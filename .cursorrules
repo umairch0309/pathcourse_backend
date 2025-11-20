@@ -1,0 +1,356 @@
+---
+applyTo: "src/**/*.ts"
+---
+
+## Structure Instructions
+- When adding new routes, ensure to import and register them in `src/app.ts`.
+- Update `src/config/tags.ts` to include any new tags relevant to the routes.
+- If your new route interacts with the database, update the Prisma schema in `prisma/schema.prisma` accordingly.
+- You can check where `src/config/env.ts` is used in the project to ensure environment variables are correctly set up.
+
+## Session
+in any handler you can do the following to get the user session from the request.
+```ts
+const user = c.get('user')
+const session = c.get('session')
+```
+Thats it you can implement your logic now ob how to handle the user and session.
+
+## Services Instructions
+When adding model inside of prisma/schema.prisma, make sure to add services for it.
+it will be inside of `src/services/` folder.
+Services will contains all the actions that can be performed on the model.
+For example, if you have a model called `Product`, you will create a file called `product.service.ts` inside of `src/services/` folder.
+Inside of the service, you will create functions for each action that can be performed on the model.
+For example, if you want to create a product, you will create a function called `createProduct`.
+If you want to get all products, you will create a function called `getAllProducts`.
+If you want to get a product by id, you will create a function called `getProductById`.
+If you want to update a product, you will create a function called `updateProduct`.
+If you want to delete a product, you will create a function called `deleteProduct`.
+```ts
+export const MODEL_NAME_SERVICES = {
+  create:()=>{},
+  getAll:()=>{},
+  getById:()=>{},
+  update:()=>{},
+  delete:()=>{},
+}
+```
+Make sure to export the service at the end of the file.
+
+### Service File Organization Rules
+- **Maximum file size**: Each service file should not exceed 500 lines of code.
+- **Service folder structure**: If a service file exceeds 500 lines or if multiple related service files are needed, create a folder structure:
+  - Create a folder named after the model (e.g., `src/services/product/`)
+  - Split services into logical files (e.g., `product.crud.service.ts`, `product.query.service.ts`, `product.validation.service.ts`)
+  - Create an `index.ts` file in the folder that imports and exports all service functions as a single object:
+  ```ts
+  // src/services/product/index.ts
+  import { PRODUCT_CRUD_SERVICES } from './product.crud.service'
+  import { PRODUCT_QUERY_SERVICES } from './product.query.service'
+  import { PRODUCT_VALIDATION_SERVICES } from './product.validation.service'
+
+  export const PRODUCT_SERVICES = {
+    ...PRODUCT_CRUD_SERVICES,
+    ...PRODUCT_QUERY_SERVICES,
+    ...PRODUCT_VALIDATION_SERVICES,
+  }
+  ```
+- **Import pattern**: Always import from the index file when using services:
+  ```ts
+  import { PRODUCT_SERVICES } from '~/services/product' // ✅ Correct
+  import { PRODUCT_SERVICES } from '~/services/product/product.crud.service' // ❌ Wrong
+  ```
+
+### Service Patterns for Complex Models
+For models with relationships and advanced filtering (like TimeSlot), include additional service methods:
+```ts
+export const TIME_SLOT_SERVICES = {
+  create: (data) => {},
+  getAll: (filters) => {}, // Support filtering by doctorId, date ranges, availability
+  getById: (id) => {},
+  update: (id, data, doctorId) => {}, // Include ownership validation
+  delete: (id, doctorId) => {}, // Include ownership validation
+  getByDoctorId: (doctorId, filters) => {}, // Doctor-specific queries
+  getAvailableSlots: (doctorId, startDate, endDate) => {}, // Availability filtering
+  bulkCreate: (slotsData) => {}, // Bulk operations
+}
+```
+
+### Important Considerations for Appointment-Related Models
+- When implementing TimeSlot or similar appointment-related models, ensure **single appointment constraint** - each time slot should have only one appointment, not multiple
+- Use UTC datetime format consistently across all datetime fields
+- Implement proper conflict detection for overlapping time slots
+- Include proper error handling for appointment constraints
+
+## Routes creations
+When creating new routes, make sure to create a new file inside of `src/routes/` folder.
+For example, if you want to create a route for `Product`, you will create a file
+three files inside of the folder `src/routes/product/` folder.
+1. `product.routes.ts` - This file will contain all the routes for the model.
+```ts
+import { createRoute, z } from '@hono/zod-openapi' // this will be used to create routes and validate request and response
+import * as HttpStatusCodes from 'stoker/http-status-codes'
+import { jsonContent, jsonContentRequired } from 'stoker/openapi/helpers' // this will be used to define the content type of the request and response
+import { createErrorSchema } from 'stoker/openapi/schemas' // this will be used to create error schema for the response it will accept zod schema as input
+import TAGS from '~/config/tags'
+import { zodResponseSchema } from '~/lib/zod-helper' // this will be used to create response schema where i follow specfici things
+// describe schema of request body if we does not have inside src/zod
+const updateRoleBodySchema = z
+  .object({
+    role: z.enum(['patient', 'doctor']).describe('New role for the user'),
+  })
+  .describe('Request body for updating user role')
+export const AUTH_ROUTES = {
+  update_role: createRoute({
+    path: '/user/update-role',
+    method: 'post',
+    tags: [TAGS.auth],
+    request: {
+      body: jsonContentRequired(updateRoleBodySchema, 'Request body for updating user role'),
+    },
+    responses: {
+      [HttpStatusCodes.UNPROCESSABLE_ENTITY]: jsonContent(
+        createErrorSchema(updateRoleBodySchema),
+        'Unprocessable Entity'
+      ),
+      [HttpStatusCodes.UNAUTHORIZED]: jsonContent(zodResponseSchema(), 'Unauthorized'),
+      [HttpStatusCodes.BAD_REQUEST]: jsonContent(zodResponseSchema(), 'Bad Request'),
+      [HttpStatusCodes.OK]: jsonContent(zodResponseSchema(), 'No Content'),
+    },
+  }),
+}
+```
+
+### Response Schema Patterns for Related Models
+For models with relationships (like TimeSlot with Doctor and Appointment), structure response schemas as follows:
+```ts
+// For single appointment per time slot pattern
+const timeSlotResponseSchema = z
+  .object({
+    id: z.string(),
+    doctorId: z.string(),
+    startTime: z.string().datetime().describe('Start time in UTC (ISO 8601 format)'),
+    endTime: z.string().datetime().describe('End time in UTC (ISO 8601 format)'),
+    createdAt: z.string().datetime().describe('Creation timestamp in UTC'),
+    updatedAt: z.string().datetime().describe('Last update timestamp in UTC'),
+    doctor: z.object({
+      id: z.string(),
+      name: z.string(),
+      email: z.string(),
+      image: z.string().nullable(),
+      role: z.string().optional(),
+    }),
+    appointment: z.object({
+      id: z.string(),
+      status: z.string(),
+      patient: z.object({
+        id: z.string(),
+        name: z.string(),
+        email: z.string(),
+      }),
+    }).nullable().describe('Single appointment for this time slot (null if available)'),
+  })
+  .describe('Time slot with related data')
+```
+
+### Permission-Based Route Patterns
+When implementing routes with different permission levels:
+```ts
+// Doctor-only operations (create, update, delete)
+export const TIME_SLOT_ROUTES = {
+  create: createRoute({
+    path: '/time-slots',
+    method: 'post',
+    tags: [TAGS.timeSlot],
+    summary: 'Create a new time slot (Doctor only)',
+    // ... rest of route definition
+  }),
+
+  // Public operations (list, get)
+  list: createRoute({
+    path: '/time-slots',
+    method: 'get',
+    tags: [TAGS.timeSlot],
+    summary: 'List time slots with filtering (Public access)',
+    // ... rest of route definition
+  }),
+}
+```
+2. `product.handlers.ts` - This file will contain all the controllers for the model.
+```ts
+import * as HttpStatusCodes from 'stoker/http-status-codes' // statuses codes will be imported from here
+
+import { HttpError } from '~/lib/error'  // HttpError will be imported from here
+import type { AUTH_ROUTES } from '~/routes/auth/auth.routes' // Routes will be imported from here
+import { USER_SERVICES } from '~/services/user' // Services will be imported from services
+import type { HandlerMapFromRoutes } from '~/types' // this is a utlity type to get the handler map from the routes
+
+export const AUTH_ROUTES_HANDLER: HandlerMapFromRoutes<typeof AUTH_ROUTES> = {
+  update_role: async c => {
+    const user = c.get('user')
+    if (!user) {
+      throw new HttpError('Unauthorized', HttpStatusCodes.UNAUTHORIZED)
+    }
+
+    const role = c.req.valid('json').role
+    await USER_SERVICES.update_user_role({
+      user_id: user.id,
+      role,
+    })
+    return c.json(
+      {
+        message: 'User role updated successfully',
+      },
+      HttpStatusCodes.OK
+    )
+  },
+}
+```
+
+### Handler Patterns for Permission-Based APIs
+For APIs with role-based permissions (like TimeSlot), implement handlers with proper authorization:
+```ts
+// Helper functions for response formatting (single appointment pattern)
+const formatAppointment = (appointments: AppointmentData[]) => {
+  if (!appointments || appointments.length === 0) {
+    return null
+  }
+  const appointment = appointments[0] // Take the first (and should be only) appointment
+  return {
+    id: appointment.id,
+    status: appointment.status,
+    patient: {
+      id: appointment.patient.id,
+      name: appointment.patient.name,
+      email: appointment.patient.email,
+    },
+  }
+}
+
+const formatTimeSlotResponse = (slot: TimeSlotData) => ({
+  id: slot.id,
+  doctorId: slot.doctorId,
+  startTime: slot.startTime.toISOString(),
+  endTime: slot.endTime.toISOString(),
+  createdAt: slot.createdAt.toISOString(),
+  updatedAt: slot.updatedAt.toISOString(),
+  doctor: {
+    id: slot.doctor.id,
+    name: slot.doctor.name,
+    email: slot.doctor.email,
+    image: slot.doctor.image,
+    role: slot.doctor.role || undefined,
+  },
+  appointment: formatAppointment(slot.appointments),
+})
+
+export const TIME_SLOT_ROUTES_HANDLER: HandlerMapFromRoutes<typeof TIME_SLOT_ROUTES> = {
+  // Doctor-only operations
+  create: async c => {
+    const user = c.get('user')
+    if (!user) {
+      throw new HttpError('Unauthorized', HttpStatusCodes.UNAUTHORIZED)
+    }
+
+    // Only doctors can create time slots
+    if (user.role !== 'doctor') {
+      throw new HttpError('Only doctors can create time slots', HttpStatusCodes.FORBIDDEN)
+    }
+
+    const { startTime, endTime } = c.req.valid('json')
+    const timeSlot = await TIME_SLOT_SERVICES.create({
+      doctorId: user.id,
+      startTime: new Date(startTime),
+      endTime: new Date(endTime),
+    })
+
+    return c.json(formatTimeSlotResponse(timeSlot), HttpStatusCodes.CREATED)
+  },
+
+  // Public operations (no authentication required)
+  list: async c => {
+    const query = c.req.valid('query')
+    const filters = {
+      doctorId: query.doctorId,
+      startDate: query.startDate ? new Date(query.startDate) : undefined,
+      endDate: query.endDate ? new Date(query.endDate) : undefined,
+      available: query.available,
+      page: query.page || 1,
+      limit: query.limit || 10,
+    }
+
+    const result = await TIME_SLOT_SERVICES.getAll(filters)
+
+    return c.json(
+      {
+        timeSlots: result.timeSlots.map(formatTimeSlotResponse),
+        pagination: result.pagination,
+      },
+      HttpStatusCodes.OK
+    )
+  },
+}
+```
+3. `index.ts` - This file will have a router inside of it.
+```ts
+import { createRouter } from "~/lib/create-app";
+import {AUTH_ROUTES_HANDLER} from "./auth.handler";
+import {AUTH_ROUTES} from "./auth.routes";
+// createRouter will be imported from here
+// Routes and Handlers will be imported from here
+// they will be chained like this createRouter().openapi(route, handler)
+
+const router = createRouter();
+
+// Use forEach method to register all routes
+Object.entries(AUTH_ROUTES).forEach(([key, route]) => {
+  router.openapi(route, AUTH_ROUTES_HANDLER[key as keyof typeof AUTH_ROUTES_HANDLER]);
+});
+
+export default router;
+```
+
+### Complete Router Pattern for Complex APIs
+For APIs with multiple endpoints (like TimeSlot with 8 routes), use forEach method:
+```ts
+import { createRouter } from "~/lib/create-app";
+import { TIME_SLOT_ROUTES_HANDLER } from "./time-slot.handlers";
+import { TIME_SLOT_ROUTES } from "./time-slot.routes";
+
+const router = createRouter();
+
+// Use forEach method to register all routes
+Object.entries(TIME_SLOT_ROUTES).forEach(([key, route]) => {
+  router.openapi(route, TIME_SLOT_ROUTES_HANDLER[key as keyof typeof TIME_SLOT_ROUTES_HANDLER]);
+});
+
+export default router;
+```
+
+## Implementation Checklist for New APIs
+
+When implementing a new API module (like TimeSlot), ensure you:
+
+1. **Create service layer** with proper business logic and validation
+2. **Define routes** with OpenAPI schemas and proper HTTP status codes
+3. **Implement handlers** with permission checks and error handling
+4. **Register routes** in the main router (`src/app.ts`)
+5. **Update tags** in `src/config/tags.ts` for API organization
+6. **Handle datetime fields** consistently in UTC format
+7. **Implement filtering** for list endpoints with pagination
+8. **Add proper TypeScript types** and interfaces
+9. **Follow single responsibility** - one appointment per slot for appointment-related models
+10. **Create comprehensive documentation** in MDX format with examples
+
+## Key Conventions
+
+- **Permission Levels**: Doctor-only for create/update/delete, public for read operations
+- **Datetime Format**: Always use UTC ISO 8601 strings in responses
+- **Response Structure**: Consistent formatting with helper functions
+- **Error Handling**: Use HttpError with appropriate status codes
+- **Validation**: Zod schemas for request/response validation
+- **Pagination**: Standard page/limit pattern with total counts
+- **Service File Size**: Maximum 500 lines per service file - use folder structure with index.ts for larger services
+- **Service Imports**: Always import from the index file when using folder-based services
+
