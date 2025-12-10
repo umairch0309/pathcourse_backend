@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/suspicious/noExplicitAny: <explanation> */
 import prisma from '~/lib/prisma'
 
 export const USER_QUERY_SERVICES = {
@@ -20,11 +21,7 @@ export const USER_QUERY_SERVICES = {
     return userQuery
   },
 
-  getAll: async (filters?: {
-    page?: number
-    limit?: number
-    search?: string
-  }) => {
+  getAll: async (filters?: { page?: number; limit?: number; search?: string }) => {
     const page = filters?.page || 1
     const limit = filters?.limit || 10
     const skip = (page - 1) * limit
@@ -92,4 +89,3 @@ export const USER_QUERY_SERVICES = {
     return userQuery
   },
 }
-

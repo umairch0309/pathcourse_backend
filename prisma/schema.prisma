@@ -71,7 +71,7 @@ model Doctor {
   updatedAt              DateTime                @updatedAt
   professional_contact   String
   professional_email     String                  @unique
-  about                  String
+  secondary_contact      String?
   isAvailable            Boolean                 @default(false)
   isInMeeting            Boolean                 @default(false)
   availableDurations     Int[]                   @default([15, 30, 45, 60])
@@ -89,7 +89,7 @@ model UserInfo {
   userId      String    @unique
   gender      String?   @db.VarChar(20)
   dateOfBirth DateTime?
-  phone       String?   @db.VarChar(20)
+  phone       String?   @db.VarChar(50)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   address     String?
@@ -111,17 +111,16 @@ model UserQuery {
 }
 
 model Education {
-  id                String    @id @default(cuid())
-  doctorId          String
-  degree            String    @db.VarChar(100)
-  startYear         DateTime
-  document          String?   @db.VarChar(500)
-  endYear           DateTime?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
-  institute_address String    @db.VarChar(200)
-  institution_name  String    @db.VarChar(200)
-  doctor            Doctor    @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  id               String    @id @default(cuid())
+  doctorId         String
+  degree           String    @db.VarChar(100)
+  startYear        DateTime
+  document         String?   @db.VarChar(500)
+  endYear          DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  institution_name String    @db.VarChar(200)
+  doctor           Doctor    @relation(fields: [doctorId], references: [id], onDelete: Cascade)
 
   @@index([doctorId])
 }
@@ -132,8 +131,7 @@ model ProfessionalExperience {
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
   age_group             String    @db.VarChar(100)
-  funding_opions        String
-  language              String    @db.VarChar(200)
+  languages             String[]   @default([])
   profession            String
   special_interest_area String
   doctor                Doctor    @relation(fields: [doctorId], references: [id], onDelete: Cascade)
@@ -141,14 +139,14 @@ model ProfessionalExperience {
 }
 
 model Documents {
-  id           String   @id @default(cuid())
-  doctorId     String   @unique
-  W9_form      String?  @db.VarChar(500)
-  attachments  String[]
-  affiliations String[]
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  doctor       Doctor   @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  id                String   @id @default(cuid())
+  doctorId          String   @unique
+  resume            String?  @db.VarChar(500)
+  medicalLicense    String?  @db.VarChar(500)
+  introductionVideo String?  @db.VarChar(500)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  doctor            Doctor   @relation(fields: [doctorId], references: [id], onDelete: Cascade)
 
   @@index([doctorId])
 }

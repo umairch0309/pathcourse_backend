@@ -30,7 +30,7 @@ const createUserQueryBodySchema = z
   .object({
     message: z.string().min(1).describe('Query message'),
     name: z.string().min(1).max(100).describe('User name'),
-    number: z.string().min(1).max(20).describe('User phone number'),
+    number: z.string().min(1).max(50).describe('User phone number'),
     email: z.string().email().describe('User email address'),
   })
   .describe('Request body for creating user query')
@@ -130,4 +130,3 @@ export const USER_QUERY_ROUTES = {
     },
   }),
 }
-

@@ -15,7 +15,7 @@ const userInfoBodySchema = z
   .object({
     gender: z.string().max(20).nullable().optional().describe('User gender'),
     dateOfBirth: z.string().datetime().nullable().optional().describe('User date of birth in UTC (ISO 8601 format)'),
-    phone: z.string().max(20).nullable().optional().describe('User phone number'),
+    phone: z.string().max(50).nullable().optional().describe('User phone number'),
     address: z.string().nullable().optional().describe('User address'),
   })
   .describe('Request body for creating or updating user info')
