@@ -7,6 +7,8 @@ const TAGS = {
   doctor: 'Doctor',
   education: 'Education',
   doctorProfile: 'Doctor Profile',
+  auth: 'Authentication',
+  enterprise: 'Enterprise',
 } as const
 
 export default TAGS

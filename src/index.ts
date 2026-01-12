@@ -31,10 +31,13 @@ app.use(
   })
 )
 
+// Register custom routes first (before better-auth catch-all)
+registerRoutes(app)
+
+// Register better-auth handler for its own routes (must be after custom routes)
 app.on(['POST', 'GET'], '/api/auth/*', c => {
   return auth.handler(c.req.raw)
 })
-registerRoutes(app)
 configureOpenAPI(app)
 console.log('Auth reference available at http://localhost:8080/api/auth/reference')
 console.log('API reference available at http://localhost:8080/reference')

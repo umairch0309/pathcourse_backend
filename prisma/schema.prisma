@@ -26,42 +26,23 @@ model User {
   banReason              String?
   banExpires             DateTime?
   onboardingStage        String?
+  enterpriseCode         String?            @db.VarChar(50)
+  employeeCode           String?            @db.VarChar(50)
   doctorAppointments     Appointment[]      @relation("doctorAppointments")
   patientAppointments    Appointment[]      @relation("patientAppointments")
   appointmentChats       AppointmentChat[]
   doctor                 Doctor?
-  doctorReviews          DoctorReviews[]    @relation("doctorReviews")
-  patientReviews         DoctorReviews[]    @relation("patientReviews")
   notifications          Notification[]
-  doctorPayments         Payments[]         @relation("doctorPayments")
-  patientPayments        Payments[]         @relation("patientPayments")
   sessions               Session[]
   userSessions           UserSession[]
   accounts               Account[]
-  twoFactor              twoFactor?
   doctorAppointmentNotes AppointmentNotes[] @relation("doctorAppointmentNotes")
   userQueries            UserQuery[]
   userInfo               UserInfo?
 
-  stripeAccountId         String? @unique
-  stripeCustomerId        String? @unique
-  stripeAccountStatus     String?
-  stripeAccountCompleted  Boolean @default(false)
-  stripeOnboardingLink    String?
-
-
   @@index([email])
+  @@index([enterpriseCode])
   @@map("user")
-}
-
-model twoFactor {
-  id          String   @id @default(cuid())
-  secret      String
-  backupCodes String
-  userId      String   @unique
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Doctor {
@@ -74,7 +55,6 @@ model Doctor {
   secondary_contact      String?
   isAvailable            Boolean                 @default(false)
   isInMeeting            Boolean                 @default(false)
-  availableDurations     Int[]                   @default([15, 30, 45, 60])
   user                   User                    @relation(fields: [userid], references: [id], onDelete: Cascade)
   documents              Documents?
   education              Education[]
@@ -99,15 +79,32 @@ model UserInfo {
 }
 
 model UserQuery {
-  id        String   @id @default(cuid())
-  message   String   @db.Text
-  name      String
-  number    String
-  email     String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
-  user      User?    @relation(fields: [userId], references: [id])
-  userId    String?
+  id                String   @id @default(cuid())
+  organizationName String   @db.VarChar(200)
+  organizationEmail String  @db.VarChar(255)
+  message           String   @db.Text
+  name              String   @db.VarChar(100)
+  number            String   @db.VarChar(50)
+  email             String   @db.VarChar(255)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @default(now()) @updatedAt
+  user              User?    @relation(fields: [userId], references: [id])
+  userId            String?
+
+  @@index([userId])
+  @@index([email])
+}
+
+model Enterprise {
+  id               String   @id @default(cuid())
+  name             String   @db.VarChar(200)
+  code             String   @unique @db.VarChar(50)
+  sessionsPerMonth Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @default(now()) @updatedAt
+
+  @@index([code])
+  @@map("enterprise")
 }
 
 model Education {
@@ -151,74 +148,46 @@ model Documents {
   @@index([doctorId])
 }
 
-model Service {
-  id                     String                   @id @default(cuid())
-  name                   String                   @unique @db.VarChar(100)
-  createdAt              DateTime                 @default(now())
-  updatedAt              DateTime                 @updatedAt
-  pricing                ServicePricing[]
-
-  @@index([name])
-}
-
 model Appointment {
   id               String             @id @default(cuid())
   doctorId         String
   patientId        String
   status           AppointmentStatus  @default(PENDING)
-  duration         Int                @default(15)
   scheduledAt      DateTime?
   startedAt        DateTime?
   endedAt          DateTime?
   createdAt        DateTime           @default(now())
-  updatedAt        DateTime           @updatedAt
+  updatedAt        DateTime           @default(now()) @updatedAt
   chatroomExpiry   DateTime?
   age              Int?
   appointmentFor   String
   issue            String
-  paymentStatus    AppointmentPayment @default(PENDING)
+  uploadId         String?            @db.VarChar(500)
   agoraTokens      AgoraToken[]
   doctor           User               @relation("doctorAppointments", fields: [doctorId], references: [id], onDelete: Cascade)
   patient          User               @relation("patientAppointments", fields: [patientId], references: [id], onDelete: Cascade)
   messages         AppointmentChat[]
-  review           DoctorReviews?
-  MedicalInfo      MedicalInfo[]
-  MedicalReports   MedicalReports[]
-  payments         Payments?
   userSessions     UserSession[]
   appointmentNotes AppointmentNotes?
+  sessionReason    SessionReason?
 
   @@index([doctorId])
   @@index([patientId])
   @@index([status])
   @@index([createdAt])
-  @@index([duration])
 }
 
-model MedicalInfo {
-  id               String      @id @default(cuid())
-  firstTherapy     String
-  anyMed           String
-  lastVisit        String
-  preCondition     String
-  currentCondition String
-  appointmentId    String
-  createdAt        DateTime    @default(now())
-  updatedAt        DateTime    @updatedAt
-  appointment      Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
-
-  @@index([appointmentId])
-}
-
-model MedicalReports {
+model SessionReason {
   id            String      @id @default(cuid())
-  fileUrl       String      @db.VarChar(500)
-  appointmentId String
+  appointmentId String      @unique
+  reason        SessionReasonType
   createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  updatedAt     DateTime    @default(now()) @updatedAt
   appointment   Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
 
   @@index([appointmentId])
+  @@index([reason])
+  @@map("session_reason")
 }
 
 model AppointmentNotes {
@@ -233,24 +202,6 @@ model AppointmentNotes {
 
   @@index([appointmentId])
   @@index([doctorId])
-}
-
-model ServicePricing {
-  id             String   @id @default(cuid())
-  serviceId      String
-  duration       Int
-  userPrice      Decimal  @db.Decimal(10, 2)
-  doctorAmount   Decimal  @db.Decimal(10, 2)
-  platformAmount Decimal  @db.Decimal(10, 2)
-  isActive       Boolean  @default(true)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  service        Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
-
-  @@unique([serviceId, duration])
-  @@index([serviceId])
-  @@index([duration])
-  @@index([isActive])
 }
 
 model AppointmentChat {
@@ -275,26 +226,6 @@ model AppointmentChat {
   @@index([createdAt])
 }
 
-model DoctorReviews {
-  id            String      @id @default(cuid())
-  doctorId      String
-  patientId     String
-  rating        Int         @db.SmallInt
-  comment       String?
-  appointmentId String      @unique
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  appointment   Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
-  doctor        User        @relation("doctorReviews", fields: [doctorId], references: [id], onDelete: Cascade)
-  patient       User        @relation("patientReviews", fields: [patientId], references: [id], onDelete: Cascade)
-
-  @@unique([doctorId, patientId, appointmentId])
-  @@index([doctorId])
-  @@index([patientId])
-  @@index([rating])
-  @@index([appointmentId])
-}
-
 model AgoraToken {
   id            String      @id @default(cuid())
   channel       String      @db.VarChar(100)
@@ -316,35 +247,6 @@ model AgoraToken {
   @@unique([channel, appointmentId])
   @@index([appointmentId])
   @@index([expiry])
-}
-
-model Payments {
-  id               String        @id @default(cuid())
-  appointmentId    String        @unique
-  totalAmount      Decimal       @db.Decimal(10, 2)
-  doctorAmount     Decimal       @db.Decimal(10, 2)
-  platformAmount   Decimal       @db.Decimal(10, 2)
-  duration         Int
-  doctorId         String
-  patientId        String
-  currency         String        @default("USD") @db.VarChar(3)
-  paymentStatus    PaymentStatus
-  stripePaymentId  String?       @unique @db.VarChar(255)
-  stripeChargeId   String?       @db.VarChar(255)
-  stripeCustomerId String?       @db.VarChar(255)
-  receiptUrl       String?       @db.VarChar(500)
-  paidAt           DateTime?
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
-  appointment      Appointment   @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
-  doctor           User          @relation("doctorPayments", fields: [doctorId], references: [id], onDelete: Cascade)
-  patient          User          @relation("patientPayments", fields: [patientId], references: [id], onDelete: Cascade)
-
-  @@index([appointmentId])
-  @@index([paymentStatus])
-  @@index([patientId])
-  @@index([doctorId])
-  @@index([stripePaymentId])
 }
 
 model Notification {
@@ -445,21 +347,6 @@ enum UserRole {
   ADMIN
 }
 
-enum PaymentStatus {
-  PENDING
-  COMPLETED
-  FAILED
-  REFUNDED
-}
-
-enum PaymentMethod {
-  STRIPE
-  CREDIT_CARD
-  DEBIT_CARD
-  BANK_TRANSFER
-  DIGITAL_WALLET
-}
-
 enum MessageType {
   TEXT
   IMAGE
@@ -467,10 +354,10 @@ enum MessageType {
   SYSTEM
 }
 
-enum AppointmentPayment {
-  PENDING
-  PAID
-  CANCELLED
+enum SessionReasonType {
+  LETTING_OFF_STEAM
+  TALKING_THROUGH_STRESS_OR_UNCERTAINTY
+  NEEDING_PERSPECTIVE_DURING_A_DEMANDING_PERIOD
 }
 
 enum QueryStatus {

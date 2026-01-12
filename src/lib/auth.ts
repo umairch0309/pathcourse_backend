@@ -27,12 +27,12 @@ export const auth = betterAuth({
         type: 'string',
         defaultValue: 'ROLE_SELECTION',
       },
-      stripeAccountId: {
+      enterpriseCode: {
         type: 'string',
         defaultValue: null,
         required: false,
       },
-      stripeCustomerId: {
+      employeeCode: {
         type: 'string',
         defaultValue: null,
         required: false,
