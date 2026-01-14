@@ -55,6 +55,7 @@ model Doctor {
   secondary_contact      String?
   isAvailable            Boolean                 @default(false)
   isInMeeting            Boolean                 @default(false)
+  rejectReason           String?                 @db.Text
   user                   User                    @relation(fields: [userid], references: [id], onDelete: Cascade)
   documents              Documents?
   education              Education[]

@@ -49,7 +49,7 @@ export const AUTH_ROUTES_HANDLER: HandlerMapFromRoutes<typeof AUTH_ROUTES> = {
           role: 'patient',
           enterpriseCode,
           employeeCode,
-          onboardingStage: 'COMPLETED', // Patients skip role selection since they're already set as patient
+          onboardingStage: 'USER_INFO', // Patients skip role selection since they're already set as patient
         },
       })
 
