@@ -22,14 +22,14 @@ const userInfoBodySchema = z
 
 const userInfoResponseSchema = z
   .object({
-    id: z.string(),
+    id: z.string().nullable(),
     userId: z.string(),
     gender: z.string().nullable(),
     dateOfBirth: z.string().datetime().nullable(),
     phone: z.string().nullable(),
     address: z.string().nullable(),
-    createdAt: z.string().datetime(),
-    updatedAt: z.string().datetime(),
+    createdAt: z.string().datetime().nullable(),
+    updatedAt: z.string().datetime().nullable(),
     user: z.object({
       id: z.string(),
       name: z.string(),
@@ -38,7 +38,7 @@ const userInfoResponseSchema = z
       role: z.string().nullable(),
     }),
   })
-  .describe('User info with related user data')
+  .describe('User info with related user data (null values when user info not created yet)')
 
 export const USER_ROUTES = {
   selectRole: createRoute({
@@ -86,9 +86,11 @@ export const USER_ROUTES = {
     summary: 'Get current user information',
     request: {},
     responses: {
-      [HttpStatusCodes.OK]: jsonContent(zodResponseSchema(userInfoResponseSchema), 'User info retrieved successfully'),
+      [HttpStatusCodes.OK]: jsonContent(
+        zodResponseSchema(userInfoResponseSchema),
+        'User info retrieved successfully (returns default structure if user info not created yet)'
+      ),
       [HttpStatusCodes.UNAUTHORIZED]: jsonContent(zodResponseSchema(), 'Unauthorized'),
-      [HttpStatusCodes.NOT_FOUND]: jsonContent(zodResponseSchema(), 'User info not found'),
     },
   }),
 }

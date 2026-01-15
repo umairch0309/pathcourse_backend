@@ -32,7 +32,6 @@ const doctorResponseSchema = z
     professional_email: z.string(),
     isAvailable: z.boolean(),
     isInMeeting: z.boolean(),
-    availableDurations: z.array(z.number().int()),
     createdAt: z.string().datetime(),
     updatedAt: z.string().datetime(),
     user: z.object({
@@ -44,6 +43,67 @@ const doctorResponseSchema = z
     }),
   })
   .describe('Doctor information with related user data')
+
+const doctorCompleteResponseSchema = z
+  .object({
+    id: z.string(),
+    userid: z.string(),
+    professional_contact: z.string(),
+    professional_email: z.string(),
+    secondary_contact: z.string().nullable(),
+    isAvailable: z.boolean(),
+    isInMeeting: z.boolean(),
+    createdAt: z.string().datetime(),
+    updatedAt: z.string().datetime(),
+    user: z.object({
+      id: z.string(),
+      name: z.string(),
+      email: z.string(),
+      image: z.string().nullable(),
+      role: z.string().nullable(),
+      onboardingStage: z.string().nullable(),
+    }),
+    documents: z
+      .object({
+        id: z.string(),
+        resume: z.string().nullable(),
+        medicalLicense: z.string().nullable(),
+        introductionVideo: z.string().nullable(),
+      })
+      .nullable(),
+    education: z.array(
+      z.object({
+        id: z.string(),
+        degree: z.string(),
+        institution_name: z.string(),
+        startYear: z.string().datetime(),
+        endYear: z.string().datetime().nullable(),
+        document: z.string().nullable(),
+      })
+    ),
+    professionalExperience: z
+      .object({
+        id: z.string(),
+        profession: z.string(),
+        special_interest_area: z.string(),
+        age_group: z.string(),
+        languages: z.array(z.string()),
+      })
+      .nullable(),
+  })
+  .describe('Complete doctor information with all related data')
+
+const doctorListResponseSchema = z
+  .object({
+    doctors: z.array(doctorCompleteResponseSchema),
+    pagination: z.object({
+      page: z.number().int(),
+      limit: z.number().int(),
+      total: z.number().int(),
+      totalPages: z.number().int(),
+    }),
+  })
+  .describe('List of doctors with pagination')
 
 export const DOCTOR_ROUTES = {
   createOrUpdate: createRoute({
@@ -101,7 +161,7 @@ export const DOCTOR_ROUTES = {
     path: '/doctor/{id}',
     method: 'get',
     tags: [TAGS.doctor],
-    summary: 'Get doctor information by ID (Public)',
+    summary: 'Get complete doctor information by ID (Public)',
     request: {
       params: z.object({
         id: z.string().describe('Doctor ID'),
@@ -109,10 +169,130 @@ export const DOCTOR_ROUTES = {
     },
     responses: {
       [HttpStatusCodes.OK]: jsonContent(
-        zodResponseSchema(doctorResponseSchema),
+        zodResponseSchema(doctorCompleteResponseSchema),
         'Doctor information retrieved successfully'
       ),
       [HttpStatusCodes.NOT_FOUND]: jsonContent(zodResponseSchema(), 'Doctor not found'),
+    },
+  }),
+
+  toggleAvailability: createRoute({
+    path: '/doctor/availability/toggle',
+    method: 'post',
+    tags: [TAGS.doctor],
+    middleware: [isAuthenticated],
+    summary: 'Toggle doctor availability status (Doctor only)',
+    request: {},
+    responses: {
+      [HttpStatusCodes.OK]: jsonContent(
+        zodResponseSchema(doctorResponseSchema),
+        'Availability toggled successfully'
+      ),
+      [HttpStatusCodes.UNAUTHORIZED]: jsonContent(zodResponseSchema(), 'Unauthorized'),
+      [HttpStatusCodes.FORBIDDEN]: jsonContent(
+        zodResponseSchema(),
+        'Forbidden - Only doctors can access this endpoint'
+      ),
+      [HttpStatusCodes.NOT_FOUND]: jsonContent(zodResponseSchema(), 'Doctor not found'),
+    },
+  }),
+
+  getAvailableDoctors: createRoute({
+    path: '/doctors/available',
+    method: 'get',
+    tags: [TAGS.doctor],
+    summary: 'Get all available doctors (Public)',
+    request: {
+      query: z.object({
+        page: z.string().optional().describe('Page number (default: 1)'),
+        limit: z.string().optional().describe('Items per page (default: 10)'),
+        search: z.string().optional().describe('Search by name or professional email'),
+      }),
+    },
+    responses: {
+      [HttpStatusCodes.OK]: jsonContent(
+        zodResponseSchema(doctorListResponseSchema),
+        'Available doctors retrieved successfully'
+      ),
+    },
+  }),
+
+  updateMeetingStatus: createRoute({
+    path: '/doctor/meeting/status',
+    method: 'post',
+    tags: [TAGS.doctor],
+    middleware: [isAuthenticated],
+    summary: 'Update doctor meeting status (Doctor only)',
+    request: {
+      body: jsonContentRequired(
+        z.object({
+          isInMeeting: z.boolean().describe('Whether the doctor is currently in a meeting'),
+        }),
+        'Request body for updating meeting status'
+      ),
+    },
+    responses: {
+      [HttpStatusCodes.OK]: jsonContent(
+        zodResponseSchema(doctorResponseSchema),
+        'Meeting status updated successfully'
+      ),
+      [HttpStatusCodes.UNAUTHORIZED]: jsonContent(zodResponseSchema(), 'Unauthorized'),
+      [HttpStatusCodes.FORBIDDEN]: jsonContent(
+        zodResponseSchema(),
+        'Forbidden - Only doctors can access this endpoint'
+      ),
+      [HttpStatusCodes.NOT_FOUND]: jsonContent(zodResponseSchema(), 'Doctor not found'),
+    },
+  }),
+
+  heartbeat: createRoute({
+    path: '/doctor/connection/heartbeat',
+    method: 'post',
+    tags: [TAGS.doctor],
+    middleware: [isAuthenticated],
+    summary: 'Send heartbeat to maintain connection (Doctor only)',
+    request: {},
+    responses: {
+      [HttpStatusCodes.OK]: jsonContent(
+        zodResponseSchema(
+          z.object({
+            timestamp: z.string().datetime(),
+            message: z.string(),
+          })
+        ),
+        'Heartbeat received successfully'
+      ),
+      [HttpStatusCodes.UNAUTHORIZED]: jsonContent(zodResponseSchema(), 'Unauthorized'),
+      [HttpStatusCodes.FORBIDDEN]: jsonContent(
+        zodResponseSchema(),
+        'Forbidden - Only doctors can access this endpoint'
+      ),
+    },
+  }),
+
+  disconnect: createRoute({
+    path: '/doctor/connection/disconnect',
+    method: 'post',
+    tags: [TAGS.doctor],
+    middleware: [isAuthenticated],
+    summary: 'Handle doctor disconnection (Doctor only)',
+    request: {},
+    responses: {
+      [HttpStatusCodes.OK]: jsonContent(
+        zodResponseSchema(
+          z.object({
+            isAvailable: z.boolean(),
+            isInMeeting: z.boolean(),
+            message: z.string(),
+          })
+        ),
+        'Disconnection handled successfully'
+      ),
+      [HttpStatusCodes.UNAUTHORIZED]: jsonContent(zodResponseSchema(), 'Unauthorized'),
+      [HttpStatusCodes.FORBIDDEN]: jsonContent(
+        zodResponseSchema(),
+        'Forbidden - Only doctors can access this endpoint'
+      ),
     },
   }),
 }

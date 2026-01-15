@@ -81,8 +81,35 @@ export const USER_ROUTES_HANDLER: HandlerMapFromRoutes<typeof USER_ROUTES> = {
 
     const userInfo = await USER_SERVICES.getUserInfo(user.id)
 
+    // If user info doesn't exist, return default/empty structure instead of 404
+    // This allows frontend to check if user info exists without getting an error
     if (!userInfo) {
-      throw new HttpError('User info not found', HttpStatusCodes.NOT_FOUND)
+      const defaultUserInfo = {
+        id: null,
+        userId: user.id,
+        gender: null,
+        dateOfBirth: null,
+        phone: null,
+        address: null,
+        createdAt: null,
+        updatedAt: null,
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          image: user.image,
+          role: user.role,
+        },
+      }
+
+      return c.json(
+        {
+          message: 'User info not found. Please create user info first.',
+          success: true,
+          data: defaultUserInfo,
+        },
+        HttpStatusCodes.OK
+      )
     }
 
     // Format response

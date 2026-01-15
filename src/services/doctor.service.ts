@@ -1,3 +1,4 @@
+import { doctorConnectionTracker } from '~/lib/doctor-connection-tracker'
 import prisma from '~/lib/prisma'
 import { keysToSignedUrls } from '~/lib/s3'
 
@@ -243,6 +244,7 @@ export const DOCTOR_SERVICES = {
         },
         documents: true,
         education: true,
+        professionalExperience: true,
       },
     })
 
@@ -445,5 +447,339 @@ export const DOCTOR_SERVICES = {
         image: userImage,
       },
     }
+  },
+
+  toggleAvailability: async (userId: string) => {
+    const doctor = await prisma.doctor.findUnique({
+      where: { userid: userId },
+    })
+
+    if (!doctor) {
+      throw new Error('Doctor not found')
+    }
+
+    const newAvailabilityStatus = !doctor.isAvailable
+
+    const updatedDoctor = await prisma.doctor.update({
+      where: { userid: userId },
+      data: {
+        isAvailable: newAvailabilityStatus,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            image: true,
+            role: true,
+            onboardingStage: true,
+          },
+        },
+      },
+    })
+
+    // Register connection in tracker when doctor becomes available
+    // This ensures connection tracking starts immediately
+    if (newAvailabilityStatus) {
+      const connectionId = `conn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      doctorConnectionTracker.registerConnection(userId, connectionId)
+      console.log(`Doctor ${userId} availability toggled ON - connection registered with ID: ${connectionId}`)
+    } else {
+      // Remove connection when doctor becomes unavailable
+      doctorConnectionTracker.removeConnection(userId)
+      console.log(`Doctor ${userId} availability toggled OFF - connection removed`)
+    }
+
+    // Convert user image to signed URL
+    const userImage = await convertUserImageToSignedUrl(updatedDoctor.user.image)
+
+    return {
+      ...updatedDoctor,
+      user: {
+        ...updatedDoctor.user,
+        image: userImage,
+      },
+    }
+  },
+
+  getAvailableDoctors: async (filters?: { page?: number; limit?: number; search?: string }) => {
+    const page = filters?.page || 1
+    const limit = filters?.limit || 10
+    const skip = (page - 1) * limit
+
+    const where = {
+      isAvailable: true,
+      user: {
+        role: 'doctor',
+        onboardingStage: 'COMPLETED', // Only show approved doctors
+      },
+      ...(filters?.search && {
+        OR: [
+          { professional_email: { contains: filters.search, mode: 'insensitive' as const } },
+          { user: { name: { contains: filters.search, mode: 'insensitive' as const } } },
+        ],
+      }),
+    }
+
+    const [doctors, total] = await Promise.all([
+      prisma.doctor.findMany({
+        where,
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              image: true,
+              role: true,
+              onboardingStage: true,
+            },
+          },
+          documents: true,
+          education: true,
+          professionalExperience: true,
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      prisma.doctor.count({ where }),
+    ])
+
+    // Convert document URLs and user images to signed URLs for all doctors
+    const doctorsWithSignedUrls = await Promise.all(
+      doctors.map(async doctor => ({
+        ...doctor,
+        user: {
+          ...doctor.user,
+          image: await convertUserImageToSignedUrl(doctor.user.image),
+        },
+        documents: await convertDocumentsToSignedUrls(doctor.documents),
+        education: await Promise.all(
+          doctor.education.map(async edu => ({
+            ...edu,
+            document: await convertEducationDocumentToSignedUrl(edu.document),
+          }))
+        ),
+      }))
+    )
+
+    return {
+      doctors: doctorsWithSignedUrls,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    }
+  },
+
+  updateMeetingStatus: async (userId: string, isInMeeting: boolean) => {
+    const doctor = await prisma.doctor.findUnique({
+      where: { userid: userId },
+    })
+
+    if (!doctor) {
+      throw new Error('Doctor not found')
+    }
+
+    // When doctor enters a meeting, automatically set isAvailable to false
+    // When doctor exits a meeting, keep isAvailable as false (they need to manually toggle it back on)
+    const updatedDoctor = await prisma.doctor.update({
+      where: { userid: userId },
+      data: {
+        isInMeeting,
+        // If entering meeting, set unavailable. If exiting, keep current availability state
+        isAvailable: isInMeeting ? false : doctor.isAvailable,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            image: true,
+            role: true,
+            onboardingStage: true,
+          },
+        },
+      },
+    })
+
+    // Convert user image to signed URL
+    const userImage = await convertUserImageToSignedUrl(updatedDoctor.user.image)
+
+    return {
+      ...updatedDoctor,
+      user: {
+        ...updatedDoctor.user,
+        image: userImage,
+      },
+    }
+  },
+
+  registerConnection: async (userId: string, connectionId: string) => {
+    const doctor = await prisma.doctor.findUnique({
+      where: { userid: userId },
+    })
+
+    if (!doctor) {
+      throw new Error('Doctor not found')
+    }
+
+    // Update last seen timestamp in a connection tracking table
+    // For now, we'll use a simple approach with UserSession or create a DoctorConnection model
+    // Since we don't have DoctorConnection, we'll track it in memory or use UserSession
+    // For simplicity, we'll just update the doctor's last activity
+    // In production, you'd want a proper connection tracking system
+
+    return {
+      connectionId,
+      timestamp: new Date(),
+    }
+  },
+
+  updateConnectionHeartbeat: async (userId: string, connectionId?: string) => {
+    const doctor = await prisma.doctor.findUnique({
+      where: { userid: userId },
+    })
+
+    if (!doctor) {
+      throw new Error('Doctor not found')
+    }
+
+    // Always update heartbeat FIRST - this will create connection if it doesn't exist
+    // or update the existing one with fresh timestamp
+    doctorConnectionTracker.updateHeartbeat(userId, connectionId)
+
+    // CRITICAL: If heartbeats are coming in, the doctor is clearly online
+    // If they were marked as unavailable due to a stale connection check,
+    // we MUST restore their availability immediately
+    // This is the key fix - heartbeats = doctor is online = should be available if they want to be
+
+    // Get fresh doctor data to check current status
+    const currentDoctor = await prisma.doctor.findUnique({
+      where: { userid: userId },
+      select: { isAvailable: true, isInMeeting: true },
+    })
+
+    if (!currentDoctor) {
+      throw new Error('Doctor not found')
+    }
+
+    // If doctor is sending heartbeats but marked as unavailable (and not in meeting),
+    // restore availability immediately
+    // This handles the case where stale checker incorrectly marked them as unavailable
+    if (!currentDoctor.isAvailable && !currentDoctor.isInMeeting) {
+      // Doctor is sending heartbeats but marked unavailable - restore availability
+      await prisma.doctor.update({
+        where: { userid: userId },
+        data: {
+          isAvailable: true,
+        },
+      })
+      console.log(`Doctor ${userId} availability restored via heartbeat - was incorrectly marked unavailable`)
+    }
+
+    // Sync availability with meeting status (ensure isAvailable is false if in meeting)
+    await DOCTOR_SERVICES.syncAvailabilityWithMeetingStatus(userId)
+
+    return {
+      timestamp: new Date(),
+    }
+  },
+
+  handleDisconnection: async (userId: string) => {
+    const doctor = await prisma.doctor.findUnique({
+      where: { userid: userId },
+    })
+
+    if (!doctor) {
+      throw new Error('Doctor not found')
+    }
+
+    // CRITICAL: Triple-check that the connection is actually stale before marking as unavailable
+    // This prevents race conditions where heartbeats arrive right after stale detection
+    const isActuallyStale = !doctorConnectionTracker.isConnected(userId)
+
+    if (!isActuallyStale) {
+      // Connection is not actually stale - heartbeat must have arrived
+      // Don't mark as unavailable
+      console.log(`Doctor ${userId} connection restored - not marking as unavailable`)
+      return {
+        isAvailable: doctor.isAvailable,
+        isInMeeting: doctor.isInMeeting,
+      }
+    }
+
+    // IMPORTANT: Only mark as unavailable if doctor's isAvailable is currently true
+    // If it's already false, don't do anything (might have been toggled off manually)
+    // This prevents the stale checker from overriding manual toggles
+    if (!doctor.isAvailable) {
+      console.log(`Doctor ${userId} is already unavailable - skipping disconnection handling`)
+      // Remove from tracker but don't change availability
+      doctorConnectionTracker.removeConnection(userId)
+      return {
+        isAvailable: false,
+        isInMeeting: doctor.isInMeeting,
+      }
+    }
+
+    // Final check: Verify connection is still stale one more time
+    // This is the last chance to catch a heartbeat that arrived during processing
+    const finalCheck = !doctorConnectionTracker.isConnected(userId)
+    if (!finalCheck) {
+      console.log(`Doctor ${userId} connection restored during disconnection handling - aborting`)
+      return {
+        isAvailable: doctor.isAvailable,
+        isInMeeting: doctor.isInMeeting,
+      }
+    }
+
+    // Remove from connection tracker
+    doctorConnectionTracker.removeConnection(userId)
+
+    // When doctor disconnects, set isAvailable to false
+    // Only if they're not in a meeting (if in meeting, isAvailable is already false)
+    if (!doctor.isInMeeting) {
+      await prisma.doctor.update({
+        where: { userid: userId },
+        data: {
+          isAvailable: false,
+        },
+      })
+      console.log(`Doctor ${userId} marked as unavailable due to stale connection (no heartbeat for 40+ seconds)`)
+    }
+
+    return {
+      isAvailable: false,
+      isInMeeting: doctor.isInMeeting,
+    }
+  },
+
+  // Method to automatically sync availability with meeting status
+  syncAvailabilityWithMeetingStatus: async (userId: string) => {
+    const doctor = await prisma.doctor.findUnique({
+      where: { userid: userId },
+    })
+
+    if (!doctor) {
+      throw new Error('Doctor not found')
+    }
+
+    // If doctor is in meeting, ensure isAvailable is false
+    if (doctor.isInMeeting && doctor.isAvailable) {
+      await prisma.doctor.update({
+        where: { userid: userId },
+        data: {
+          isAvailable: false,
+        },
+      })
+      return { updated: true, isAvailable: false }
+    }
+
+    return { updated: false, isAvailable: doctor.isAvailable }
   },
 }

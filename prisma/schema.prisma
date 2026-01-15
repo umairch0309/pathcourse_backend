@@ -19,6 +19,11 @@ model User {
   email                  String             @unique @db.VarChar(255)
   emailVerified          Boolean            @default(false)
   image                  String?            @db.VarChar(500)
+  phone                  String?            @db.VarChar(50)
+  address                String?            @db.VarChar(500)
+  country                String?            @db.VarChar(100)
+  city                   String?            @db.VarChar(100)
+  zipCode                String?            @db.VarChar(20)
   createdAt              DateTime           @default(now())
   updatedAt              DateTime           @default(now()) @updatedAt
   role                   String?
@@ -150,27 +155,30 @@ model Documents {
 }
 
 model Appointment {
-  id               String             @id @default(cuid())
-  doctorId         String
-  patientId        String
-  status           AppointmentStatus  @default(PENDING)
-  scheduledAt      DateTime?
-  startedAt        DateTime?
-  endedAt          DateTime?
-  createdAt        DateTime           @default(now())
-  updatedAt        DateTime           @default(now()) @updatedAt
-  chatroomExpiry   DateTime?
-  age              Int?
-  appointmentFor   String
-  issue            String
-  uploadId         String?            @db.VarChar(500)
-  agoraTokens      AgoraToken[]
-  doctor           User               @relation("doctorAppointments", fields: [doctorId], references: [id], onDelete: Cascade)
-  patient          User               @relation("patientAppointments", fields: [patientId], references: [id], onDelete: Cascade)
-  messages         AppointmentChat[]
-  userSessions     UserSession[]
-  appointmentNotes AppointmentNotes?
-  sessionReason    SessionReason?
+  id                  String             @id @default(cuid())
+  doctorId            String
+  patientId           String
+  status              AppointmentStatus  @default(BOOKED)
+  scheduledAt         DateTime?
+  startedAt           DateTime?
+  endedAt             DateTime?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @default(now()) @updatedAt
+  chatroomExpiry      DateTime?
+  age                 Int?
+  appointmentFor      String
+  issue               String
+  uploadId            String?            @db.VarChar(500)
+  relationWithPatient String?            @db.VarChar(100)
+  patientName         String?            @db.VarChar(100)
+  patientAge          Int?
+  agoraTokens         AgoraToken[]
+  doctor              User               @relation("doctorAppointments", fields: [doctorId], references: [id], onDelete: Cascade)
+  patient             User               @relation("patientAppointments", fields: [patientId], references: [id], onDelete: Cascade)
+  messages            AppointmentChat[]
+  userSessions        UserSession[]
+  appointmentNotes    AppointmentNotes?
+  sessionReason       SessionReason?
 
   @@index([doctorId])
   @@index([patientId])
@@ -334,11 +342,8 @@ model UserSession {
 }
 
 enum AppointmentStatus {
-  PENDING
-  ACCEPTED
-  IN_PROGRESS
+  BOOKED
   COMPLETED
-  CANCELED
   NO_SHOW
 }
 
