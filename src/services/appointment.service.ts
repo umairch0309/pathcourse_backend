@@ -36,6 +36,9 @@ export const APPOINTMENT_SERVICES = {
       }
     }
 
+    // Set scheduledAt to current time if not provided (appointment is booked for now)
+    const scheduledAt = data.scheduledAt || new Date()
+
     // Create appointment with BOOKED status
     const appointment = await prisma.appointment.create({
       data: {
@@ -45,7 +48,7 @@ export const APPOINTMENT_SERVICES = {
         issue: data.issue,
         age: data.age,
         uploadId: data.uploadId,
-        scheduledAt: data.scheduledAt,
+        scheduledAt: scheduledAt,
         relationWithPatient: data.relationWithPatient,
         patientName: data.patientName,
         patientAge: data.patientAge,
@@ -70,6 +73,15 @@ export const APPOINTMENT_SERVICES = {
             role: true,
           },
         },
+      },
+    })
+
+    // After creating appointment, set doctor as unavailable for the appointment duration (15 minutes)
+    // This ensures the doctor remains unavailable during the appointment time
+    await prisma.doctor.update({
+      where: { userid: data.doctorId },
+      data: {
+        isAvailable: false,
       },
     })
 
@@ -107,7 +119,7 @@ export const APPOINTMENT_SERVICES = {
   getAll: async (filters?: {
     doctorId?: string
     patientId?: string
-    status?: string
+    status?: 'BOOKED' | 'COMPLETED' | 'NO_SHOW'
     page?: number
     limit?: number
   }) => {
@@ -115,7 +127,11 @@ export const APPOINTMENT_SERVICES = {
     const limit = filters?.limit || 10
     const skip = (page - 1) * limit
 
-    const where: any = {}
+    const where: {
+      doctorId?: string
+      patientId?: string
+      status?: 'BOOKED' | 'COMPLETED' | 'NO_SHOW'
+    } = {}
 
     if (filters?.doctorId) {
       where.doctorId = filters.doctorId
@@ -206,6 +222,10 @@ export const APPOINTMENT_SERVICES = {
         },
       },
     })
+
+    // If appointment is completed or marked as no-show, the doctor can manually toggle availability back on
+    // The syncAvailabilityWithMeetingStatus will check for other upcoming appointments and prevent
+    // availability if there are any within the next 15 minutes
 
     return updatedAppointment
   },

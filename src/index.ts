@@ -41,7 +41,6 @@ app.on(['POST', 'GET'], '/api/auth/*', c => {
   return auth.handler(c.req.raw)
 })
 configureOpenAPI(app)
-
 // Start stale connection checker for doctors
 // This automatically sets isAvailable to false when doctors disconnect
 doctorConnectionTracker.startStaleConnectionChecker(async (userId: string) => {

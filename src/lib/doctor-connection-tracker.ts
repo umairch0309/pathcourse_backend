@@ -42,7 +42,8 @@ class DoctorConnectionTracker {
     } else {
       // Connection doesn't exist, create it
       // Generate connectionId if not provided
-      const finalConnectionId = connectionId || `conn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      const finalConnectionId =
+        connectionId || `conn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
       this.registerConnection(userId, finalConnectionId)
     }
   }
@@ -92,9 +93,7 @@ class DoctorConnectionTracker {
   /**
    * Start background job to check for stale connections
    */
-  startStaleConnectionChecker(
-    onStaleConnection: (userId: string) => Promise<void>
-  ): void {
+  startStaleConnectionChecker(onStaleConnection: (userId: string) => Promise<void>): void {
     // Check every 15 seconds for stale connections (less frequent to reduce race conditions)
     this.checkInterval = setInterval(async () => {
       const staleConnections = this.getStaleConnections()
@@ -121,7 +120,9 @@ class DoctorConnectionTracker {
             }
           } else {
             // Connection was updated recently, skip it
-            console.log(`Connection for user ${userId} was updated recently (${Math.round(timeSinceLastHeartbeat / 1000)}s ago), skipping stale check`)
+            console.log(
+              `Connection for user ${userId} was updated recently (${Math.round(timeSinceLastHeartbeat / 1000)}s ago), skipping stale check`
+            )
           }
         } else {
           // Connection was already removed, skip
@@ -151,4 +152,3 @@ class DoctorConnectionTracker {
 
 // Singleton instance
 export const doctorConnectionTracker = new DoctorConnectionTracker()
-

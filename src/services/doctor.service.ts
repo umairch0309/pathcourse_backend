@@ -460,6 +460,29 @@ export const DOCTOR_SERVICES = {
 
     const newAvailabilityStatus = !doctor.isAvailable
 
+    // If trying to toggle ON, check if doctor has an upcoming appointment within 15 minutes
+    if (newAvailabilityStatus) {
+      const now = new Date()
+      const fifteenMinutesFromNow = new Date(now.getTime() + 15 * 60 * 1000)
+
+      const upcomingAppointment = await prisma.appointment.findFirst({
+        where: {
+          doctorId: userId,
+          status: 'BOOKED',
+          scheduledAt: {
+            gte: now,
+            lte: fifteenMinutesFromNow,
+          },
+        },
+      })
+
+      if (upcomingAppointment) {
+        throw new Error(
+          'Cannot toggle availability ON - you have an upcoming appointment within the next 15 minutes'
+        )
+      }
+    }
+
     const updatedDoctor = await prisma.doctor.update({
       where: { userid: userId },
       data: {
@@ -484,7 +507,9 @@ export const DOCTOR_SERVICES = {
     if (newAvailabilityStatus) {
       const connectionId = `conn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
       doctorConnectionTracker.registerConnection(userId, connectionId)
-      console.log(`Doctor ${userId} availability toggled ON - connection registered with ID: ${connectionId}`)
+      console.log(
+        `Doctor ${userId} availability toggled ON - connection registered with ID: ${connectionId}`
+      )
     } else {
       // Remove connection when doctor becomes unavailable
       doctorConnectionTracker.removeConnection(userId)
@@ -508,12 +533,40 @@ export const DOCTOR_SERVICES = {
     const limit = filters?.limit || 10
     const skip = (page - 1) * limit
 
+    // Check for active appointments (within last 15 minutes or next 15 minutes)
+    const now = new Date()
+    const fifteenMinutesAgo = new Date(now.getTime() - 15 * 60 * 1000)
+    const fifteenMinutesFromNow = new Date(now.getTime() + 15 * 60 * 1000)
+
+    // Get all doctors with active appointments
+    const doctorsWithActiveAppointments = await prisma.appointment.findMany({
+      where: {
+        status: 'BOOKED',
+        scheduledAt: {
+          gte: fifteenMinutesAgo, // Within last 15 minutes
+          lte: fifteenMinutesFromNow, // Or within next 15 minutes
+        },
+      },
+      select: {
+        doctorId: true,
+      },
+      distinct: ['doctorId'],
+    })
+
+    const doctorIdsWithAppointments = doctorsWithActiveAppointments.map(a => a.doctorId)
+
     const where = {
       isAvailable: true,
       user: {
         role: 'doctor',
         onboardingStage: 'COMPLETED', // Only show approved doctors
       },
+      // Exclude doctors with upcoming appointments
+      ...(doctorIdsWithAppointments.length > 0 && {
+        userid: {
+          notIn: doctorIdsWithAppointments,
+        },
+      }),
       ...(filters?.search && {
         OR: [
           { professional_email: { contains: filters.search, mode: 'insensitive' as const } },
@@ -655,9 +708,10 @@ export const DOCTOR_SERVICES = {
     doctorConnectionTracker.updateHeartbeat(userId, connectionId)
 
     // CRITICAL: If heartbeats are coming in, the doctor is clearly online
-    // If they were marked as unavailable due to a stale connection check,
-    // we MUST restore their availability immediately
-    // This is the key fix - heartbeats = doctor is online = should be available if they want to be
+    // However, we should NOT restore availability if:
+    // 1. Doctor is in a meeting
+    // 2. Doctor has an upcoming appointment within 15 minutes
+    // Only restore if they were incorrectly marked unavailable due to stale connection
 
     // Get fresh doctor data to check current status
     const currentDoctor = await prisma.doctor.findUnique({
@@ -669,21 +723,48 @@ export const DOCTOR_SERVICES = {
       throw new Error('Doctor not found')
     }
 
-    // If doctor is sending heartbeats but marked as unavailable (and not in meeting),
-    // restore availability immediately
-    // This handles the case where stale checker incorrectly marked them as unavailable
-    if (!currentDoctor.isAvailable && !currentDoctor.isInMeeting) {
+    // Check if doctor has an appointment within 15 minutes (past or future)
+    // This includes appointments that just started (within last 15 min) or upcoming (within next 15 min)
+    const now = new Date()
+    const fifteenMinutesAgo = new Date(now.getTime() - 15 * 60 * 1000)
+    const fifteenMinutesFromNow = new Date(now.getTime() + 15 * 60 * 1000)
+
+    const activeAppointment = await prisma.appointment.findFirst({
+      where: {
+        doctorId: userId,
+        status: 'BOOKED',
+        scheduledAt: {
+          gte: fifteenMinutesAgo, // Within last 15 minutes
+          lte: fifteenMinutesFromNow, // Or within next 15 minutes
+        },
+      },
+    })
+
+    // If doctor is sending heartbeats but marked as unavailable:
+    // - Restore availability ONLY if NOT in meeting AND no active appointment
+    // - This handles the case where stale checker incorrectly marked them as unavailable
+    // - But preserves availability=false when there's an actual appointment scheduled
+    if (!currentDoctor.isAvailable && !currentDoctor.isInMeeting && !activeAppointment) {
       // Doctor is sending heartbeats but marked unavailable - restore availability
+      // Only if there's no active appointment
       await prisma.doctor.update({
         where: { userid: userId },
         data: {
           isAvailable: true,
         },
       })
-      console.log(`Doctor ${userId} availability restored via heartbeat - was incorrectly marked unavailable`)
+      console.log(
+        `Doctor ${userId} availability restored via heartbeat - was incorrectly marked unavailable`
+      )
+    } else if (!currentDoctor.isAvailable && activeAppointment) {
+      // Doctor has an active appointment - keep them unavailable
+      console.log(
+        `Doctor ${userId} remains unavailable due to active appointment at ${activeAppointment.scheduledAt?.toISOString()}`
+      )
     }
 
-    // Sync availability with meeting status (ensure isAvailable is false if in meeting)
+    // Sync availability with meeting status and upcoming appointments
+    // This ensures availability is correctly set based on meetings and appointments
     await DOCTOR_SERVICES.syncAvailabilityWithMeetingStatus(userId)
 
     return {
@@ -750,7 +831,9 @@ export const DOCTOR_SERVICES = {
           isAvailable: false,
         },
       })
-      console.log(`Doctor ${userId} marked as unavailable due to stale connection (no heartbeat for 40+ seconds)`)
+      console.log(
+        `Doctor ${userId} marked as unavailable due to stale connection (no heartbeat for 40+ seconds)`
+      )
     }
 
     return {
@@ -759,7 +842,7 @@ export const DOCTOR_SERVICES = {
     }
   },
 
-  // Method to automatically sync availability with meeting status
+  // Method to automatically sync availability with meeting status and upcoming appointments
   syncAvailabilityWithMeetingStatus: async (userId: string) => {
     const doctor = await prisma.doctor.findUnique({
       where: { userid: userId },
@@ -769,8 +852,25 @@ export const DOCTOR_SERVICES = {
       throw new Error('Doctor not found')
     }
 
-    // If doctor is in meeting, ensure isAvailable is false
-    if (doctor.isInMeeting && doctor.isAvailable) {
+    // Check if doctor has an appointment within 15 minutes (past or future)
+    // This includes appointments that just started (within last 15 min) or upcoming (within next 15 min)
+    const now = new Date()
+    const fifteenMinutesAgo = new Date(now.getTime() - 15 * 60 * 1000)
+    const fifteenMinutesFromNow = new Date(now.getTime() + 15 * 60 * 1000)
+
+    const activeAppointment = await prisma.appointment.findFirst({
+      where: {
+        doctorId: userId,
+        status: 'BOOKED',
+        scheduledAt: {
+          gte: fifteenMinutesAgo, // Within last 15 minutes
+          lte: fifteenMinutesFromNow, // Or within next 15 minutes
+        },
+      },
+    })
+
+    // If doctor is in meeting OR has an active appointment, ensure isAvailable is false
+    if ((doctor.isInMeeting || activeAppointment) && doctor.isAvailable) {
       await prisma.doctor.update({
         where: { userid: userId },
         data: {
@@ -781,5 +881,25 @@ export const DOCTOR_SERVICES = {
     }
 
     return { updated: false, isAvailable: doctor.isAvailable }
+  },
+
+  // Method to check if doctor has active appointments (within 15 minutes)
+  hasUpcomingAppointment: async (userId: string): Promise<boolean> => {
+    const now = new Date()
+    const fifteenMinutesAgo = new Date(now.getTime() - 15 * 60 * 1000)
+    const fifteenMinutesFromNow = new Date(now.getTime() + 15 * 60 * 1000)
+
+    const activeAppointment = await prisma.appointment.findFirst({
+      where: {
+        doctorId: userId,
+        status: 'BOOKED',
+        scheduledAt: {
+          gte: fifteenMinutesAgo, // Within last 15 minutes
+          lte: fifteenMinutesFromNow, // Or within next 15 minutes
+        },
+      },
+    })
+
+    return !!activeAppointment
   },
 }
