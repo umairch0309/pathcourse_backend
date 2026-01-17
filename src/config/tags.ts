@@ -10,6 +10,7 @@ const TAGS = {
   auth: 'Authentication',
   enterprise: 'Enterprise',
   appointment: 'Appointment',
+  agora: 'Agora',
 } as const
 
 export default TAGS

@@ -1,6 +1,7 @@
 import * as HttpStatusCodes from 'stoker/http-status-codes'
 
 import { HttpError } from '~/lib/error'
+import prisma from '~/lib/prisma'
 import type { USER_ROUTES } from '~/routes/user/user.routes'
 import { USER_SERVICES } from '~/services/user.service'
 import type { HandlerMapFromRoutes } from '~/types'
@@ -84,6 +85,15 @@ export const USER_ROUTES_HANDLER: HandlerMapFromRoutes<typeof USER_ROUTES> = {
     // If user info doesn't exist, return default/empty structure instead of 404
     // This allows frontend to check if user info exists without getting an error
     if (!userInfo) {
+      // Fetch full user data to get employeeCode and isAnonymous
+      const fullUser = await prisma.user.findUnique({
+        where: { id: user.id },
+        select: {
+          employeeCode: true,
+          isAnonymous: true,
+        },
+      })
+
       const defaultUserInfo = {
         id: null,
         userId: user.id,
@@ -99,6 +109,8 @@ export const USER_ROUTES_HANDLER: HandlerMapFromRoutes<typeof USER_ROUTES> = {
           email: user.email,
           image: user.image,
           role: user.role,
+          employeeCode: fullUser?.employeeCode || null,
+          isAnonymous: fullUser?.isAnonymous || false,
         },
       }
 
@@ -128,6 +140,8 @@ export const USER_ROUTES_HANDLER: HandlerMapFromRoutes<typeof USER_ROUTES> = {
         email: userInfo.user.email,
         image: userInfo.user.image,
         role: userInfo.user.role,
+        employeeCode: userInfo.user.employeeCode || null,
+        isAnonymous: userInfo.user.isAnonymous || false,
       },
     }
 
@@ -139,6 +153,43 @@ export const USER_ROUTES_HANDLER: HandlerMapFromRoutes<typeof USER_ROUTES> = {
       },
       HttpStatusCodes.OK
     )
+  },
+
+  toggleAnonymousMode: async c => {
+    const user = c.get('user')
+    if (!user) {
+      throw new HttpError('Unauthorized', HttpStatusCodes.UNAUTHORIZED)
+    }
+
+    try {
+      const updatedUser = await USER_SERVICES.toggleAnonymousMode(user.id)
+
+      return c.json(
+        {
+          message: updatedUser.isAnonymous
+            ? 'Anonymous mode enabled. Your name and email will be hidden.'
+            : 'Anonymous mode disabled. Your name and email will be visible.',
+          success: true,
+          data: {
+            id: updatedUser.id,
+            name: updatedUser.name,
+            email: updatedUser.email,
+            role: updatedUser.role,
+            isAnonymous: updatedUser.isAnonymous,
+            employeeCode: updatedUser.employeeCode,
+          },
+        },
+        HttpStatusCodes.OK
+      )
+    } catch (error: any) {
+      if (error.message === 'User not found') {
+        throw new HttpError('User not found', HttpStatusCodes.NOT_FOUND)
+      }
+      if (error.message === 'Only patients can use anonymous mode') {
+        throw new HttpError('Only patients can use anonymous mode', HttpStatusCodes.FORBIDDEN)
+      }
+      throw new HttpError(error.message || 'Failed to toggle anonymous mode', HttpStatusCodes.INTERNAL_SERVER_ERROR)
+    }
   },
 }
 

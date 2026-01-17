@@ -36,6 +36,8 @@ const userInfoResponseSchema = z
       email: z.string(),
       image: z.string().nullable(),
       role: z.string().nullable(),
+      employeeCode: z.string().nullable(),
+      isAnonymous: z.boolean(),
     }),
   })
   .describe('User info with related user data (null values when user info not created yet)')
@@ -91,6 +93,32 @@ export const USER_ROUTES = {
         'User info retrieved successfully (returns default structure if user info not created yet)'
       ),
       [HttpStatusCodes.UNAUTHORIZED]: jsonContent(zodResponseSchema(), 'Unauthorized'),
+    },
+  }),
+
+  toggleAnonymousMode: createRoute({
+    path: '/user/anonymous',
+    method: 'post',
+    tags: [TAGS.user],
+    summary: 'Toggle anonymous mode for patient (hide name/email, only show employee ID)',
+    request: {},
+    responses: {
+      [HttpStatusCodes.OK]: jsonContent(
+        zodResponseSchema(
+          z.object({
+            id: z.string(),
+            name: z.string(),
+            email: z.string(),
+            role: z.string().nullable(),
+            isAnonymous: z.boolean(),
+            employeeCode: z.string().nullable(),
+          })
+        ),
+        'Anonymous mode toggled successfully'
+      ),
+      [HttpStatusCodes.UNAUTHORIZED]: jsonContent(zodResponseSchema(), 'Unauthorized'),
+      [HttpStatusCodes.FORBIDDEN]: jsonContent(zodResponseSchema(), 'Only patients can use anonymous mode'),
+      [HttpStatusCodes.BAD_REQUEST]: jsonContent(zodResponseSchema(), 'Bad Request'),
     },
   }),
 }

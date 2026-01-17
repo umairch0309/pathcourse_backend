@@ -19,8 +19,6 @@ export const USER_SERVICES = {
     phone?: string | null
     address?: string | null
   }) => {
-
-
     // Get user to check role
     const user = await prisma.user.findUnique({
       where: { id: data.userId },
@@ -78,11 +76,50 @@ export const USER_SERVICES = {
             email: true,
             image: true,
             role: true,
+            isAnonymous: true,
+            employeeCode: true,
           },
         },
       },
     })
     return userInfo
   },
-}
 
+  toggleAnonymousMode: async (userId: string) => {
+    // Get current user to check role
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true, isAnonymous: true },
+    })
+
+    if (!user) {
+      throw new Error('User not found')
+    }
+
+    // Only patients can use anonymous mode
+    if (user.role !== 'patient') {
+      throw new Error('Only patients can use anonymous mode')
+    }
+
+    // Toggle anonymous mode
+    const newAnonymousStatus = !user.isAnonymous
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        isAnonymous: newAnonymousStatus,
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        image: true,
+        role: true,
+        isAnonymous: true,
+        employeeCode: true,
+      },
+    })
+
+    return updatedUser
+  },
+}

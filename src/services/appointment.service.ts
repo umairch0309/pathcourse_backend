@@ -1,4 +1,5 @@
 import prisma from '~/lib/prisma'
+import { DOCTOR_SERVICES } from '~/services/doctor.service'
 
 export const APPOINTMENT_SERVICES = {
   create: async (data: {
@@ -62,6 +63,8 @@ export const APPOINTMENT_SERVICES = {
             email: true,
             image: true,
             role: true,
+            isAnonymous: true,
+            employeeCode: true,
           },
         },
         patient: {
@@ -71,6 +74,8 @@ export const APPOINTMENT_SERVICES = {
             email: true,
             image: true,
             role: true,
+            isAnonymous: true,
+            employeeCode: true,
           },
         },
       },
@@ -99,6 +104,8 @@ export const APPOINTMENT_SERVICES = {
             email: true,
             image: true,
             role: true,
+            isAnonymous: true,
+            employeeCode: true,
           },
         },
         patient: {
@@ -108,12 +115,167 @@ export const APPOINTMENT_SERVICES = {
             email: true,
             image: true,
             role: true,
+            isAnonymous: true,
+            employeeCode: true,
           },
         },
       },
     })
 
     return appointment
+  },
+
+  getByIdWithFullDetails: async (id: string) => {
+    const appointment = await prisma.appointment.findUnique({
+      where: { id },
+      include: {
+        doctor: {
+          include: {
+            doctor: {
+              include: {
+                documents: true,
+                education: true,
+                professionalExperience: true,
+              },
+            },
+            userInfo: true,
+          },
+        },
+        patient: {
+          include: {
+            userInfo: true,
+          },
+        },
+      },
+    })
+
+    return appointment
+  },
+
+  getPatientAppointments: async (
+    patientId: string,
+    filters?: {
+      status?: 'BOOKED' | 'COMPLETED' | 'NO_SHOW'
+      page?: number
+      limit?: number
+    }
+  ) => {
+    const page = filters?.page || 1
+    const limit = filters?.limit || 10
+    const skip = (page - 1) * limit
+
+    const where: {
+      patientId: string
+      status?: 'BOOKED' | 'COMPLETED' | 'NO_SHOW'
+    } = {
+      patientId,
+    }
+
+    if (filters?.status) {
+      where.status = filters.status
+    }
+
+    const [appointments, total] = await Promise.all([
+      prisma.appointment.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          doctor: {
+            include: {
+              doctor: {
+                include: {
+                  documents: true,
+                  education: true,
+                  professionalExperience: true,
+                },
+              },
+              userInfo: true,
+            },
+          },
+          patient: {
+            include: {
+              userInfo: true,
+            },
+          },
+        },
+      }),
+      prisma.appointment.count({ where }),
+    ])
+
+    return {
+      appointments,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    }
+  },
+
+  getDoctorAppointments: async (
+    doctorId: string,
+    filters?: {
+      status?: 'BOOKED' | 'COMPLETED' | 'NO_SHOW'
+      page?: number
+      limit?: number
+    }
+  ) => {
+    const page = filters?.page || 1
+    const limit = filters?.limit || 10
+    const skip = (page - 1) * limit
+
+    const where: {
+      doctorId: string
+      status?: 'BOOKED' | 'COMPLETED' | 'NO_SHOW'
+    } = {
+      doctorId,
+    }
+
+    if (filters?.status) {
+      where.status = filters.status
+    }
+
+    const [appointments, total] = await Promise.all([
+      prisma.appointment.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          doctor: {
+            include: {
+              doctor: {
+                include: {
+                  documents: true,
+                  education: true,
+                  professionalExperience: true,
+                },
+              },
+              userInfo: true,
+            },
+          },
+          patient: {
+            include: {
+              userInfo: true,
+            },
+          },
+        },
+      }),
+      prisma.appointment.count({ where }),
+    ])
+
+    return {
+      appointments,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    }
   },
 
   getAll: async (filters?: {
@@ -159,6 +321,8 @@ export const APPOINTMENT_SERVICES = {
               email: true,
               image: true,
               role: true,
+              isAnonymous: true,
+              employeeCode: true,
             },
           },
           patient: {
@@ -168,6 +332,8 @@ export const APPOINTMENT_SERVICES = {
               email: true,
               image: true,
               role: true,
+              isAnonymous: true,
+              employeeCode: true,
             },
           },
         },
@@ -228,5 +394,79 @@ export const APPOINTMENT_SERVICES = {
     // availability if there are any within the next 15 minutes
 
     return updatedAppointment
+  },
+
+  /**
+   * Mark appointments as NO_SHOW if 20 minutes have passed since scheduledAt
+   * Only affects appointments with status BOOKED that haven't been completed
+   * Also checks if doctors can be restored to available status
+   */
+  markNoShowAppointments: async () => {
+    const now = new Date()
+    const twentyMinutesAgo = new Date(now.getTime() - 20 * 60 * 1000) // 20 minutes ago
+
+    // Find all BOOKED appointments where scheduledAt is more than 20 minutes ago
+    const appointmentsToMark = await prisma.appointment.findMany({
+      where: {
+        status: 'BOOKED',
+        scheduledAt: {
+          not: null,
+          lte: twentyMinutesAgo, // scheduledAt is 20+ minutes in the past
+        },
+      },
+      select: {
+        id: true,
+        doctorId: true,
+        patientId: true,
+        scheduledAt: true,
+      },
+    })
+
+    if (appointmentsToMark.length === 0) {
+      return {
+        marked: 0,
+        appointments: [],
+      }
+    }
+
+    // Update all found appointments to NO_SHOW status
+    const updateResult = await prisma.appointment.updateMany({
+      where: {
+        id: {
+          in: appointmentsToMark.map(apt => apt.id),
+        },
+      },
+      data: {
+        status: 'NO_SHOW',
+      },
+    })
+
+    // Get unique doctor IDs to check availability restoration
+    const uniqueDoctorIds = Array.from(new Set(appointmentsToMark.map(apt => apt.doctorId)))
+
+    // Check and restore doctor availability for each affected doctor
+    for (const doctorId of uniqueDoctorIds) {
+      try {
+        // Sync availability - this will check for other upcoming appointments
+        // and restore availability if there are no active appointments
+        await DOCTOR_SERVICES.syncAvailabilityWithMeetingStatus(doctorId)
+      } catch (error) {
+        console.error(`[No-Show Cron] Error syncing availability for doctor ${doctorId}:`, error)
+      }
+    }
+
+    console.log(
+      `[No-Show Cron] Marked ${updateResult.count} appointment(s) as NO_SHOW. Appointment IDs: ${appointmentsToMark.map(apt => apt.id).join(', ')}`
+    )
+
+    return {
+      marked: updateResult.count,
+      appointments: appointmentsToMark.map(apt => ({
+        id: apt.id,
+        doctorId: apt.doctorId,
+        patientId: apt.patientId,
+        scheduledAt: apt.scheduledAt,
+      })),
+    }
   },
 }

@@ -3,6 +3,7 @@ import { registerRoutes } from '~/app'
 import { auth } from '~/lib/auth'
 import configureOpenAPI from '~/lib/configure-open-api'
 import createApp from '~/lib/create-app'
+import { appointmentNoShowCron } from '~/lib/appointment-no-show-cron'
 import { doctorConnectionTracker } from '~/lib/doctor-connection-tracker'
 import { DOCTOR_SERVICES } from '~/services/doctor.service'
 import { ORIGINS } from './config/origins'
@@ -52,9 +53,14 @@ doctorConnectionTracker.startStaleConnectionChecker(async (userId: string) => {
   }
 })
 
+// Start appointment no-show cron job
+// This automatically marks appointments as NO_SHOW if 20 minutes have passed since scheduledAt
+appointmentNoShowCron.start()
+
 console.log('Auth reference available at http://localhost:8080/api/auth/reference')
 console.log('API reference available at http://localhost:8080/reference')
-console.log('Doctor connection tracker started - checking for stale connections every 10 seconds')
+console.log('Doctor connection tracker started - checking for stale connections every 15 seconds')
+console.log('Appointment no-show cron job started - checking every 5 minutes for appointments past 20-minute mark')
 
 export default {
   fetch: app.fetch,

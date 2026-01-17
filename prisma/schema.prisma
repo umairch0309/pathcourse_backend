@@ -33,6 +33,7 @@ model User {
   onboardingStage        String?
   enterpriseCode         String?            @db.VarChar(50)
   employeeCode           String?            @db.VarChar(50)
+  isAnonymous            Boolean?           @default(false)
   doctorAppointments     Appointment[]      @relation("doctorAppointments")
   patientAppointments    Appointment[]      @relation("patientAppointments")
   appointmentChats       AppointmentChat[]

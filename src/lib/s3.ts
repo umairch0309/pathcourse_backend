@@ -129,6 +129,25 @@ export const getPublicAssetUrl = (key: string): string => {
 }
 
 /**
+ * Extracts S3 key from a file URL or returns the key if it's already a key.
+ * Handles both full URLs and direct keys.
+ */
+export const extractS3KeyFromUrl = (fileUrlOrKey: string | null): string | null => {
+  if (!fileUrlOrKey) {
+    return null
+  }
+  try {
+    // Try to parse as URL
+    const url = new URL(fileUrlOrKey)
+    // Remove leading slash from pathname to get the key
+    return url.pathname.startsWith('/') ? url.pathname.slice(1) : url.pathname
+  } catch {
+    // If URL parsing fails, assume it's already a key
+    return fileUrlOrKey
+  }
+}
+
+/**
  * Converts S3 key(s) to signed URL(s) for downloading.
  * Accepts either a single key or an array of keys.
  * Returns signed URLs with the specified expiry time (default: 7 days).

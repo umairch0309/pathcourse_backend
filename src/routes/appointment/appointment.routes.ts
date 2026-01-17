@@ -13,13 +13,25 @@ const createAppointmentBodySchema = z
     issue: z.string().min(1).describe('Issue or reason for appointment'),
     age: z.number().int().positive().optional().describe('Age of the person (if booking for self)'),
     uploadId: z.string().optional().describe('Upload ID for any documents'),
-    scheduledAt: z.string().datetime().optional().describe('Scheduled date and time in UTC (ISO 8601 format)'),
+    scheduledAt: z
+      .string()
+      .datetime()
+      .optional()
+      .describe('Scheduled date and time in UTC (ISO 8601 format)'),
     relationWithPatient: z
       .string()
       .optional()
       .describe('Relation with patient (required if appointmentFor is "someone else")'),
-    patientName: z.string().optional().describe('Patient name (required if appointmentFor is "someone else")'),
-    patientAge: z.number().int().positive().optional().describe('Patient age (required if appointmentFor is "someone else")'),
+    patientName: z
+      .string()
+      .optional()
+      .describe('Patient name (required if appointmentFor is "someone else")'),
+    patientAge: z
+      .number()
+      .int()
+      .positive()
+      .optional()
+      .describe('Patient age (required if appointmentFor is "someone else")'),
   })
   .describe('Request body for creating an appointment')
 
@@ -48,13 +60,15 @@ const appointmentResponseSchema = z
       email: z.string(),
       image: z.string().nullable(),
       role: z.string().nullable(),
+      employeeCode: z.string().nullable(),
     }),
     patient: z.object({
       id: z.string(),
-      name: z.string(),
-      email: z.string(),
+      name: z.string().nullable(),
+      email: z.string().nullable(),
       image: z.string().nullable(),
       role: z.string().nullable(),
+      employeeCode: z.string().nullable(),
     }),
   })
   .describe('Appointment information with related doctor and patient data')
@@ -79,7 +93,10 @@ export const APPOINTMENT_ROUTES = {
     middleware: [isAuthenticated],
     summary: 'Create a new appointment (Patient only)',
     request: {
-      body: jsonContentRequired(createAppointmentBodySchema, 'Request body for creating an appointment'),
+      body: jsonContentRequired(
+        createAppointmentBodySchema,
+        'Request body for creating an appointment'
+      ),
     },
     responses: {
       [HttpStatusCodes.CREATED]: jsonContent(
@@ -91,7 +108,10 @@ export const APPOINTMENT_ROUTES = {
         'Unprocessable Entity'
       ),
       [HttpStatusCodes.UNAUTHORIZED]: jsonContent(zodResponseSchema(), 'Unauthorized'),
-      [HttpStatusCodes.BAD_REQUEST]: jsonContent(zodResponseSchema(), 'Bad Request - Doctor not available'),
+      [HttpStatusCodes.BAD_REQUEST]: jsonContent(
+        zodResponseSchema(),
+        'Bad Request - Doctor not available'
+      ),
       [HttpStatusCodes.NOT_FOUND]: jsonContent(zodResponseSchema(), 'Doctor not found'),
     },
   }),
@@ -168,5 +188,113 @@ export const APPOINTMENT_ROUTES = {
       [HttpStatusCodes.BAD_REQUEST]: jsonContent(zodResponseSchema(), 'Bad Request'),
     },
   }),
-}
 
+  getByIdFull: createRoute({
+    path: '/appointment/{id}/full',
+    method: 'get',
+    tags: [TAGS.appointment],
+    middleware: [isAuthenticated],
+    summary: 'Get appointment by ID with full doctor and patient details',
+    request: {
+      params: z.object({
+        id: z.string().describe('Appointment ID'),
+      }),
+    },
+    responses: {
+      [HttpStatusCodes.OK]: jsonContent(
+        zodResponseSchema(z.any()),
+        'Appointment with full details retrieved successfully'
+      ),
+      [HttpStatusCodes.UNAUTHORIZED]: jsonContent(zodResponseSchema(), 'Unauthorized'),
+      [HttpStatusCodes.NOT_FOUND]: jsonContent(zodResponseSchema(), 'Appointment not found'),
+      [HttpStatusCodes.FORBIDDEN]: jsonContent(zodResponseSchema(), 'Forbidden'),
+    },
+  }),
+
+  getPatientAppointments: createRoute({
+    path: '/appointments/patient',
+    method: 'get',
+    tags: [TAGS.appointment],
+    middleware: [isAuthenticated],
+    summary: 'Get all appointments for authenticated patient with status filter',
+    request: {
+      query: z.object({
+        status: z
+          .enum(['BOOKED', 'COMPLETED', 'NO_SHOW'])
+          .optional()
+          .describe('Filter by appointment status'),
+        page: z.string().optional().describe('Page number (default: 1)'),
+        limit: z.string().optional().describe('Items per page (default: 10)'),
+      }),
+    },
+    responses: {
+      [HttpStatusCodes.OK]: jsonContent(
+        zodResponseSchema(z.any()),
+        'Patient appointments retrieved successfully with full doctor details'
+      ),
+      [HttpStatusCodes.UNAUTHORIZED]: jsonContent(zodResponseSchema(), 'Unauthorized'),
+      [HttpStatusCodes.FORBIDDEN]: jsonContent(
+        zodResponseSchema(),
+        'Only patients can access this endpoint'
+      ),
+    },
+  }),
+
+  getDoctorAppointments: createRoute({
+    path: '/appointments/doctor',
+    method: 'get',
+    tags: [TAGS.appointment],
+    middleware: [isAuthenticated],
+    summary: 'Get all appointments for authenticated doctor with status filter',
+    request: {
+      query: z.object({
+        status: z
+          .enum(['BOOKED', 'COMPLETED', 'NO_SHOW'])
+          .optional()
+          .describe('Filter by appointment status'),
+        page: z.string().optional().describe('Page number (default: 1)'),
+        limit: z.string().optional().describe('Items per page (default: 10)'),
+      }),
+    },
+    responses: {
+      [HttpStatusCodes.OK]: jsonContent(
+        zodResponseSchema(z.any()),
+        'Doctor appointments retrieved successfully with full patient details'
+      ),
+      [HttpStatusCodes.UNAUTHORIZED]: jsonContent(zodResponseSchema(), 'Unauthorized'),
+      [HttpStatusCodes.FORBIDDEN]: jsonContent(
+        zodResponseSchema(),
+        'Only doctors can access this endpoint'
+      ),
+    },
+  }),
+
+  markAsCompleted: createRoute({
+    path: '/appointment/{id}/complete',
+    method: 'patch',
+    tags: [TAGS.appointment],
+    middleware: [isAuthenticated],
+    summary: 'Mark appointment as completed (Doctor only)',
+    request: {
+      params: z.object({
+        id: z.string().describe('Appointment ID'),
+      }),
+    },
+    responses: {
+      [HttpStatusCodes.OK]: jsonContent(
+        zodResponseSchema(appointmentResponseSchema),
+        'Appointment marked as completed successfully'
+      ),
+      [HttpStatusCodes.UNAUTHORIZED]: jsonContent(zodResponseSchema(), 'Unauthorized'),
+      [HttpStatusCodes.NOT_FOUND]: jsonContent(zodResponseSchema(), 'Appointment not found'),
+      [HttpStatusCodes.FORBIDDEN]: jsonContent(
+        zodResponseSchema(),
+        'Only the doctor can mark appointment as completed'
+      ),
+      [HttpStatusCodes.BAD_REQUEST]: jsonContent(
+        zodResponseSchema(),
+        'Bad Request - Appointment already completed or invalid status'
+      ),
+    },
+  }),
+}

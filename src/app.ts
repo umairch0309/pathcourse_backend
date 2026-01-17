@@ -1,4 +1,5 @@
 import adminRouter from '~/routes/admin'
+import agoraRouter from '~/routes/agora'
 import appointmentRouter from '~/routes/appointment'
 import authRouter from '~/routes/auth'
 import doctorRouter from '~/routes/doctor'
@@ -25,5 +26,6 @@ export function registerRoutes(app: AppOpenAPI) {
     .route('/api', doctorProfileRouter)
     .route('/api', enterpriseRouter)
     .route('/api', appointmentRouter)
+    .route('/api', agoraRouter)
     .route('/api', adminRouter) // chained router.
 }
