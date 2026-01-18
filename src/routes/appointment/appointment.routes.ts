@@ -269,6 +269,45 @@ export const APPOINTMENT_ROUTES = {
     },
   }),
 
+  updateStartedAt: createRoute({
+    path: '/appointment/{id}',
+    method: 'patch',
+    tags: [TAGS.appointment],
+    middleware: [isAuthenticated],
+    summary: 'Update appointment startedAt timestamp (Doctor only)',
+    description: 'Allows doctors to set or update the startedAt timestamp for an appointment. If startedAt is not provided in the request body, it will default to the current time.',
+    request: {
+      params: z.object({
+        id: z.string().describe('Appointment ID'),
+      }),
+      body: jsonContent(
+        z
+          .object({
+            startedAt: z
+              .string()
+              .datetime()
+              .optional()
+              .describe('Start time in UTC (ISO 8601 format). If not provided, current time will be used.'),
+          })
+          .describe('Request body for updating appointment startedAt'),
+        'Request body for updating appointment startedAt'
+      ),
+    },
+    responses: {
+      [HttpStatusCodes.OK]: jsonContent(
+        zodResponseSchema(appointmentResponseSchema),
+        'Appointment startedAt updated successfully'
+      ),
+      [HttpStatusCodes.UNAUTHORIZED]: jsonContent(zodResponseSchema(), 'Unauthorized'),
+      [HttpStatusCodes.NOT_FOUND]: jsonContent(zodResponseSchema(), 'Appointment not found'),
+      [HttpStatusCodes.FORBIDDEN]: jsonContent(
+        zodResponseSchema(),
+        'Only the doctor can update this appointment'
+      ),
+      [HttpStatusCodes.BAD_REQUEST]: jsonContent(zodResponseSchema(), 'Bad Request'),
+    },
+  }),
+
   markAsCompleted: createRoute({
     path: '/appointment/{id}/complete',
     method: 'patch',
@@ -294,6 +333,63 @@ export const APPOINTMENT_ROUTES = {
       [HttpStatusCodes.BAD_REQUEST]: jsonContent(
         zodResponseSchema(),
         'Bad Request - Appointment already completed or invalid status'
+      ),
+    },
+  }),
+
+  submitSessionReason: createRoute({
+    path: '/appointment/{id}/session-reason',
+    method: 'post',
+    tags: [TAGS.appointment],
+    summary: 'Submit session reason for completed appointment (Doctor only)',
+    description:
+      'Allows doctors to submit or update the purpose/reason for a completed appointment. The reason helps categorize why the patient sought the session.',
+    middleware: [isAuthenticated],
+    request: {
+      params: z.object({
+        id: z.string().describe('Appointment ID'),
+      }),
+      body: jsonContentRequired(
+        z
+          .object({
+            reason: z
+              .enum([
+                'LETTING_OFF_STEAM',
+                'TALKING_THROUGH_STRESS_OR_UNCERTAINTY',
+                'NEEDING_PERSPECTIVE_DURING_A_DEMANDING_PERIOD',
+              ])
+              .describe('The reason/purpose for the appointment session'),
+          })
+          .describe('Request body for submitting session reason'),
+        'Request body for submitting session reason'
+      ),
+    },
+    responses: {
+      [HttpStatusCodes.CREATED]: jsonContent(
+        zodResponseSchema(
+          z.object({
+            id: z.string(),
+            appointmentId: z.string(),
+            reason: z.enum([
+              'LETTING_OFF_STEAM',
+              'TALKING_THROUGH_STRESS_OR_UNCERTAINTY',
+              'NEEDING_PERSPECTIVE_DURING_A_DEMANDING_PERIOD',
+            ]),
+            createdAt: z.string().datetime(),
+            updatedAt: z.string().datetime(),
+          })
+        ),
+        'Session reason submitted successfully'
+      ),
+      [HttpStatusCodes.UNAUTHORIZED]: jsonContent(zodResponseSchema(), 'Unauthorized'),
+      [HttpStatusCodes.NOT_FOUND]: jsonContent(zodResponseSchema(), 'Appointment not found'),
+      [HttpStatusCodes.FORBIDDEN]: jsonContent(
+        zodResponseSchema(),
+        'Only the doctor can submit session reason for this appointment'
+      ),
+      [HttpStatusCodes.BAD_REQUEST]: jsonContent(
+        zodResponseSchema(),
+        'Bad Request - Session reason can only be submitted for completed appointments'
       ),
     },
   }),

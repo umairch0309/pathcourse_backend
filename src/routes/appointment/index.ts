@@ -23,7 +23,9 @@ router.openapi(APPOINTMENT_ROUTES.getByIdFull, APPOINTMENT_ROUTES_HANDLER.getByI
 // Register other routes
 router.openapi(APPOINTMENT_ROUTES.create, APPOINTMENT_ROUTES_HANDLER.create)
 router.openapi(APPOINTMENT_ROUTES.getById, APPOINTMENT_ROUTES_HANDLER.getById)
+router.openapi(APPOINTMENT_ROUTES.updateStartedAt, APPOINTMENT_ROUTES_HANDLER.updateStartedAt)
 router.openapi(APPOINTMENT_ROUTES.markAsCompleted, APPOINTMENT_ROUTES_HANDLER.markAsCompleted)
+router.openapi(APPOINTMENT_ROUTES.submitSessionReason, APPOINTMENT_ROUTES_HANDLER.submitSessionReason)
 router.openapi(APPOINTMENT_ROUTES.updateStatus, APPOINTMENT_ROUTES_HANDLER.updateStatus)
 
 // Register the general /appointments route LAST to avoid conflicts

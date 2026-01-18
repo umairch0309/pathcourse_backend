@@ -391,6 +391,52 @@ export const APPOINTMENT_ROUTES_HANDLER: HandlerMapFromRoutes<typeof APPOINTMENT
     }
   },
 
+  updateStartedAt: async c => {
+    const user = c.get('user')
+    if (!user) {
+      throw new HttpError('Unauthorized', HttpStatusCodes.UNAUTHORIZED)
+    }
+
+    // Only doctors can update startedAt
+    if (user.role !== 'doctor') {
+      throw new HttpError('Only doctors can update appointment startedAt', HttpStatusCodes.FORBIDDEN)
+    }
+
+    const { id } = c.req.valid('param')
+    const body = c.req.valid('json')
+    const startedAt = body?.startedAt ? new Date(body.startedAt) : undefined
+
+    try {
+      const updatedAppointment = await APPOINTMENT_SERVICES.updateStartedAt(id, user.id, startedAt)
+
+      return c.json(
+        {
+          message: 'Appointment startedAt updated successfully',
+          success: true,
+          data: formatAppointmentResponse(updatedAppointment, user.id),
+        },
+        HttpStatusCodes.OK
+      )
+    } catch (error: any) {
+      if (error instanceof HttpError) {
+        throw error
+      }
+
+      // Handle specific error messages from service
+      if (error.message?.includes('not found')) {
+        throw new HttpError('Appointment not found', HttpStatusCodes.NOT_FOUND)
+      }
+      if (error.message?.includes('permission')) {
+        throw new HttpError('Only the doctor can update this appointment', HttpStatusCodes.FORBIDDEN)
+      }
+
+      throw new HttpError(
+        error.message || 'Failed to update appointment startedAt',
+        HttpStatusCodes.INTERNAL_SERVER_ERROR
+      )
+    }
+  },
+
   markAsCompleted: async c => {
     const user = c.get('user')
     if (!user) {
@@ -556,6 +602,70 @@ export const APPOINTMENT_ROUTES_HANDLER: HandlerMapFromRoutes<typeof APPOINTMENT
       )
     } catch (error: any) {
       throw new HttpError(error.message || 'Failed to retrieve doctor appointments', HttpStatusCodes.INTERNAL_SERVER_ERROR)
+    }
+  },
+
+  submitSessionReason: async c => {
+    const user = c.get('user')
+    if (!user) {
+      throw new HttpError('Unauthorized', HttpStatusCodes.UNAUTHORIZED)
+    }
+
+    // Only doctors can submit session reasons
+    if (user.role !== 'doctor') {
+      throw new HttpError('Only doctors can submit session reasons', HttpStatusCodes.FORBIDDEN)
+    }
+
+    const { id } = c.req.valid('param')
+    const { reason } = c.req.valid('json')
+
+    try {
+      const sessionReason = await APPOINTMENT_SERVICES.submitSessionReason({
+        appointmentId: id,
+        doctorId: user.id,
+        reason: reason as 'LETTING_OFF_STEAM' | 'TALKING_THROUGH_STRESS_OR_UNCERTAINTY' | 'NEEDING_PERSPECTIVE_DURING_A_DEMANDING_PERIOD',
+      })
+
+      return c.json(
+        {
+          message: 'Session reason submitted successfully',
+          success: true,
+          data: {
+            id: sessionReason.id,
+            appointmentId: sessionReason.appointmentId,
+            reason: sessionReason.reason,
+            createdAt: sessionReason.createdAt.toISOString(),
+            updatedAt: sessionReason.updatedAt.toISOString(),
+          },
+        },
+        HttpStatusCodes.CREATED
+      )
+    } catch (error: any) {
+      if (error instanceof HttpError) {
+        throw error
+      }
+
+      // Handle specific error messages from service
+      if (error.message?.includes('not found')) {
+        throw new HttpError('Appointment not found', HttpStatusCodes.NOT_FOUND)
+      }
+      if (error.message?.includes('permission')) {
+        throw new HttpError(
+          'Only the doctor can submit session reason for this appointment',
+          HttpStatusCodes.FORBIDDEN
+        )
+      }
+      if (error.message?.includes('completed')) {
+        throw new HttpError(
+          'Session reason can only be submitted for completed appointments',
+          HttpStatusCodes.BAD_REQUEST
+        )
+      }
+
+      throw new HttpError(
+        error.message || 'Failed to submit session reason',
+        HttpStatusCodes.INTERNAL_SERVER_ERROR
+      )
     }
   },
 }

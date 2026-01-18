@@ -352,6 +352,55 @@ export const APPOINTMENT_SERVICES = {
     }
   },
 
+  updateStartedAt: async (id: string, doctorId: string, startedAt?: Date) => {
+    const appointment = await prisma.appointment.findUnique({
+      where: { id },
+    })
+
+    if (!appointment) {
+      throw new Error('Appointment not found')
+    }
+
+    if (appointment.doctorId !== doctorId) {
+      throw new Error('You do not have permission to update this appointment')
+    }
+
+    const startTime = startedAt || new Date()
+
+    const updatedAppointment = await prisma.appointment.update({
+      where: { id },
+      data: {
+        startedAt: startTime,
+      },
+      include: {
+        doctor: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            image: true,
+            role: true,
+            isAnonymous: true,
+            employeeCode: true,
+          },
+        },
+        patient: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            image: true,
+            role: true,
+            isAnonymous: true,
+            employeeCode: true,
+          },
+        },
+      },
+    })
+
+    return updatedAppointment
+  },
+
   updateStatus: async (id: string, status: 'BOOKED' | 'COMPLETED' | 'NO_SHOW') => {
     const appointment = await prisma.appointment.findUnique({
       where: { id },
@@ -375,6 +424,8 @@ export const APPOINTMENT_SERVICES = {
             email: true,
             image: true,
             role: true,
+            isAnonymous: true,
+            employeeCode: true,
           },
         },
         patient: {
@@ -384,6 +435,8 @@ export const APPOINTMENT_SERVICES = {
             email: true,
             image: true,
             role: true,
+            isAnonymous: true,
+            employeeCode: true,
           },
         },
       },
@@ -468,5 +521,49 @@ export const APPOINTMENT_SERVICES = {
         scheduledAt: apt.scheduledAt,
       })),
     }
+  },
+
+  submitSessionReason: async (data: {
+    appointmentId: string
+    doctorId: string
+    reason:
+      | 'LETTING_OFF_STEAM'
+      | 'TALKING_THROUGH_STRESS_OR_UNCERTAINTY'
+      | 'NEEDING_PERSPECTIVE_DURING_A_DEMANDING_PERIOD'
+  }) => {
+    // Check if appointment exists and belongs to the doctor
+    const appointment = await prisma.appointment.findUnique({
+      where: { id: data.appointmentId },
+      include: {
+        sessionReason: true,
+      },
+    })
+
+    if (!appointment) {
+      throw new Error('Appointment not found')
+    }
+
+    if (appointment.doctorId !== data.doctorId) {
+      throw new Error('You do not have permission to submit session reason for this appointment')
+    }
+
+    if (appointment.status !== 'COMPLETED') {
+      throw new Error('Session reason can only be submitted for completed appointments')
+    }
+
+    // Create or update session reason
+    const sessionReason = await prisma.sessionReason.upsert({
+      where: { appointmentId: data.appointmentId },
+      update: {
+        reason: data.reason,
+        updatedAt: new Date(),
+      },
+      create: {
+        appointmentId: data.appointmentId,
+        reason: data.reason,
+      },
+    })
+
+    return sessionReason
   },
 }
