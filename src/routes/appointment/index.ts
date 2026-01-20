@@ -15,6 +15,26 @@ router.openapi(
   APPOINTMENT_ROUTES_HANDLER.getDoctorAppointments
 )
 router.openapi(
+  APPOINTMENT_ROUTES.getDoctorSessionHistory,
+  APPOINTMENT_ROUTES_HANDLER.getDoctorSessionHistory
+)
+router.openapi(
+  APPOINTMENT_ROUTES.getDoctorSessionReasonHistory,
+  APPOINTMENT_ROUTES_HANDLER.getDoctorSessionReasonHistory
+)
+router.openapi(
+  APPOINTMENT_ROUTES.getDoctorFullSessionReasonHistory,
+  APPOINTMENT_ROUTES_HANDLER.getDoctorFullSessionReasonHistory
+)
+router.openapi(
+  APPOINTMENT_ROUTES.getDoctorYearlySessionReasonStats,
+  APPOINTMENT_ROUTES_HANDLER.getDoctorYearlySessionReasonStats
+)
+router.openapi(
+  APPOINTMENT_ROUTES.getDoctorMonthlyStats,
+  APPOINTMENT_ROUTES_HANDLER.getDoctorMonthlyStats
+)
+router.openapi(
   APPOINTMENT_ROUTES.getPatientAppointments,
   APPOINTMENT_ROUTES_HANDLER.getPatientAppointments
 )

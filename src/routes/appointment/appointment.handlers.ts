@@ -601,7 +601,243 @@ export const APPOINTMENT_ROUTES_HANDLER: HandlerMapFromRoutes<typeof APPOINTMENT
         HttpStatusCodes.OK
       )
     } catch (error: any) {
-      throw new HttpError(error.message || 'Failed to retrieve doctor appointments', HttpStatusCodes.INTERNAL_SERVER_ERROR)
+      throw new HttpError(
+        error.message || 'Failed to retrieve doctor appointments',
+        HttpStatusCodes.INTERNAL_SERVER_ERROR
+      )
+    }
+  },
+
+  /**
+   * Doctor dashboard: last N completed sessions (session history)
+   */
+  getDoctorSessionHistory: async c => {
+    const user = c.get('user')
+    if (!user) {
+      throw new HttpError('Unauthorized', HttpStatusCodes.UNAUTHORIZED)
+    }
+
+    if (user.role !== 'doctor') {
+      throw new HttpError('Only doctors can access this endpoint', HttpStatusCodes.FORBIDDEN)
+    }
+
+    const query = c.req.valid('query')
+    const limit = query.limit ? parseInt(query.limit, 10) || 4 : 4
+
+    try {
+      const appointments = await APPOINTMENT_SERVICES.getDoctorSessionHistory(user.id, limit)
+
+      const data = appointments.map(appointment => ({
+        ...formatAppointmentResponse(appointment, user.id),
+        sessionReason: appointment.sessionReason
+          ? {
+              reason: appointment.sessionReason.reason,
+              createdAt: appointment.sessionReason.createdAt.toISOString(),
+              updatedAt: appointment.sessionReason.updatedAt.toISOString(),
+            }
+          : null,
+      }))
+
+      return c.json(
+        {
+          message: 'Doctor session history retrieved successfully',
+          success: true,
+          data,
+        },
+        HttpStatusCodes.OK
+      )
+    } catch (error: any) {
+      throw new HttpError(
+        error.message || 'Failed to get doctor session history',
+        HttpStatusCodes.INTERNAL_SERVER_ERROR
+      )
+    }
+  },
+
+  /**
+   * Doctor dashboard: last N session reasons
+   */
+  getDoctorSessionReasonHistory: async c => {
+    const user = c.get('user')
+    if (!user) {
+      throw new HttpError('Unauthorized', HttpStatusCodes.UNAUTHORIZED)
+    }
+
+    if (user.role !== 'doctor') {
+      throw new HttpError('Only doctors can access this endpoint', HttpStatusCodes.FORBIDDEN)
+    }
+
+    const query = c.req.valid('query')
+    const limit = query.limit ? parseInt(query.limit, 10) || 3 : 3
+
+    try {
+      const appointments = await APPOINTMENT_SERVICES.getDoctorSessionReasonHistory(user.id, limit)
+
+      const data = appointments.map(appointment => ({
+        appointmentId: appointment.id,
+        doctorId: appointment.doctorId,
+        patientId: appointment.patientId,
+        scheduledAt: appointment.scheduledAt?.toISOString() || null,
+        startedAt: appointment.startedAt?.toISOString() || null,
+        endedAt: appointment.endedAt?.toISOString() || null,
+        patient: formatUserForAppointment(appointment.patient, 'patient', false),
+        sessionReason: appointment.sessionReason
+          ? {
+              reason: appointment.sessionReason.reason,
+              createdAt: appointment.sessionReason.createdAt.toISOString(),
+              updatedAt: appointment.sessionReason.updatedAt.toISOString(),
+            }
+          : null,
+      }))
+
+      return c.json(
+        {
+          message: 'Doctor session reason history retrieved successfully',
+          success: true,
+          data,
+        },
+        HttpStatusCodes.OK
+      )
+    } catch (error: any) {
+      throw new HttpError(
+        error.message || 'Failed to get doctor session reason history',
+        HttpStatusCodes.INTERNAL_SERVER_ERROR
+      )
+    }
+  },
+
+  /**
+   * Doctor dashboard: full session reason history (paginated)
+   */
+  getDoctorFullSessionReasonHistory: async c => {
+    const user = c.get('user')
+    if (!user) {
+      throw new HttpError('Unauthorized', HttpStatusCodes.UNAUTHORIZED)
+    }
+
+    if (user.role !== 'doctor') {
+      throw new HttpError('Only doctors can access this endpoint', HttpStatusCodes.FORBIDDEN)
+    }
+
+    const query = c.req.valid('query')
+
+    const page = query.page ? parseInt(query.page, 10) || 1 : 1
+    const limit = query.limit ? parseInt(query.limit, 10) || 10 : 10
+
+    try {
+      const result = await APPOINTMENT_SERVICES.getDoctorFullSessionReasonHistory(user.id, {
+        page,
+        limit,
+      })
+
+      const data = {
+        appointments: result.appointments.map(appointment => ({
+          ...formatAppointmentResponse(appointment, user.id),
+          sessionReason: appointment.sessionReason
+            ? {
+                reason: appointment.sessionReason.reason,
+                createdAt: appointment.sessionReason.createdAt.toISOString(),
+                updatedAt: appointment.sessionReason.updatedAt.toISOString(),
+              }
+            : null,
+        })),
+        pagination: result.pagination,
+      }
+
+      return c.json(
+        {
+          message: 'Doctor full session reason history retrieved successfully',
+          success: true,
+          data,
+        },
+        HttpStatusCodes.OK
+      )
+    } catch (error: any) {
+      throw new HttpError(
+        error.message || 'Failed to get doctor full session reason history',
+        HttpStatusCodes.INTERNAL_SERVER_ERROR
+      )
+    }
+  },
+
+  /**
+   * Doctor dashboard: yearly session reason stats (for graphs)
+   */
+  getDoctorYearlySessionReasonStats: async c => {
+    const user = c.get('user')
+    if (!user) {
+      throw new HttpError('Unauthorized', HttpStatusCodes.UNAUTHORIZED)
+    }
+
+    if (user.role !== 'doctor') {
+      throw new HttpError('Only doctors can access this endpoint', HttpStatusCodes.FORBIDDEN)
+    }
+
+    const query = c.req.valid('query')
+
+    const year = parseInt(query.year, 10)
+
+    if (!year) {
+      throw new HttpError('Invalid year', HttpStatusCodes.BAD_REQUEST)
+    }
+
+    try {
+      const stats = await APPOINTMENT_SERVICES.getDoctorYearlySessionReasonStats(user.id, year)
+
+      return c.json(
+        {
+          message: 'Doctor yearly session reason stats retrieved successfully',
+          success: true,
+          data: stats,
+        },
+        HttpStatusCodes.OK
+      )
+    } catch (error: any) {
+      throw new HttpError(
+        error.message || 'Failed to get doctor yearly session reason stats',
+        HttpStatusCodes.INTERNAL_SERVER_ERROR
+      )
+    }
+  },
+
+  /**
+   * Doctor dashboard: monthly stats
+   */
+  getDoctorMonthlyStats: async c => {
+    const user = c.get('user')
+    if (!user) {
+      throw new HttpError('Unauthorized', HttpStatusCodes.UNAUTHORIZED)
+    }
+
+    if (user.role !== 'doctor') {
+      throw new HttpError('Only doctors can access this endpoint', HttpStatusCodes.FORBIDDEN)
+    }
+
+    const query = c.req.valid('query')
+
+    const month = parseInt(query.month, 10)
+    const year = parseInt(query.year, 10)
+
+    if (!month || !year || month < 1 || month > 12) {
+      throw new HttpError('Invalid month or year', HttpStatusCodes.BAD_REQUEST)
+    }
+
+    try {
+      const stats = await APPOINTMENT_SERVICES.getDoctorMonthlyStats(user.id, month, year)
+
+      return c.json(
+        {
+          message: 'Doctor monthly appointment stats retrieved successfully',
+          success: true,
+          data: stats,
+        },
+        HttpStatusCodes.OK
+      )
+    } catch (error: any) {
+      throw new HttpError(
+        error.message || 'Failed to get doctor monthly stats',
+        HttpStatusCodes.INTERNAL_SERVER_ERROR
+      )
     }
   },
 

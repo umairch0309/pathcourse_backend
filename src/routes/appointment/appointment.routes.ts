@@ -85,6 +85,15 @@ const appointmentListResponseSchema = z
   })
   .describe('List of appointments with pagination')
 
+const doctorMonthlyStatsResponseSchema = z
+  .object({
+    month: z.number().int().min(1).max(12).describe('Month number (1-12)'),
+    year: z.number().int().describe('Full year (e.g. 2026)'),
+    totalAppointments: z.number().int().describe('Total appointments for the month'),
+    completedAppointments: z.number().int().describe('Completed appointments for the month'),
+  })
+  .describe('Monthly appointment statistics for a doctor')
+
 export const APPOINTMENT_ROUTES = {
   create: createRoute({
     path: '/appointment',
@@ -266,6 +275,168 @@ export const APPOINTMENT_ROUTES = {
         zodResponseSchema(),
         'Only doctors can access this endpoint'
       ),
+    },
+  }),
+
+  /**
+   * Doctor dashboard: last 4 completed sessions (session history)
+   */
+  getDoctorSessionHistory: createRoute({
+    path: '/appointments/doctor/session-history',
+    method: 'get',
+    tags: [TAGS.appointment],
+    middleware: [isAuthenticated],
+    summary: 'Get last completed sessions for authenticated doctor (default last 4)',
+    request: {
+      query: z.object({
+        limit: z
+          .string()
+          .optional()
+          .describe('Number of records to return (default: 4)'),
+      }),
+    },
+    responses: {
+      [HttpStatusCodes.OK]: jsonContent(
+        zodResponseSchema(z.any()),
+        'Doctor session history retrieved successfully'
+      ),
+      [HttpStatusCodes.UNAUTHORIZED]: jsonContent(zodResponseSchema(), 'Unauthorized'),
+      [HttpStatusCodes.FORBIDDEN]: jsonContent(
+        zodResponseSchema(),
+        'Only doctors can access this endpoint'
+      ),
+    },
+  }),
+
+  /**
+   * Doctor dashboard: last 3 session reasons
+   */
+  getDoctorSessionReasonHistory: createRoute({
+    path: '/appointments/doctor/session-reasons',
+    method: 'get',
+    tags: [TAGS.appointment],
+    middleware: [isAuthenticated],
+    summary: 'Get last session reasons for authenticated doctor (default last 3)',
+    request: {
+      query: z.object({
+        limit: z
+          .string()
+          .optional()
+          .describe('Number of records to return (default: 3)'),
+      }),
+    },
+    responses: {
+      [HttpStatusCodes.OK]: jsonContent(
+        zodResponseSchema(z.any()),
+        'Doctor session reason history retrieved successfully'
+      ),
+      [HttpStatusCodes.UNAUTHORIZED]: jsonContent(zodResponseSchema(), 'Unauthorized'),
+      [HttpStatusCodes.FORBIDDEN]: jsonContent(
+        zodResponseSchema(),
+        'Only doctors can access this endpoint'
+      ),
+    },
+  }),
+
+  /**
+   * Doctor dashboard: full session reason history (paginated)
+   */
+  getDoctorFullSessionReasonHistory: createRoute({
+    path: '/appointments/doctor/session-reasons/full',
+    method: 'get',
+    tags: [TAGS.appointment],
+    middleware: [isAuthenticated],
+    summary: 'Get full session reason history for authenticated doctor (paginated)',
+    request: {
+      query: z.object({
+        page: z.string().optional().describe('Page number (default: 1)'),
+        limit: z.string().optional().describe('Items per page (default: 10)'),
+      }),
+    },
+    responses: {
+      [HttpStatusCodes.OK]: jsonContent(
+        zodResponseSchema(z.any()),
+        'Doctor full session reason history retrieved successfully'
+      ),
+      [HttpStatusCodes.UNAUTHORIZED]: jsonContent(zodResponseSchema(), 'Unauthorized'),
+      [HttpStatusCodes.FORBIDDEN]: jsonContent(
+        zodResponseSchema(),
+        'Only doctors can access this endpoint'
+      ),
+    },
+  }),
+
+  /**
+   * Doctor dashboard: yearly session reason stats (for graphs)
+   */
+  getDoctorYearlySessionReasonStats: createRoute({
+    path: '/appointments/doctor/session-reasons/stats/yearly',
+    method: 'get',
+    tags: [TAGS.appointment],
+    middleware: [isAuthenticated],
+    summary: 'Get yearly session reason stats for authenticated doctor (per month, per reason)',
+    request: {
+      query: z.object({
+        year: z.string().describe('Full year (e.g. 2026)'),
+      }),
+    },
+    responses: {
+      [HttpStatusCodes.OK]: jsonContent(
+        zodResponseSchema(
+          z.object({
+            year: z.number().int(),
+            months: z.array(
+              z.object({
+                month: z.number().int().min(1).max(12),
+                LETTING_OFF_STEAM: z.number().int(),
+                TALKING_THROUGH_STRESS_OR_UNCERTAINTY: z.number().int(),
+                NEEDING_PERSPECTIVE_DURING_A_DEMANDING_PERIOD: z.number().int(),
+                total: z.number().int(),
+              })
+            ),
+          })
+        ),
+        'Doctor yearly session reason stats retrieved successfully'
+      ),
+      [HttpStatusCodes.UNAUTHORIZED]: jsonContent(zodResponseSchema(), 'Unauthorized'),
+      [HttpStatusCodes.FORBIDDEN]: jsonContent(
+        zodResponseSchema(),
+        'Only doctors can access this endpoint'
+      ),
+      [HttpStatusCodes.BAD_REQUEST]: jsonContent(zodResponseSchema(), 'Bad Request'),
+    },
+  }),
+
+  /**
+   * Doctor dashboard: monthly appointment stats
+   */
+  getDoctorMonthlyStats: createRoute({
+    path: '/appointments/doctor/stats/monthly',
+    method: 'get',
+    tags: [TAGS.appointment],
+    middleware: [isAuthenticated],
+    summary: 'Get monthly appointment statistics for authenticated doctor',
+    request: {
+      query: z.object({
+        month: z
+          .string()
+          .describe('Month number (1-12)'),
+        year: z
+          .string()
+          .describe('Full year (e.g. 2026)'),
+      }),
+    },
+    responses: {
+      [HttpStatusCodes.OK]: jsonContent(
+        zodResponseSchema(doctorMonthlyStatsResponseSchema),
+        'Doctor monthly appointment stats retrieved successfully'
+      ),
+      [HttpStatusCodes.UNAUTHORIZED]: jsonContent(zodResponseSchema(), 'Unauthorized'),
+      [HttpStatusCodes.FORBIDDEN]: jsonContent(
+        zodResponseSchema(),
+        'Only doctors can access this endpoint'
+      ),
+      [HttpStatusCodes.BAD_REQUEST]: jsonContent(zodResponseSchema(), 'Bad Request'),
     },
   }),
 
