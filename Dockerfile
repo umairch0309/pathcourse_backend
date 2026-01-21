@@ -8,8 +8,8 @@ WORKDIR /app
 COPY package.json ./
 COPY bun.lockb* ./
 
-# Install dependencies
-RUN bun install --frozen-lockfile --production=false
+# Install dependencies (all dependencies including dev dependencies for build)
+RUN bun install --frozen-lockfile
 
 # Build stage
 FROM base AS build
