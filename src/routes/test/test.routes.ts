@@ -2,7 +2,7 @@ import { createRoute } from '@hono/zod-openapi'
 import * as HttpStatusCodes from 'stoker/http-status-codes'
 import { jsonContent } from 'stoker/openapi/helpers'
 import { zodResponseSchema } from '~/lib/zod-helper'
-import { UserSchema } from '~/zod/models'
+import { UserSchema } from '../../zod/models'
 export const TEST_ROUTES = {
   get_test: createRoute({
     method: 'get',
