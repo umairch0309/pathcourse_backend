@@ -1,3 +1,4 @@
+import type { Prisma } from '@prisma/client'
 import * as HttpStatusCodes from 'stoker/http-status-codes'
 
 import { HttpError } from '~/lib/error'
@@ -5,7 +6,13 @@ import type { USER_QUERY_ROUTES } from '~/routes/user-query/user-query.routes'
 import { USER_QUERY_SERVICES } from '~/services/user-query.service'
 import type { HandlerMapFromRoutes } from '~/types'
 
-const formatUserQueryResponse = (query: any) => ({
+type UserQueryWithUser = Prisma.UserQueryGetPayload<{
+  include: {
+    user: true
+  }
+}>
+
+const formatUserQueryResponse = (query: UserQueryWithUser) => ({
   id: query.id,
   message: query.message,
   name: query.name,
@@ -133,8 +140,8 @@ export const USER_QUERY_ROUTES_HANDLER: HandlerMapFromRoutes<typeof USER_QUERY_R
         },
         HttpStatusCodes.OK
       )
-    } catch (error: any) {
-      if (error.code === 'P2025') {
+    } catch (error: unknown) {
+      if (error instanceof Error && 'code' in error && error.code === 'P2025') {
         throw new HttpError('User query not found', HttpStatusCodes.NOT_FOUND)
       }
       throw error

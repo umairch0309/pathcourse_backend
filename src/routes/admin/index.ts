@@ -6,7 +6,7 @@ const router = createRouter()
 
 // Use forEach method to register all routes
 Object.entries(ADMIN_ROUTES).forEach(([key, route]) => {
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  // biome-ignore lint/suspicious/noExplicitAny: type assertion needed for dynamic route handler mapping
   router.openapi(route, ADMIN_ROUTES_HANDLER[key as keyof typeof ADMIN_ROUTES_HANDLER] as any)
 })
 

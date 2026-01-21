@@ -38,6 +38,18 @@ router.openapi(
   APPOINTMENT_ROUTES.getPatientAppointments,
   APPOINTMENT_ROUTES_HANDLER.getPatientAppointments
 )
+router.openapi(
+  APPOINTMENT_ROUTES.getPatientSessionHistory,
+  APPOINTMENT_ROUTES_HANDLER.getPatientSessionHistory
+)
+router.openapi(
+  APPOINTMENT_ROUTES.getPatientMonthlyStats,
+  APPOINTMENT_ROUTES_HANDLER.getPatientMonthlyStats
+)
+router.openapi(
+  APPOINTMENT_ROUTES.getPatientWeeklyActivityStats,
+  APPOINTMENT_ROUTES_HANDLER.getPatientWeeklyActivityStats
+)
 router.openapi(APPOINTMENT_ROUTES.getByIdFull, APPOINTMENT_ROUTES_HANDLER.getByIdFull)
 
 // Register other routes
@@ -45,7 +57,18 @@ router.openapi(APPOINTMENT_ROUTES.create, APPOINTMENT_ROUTES_HANDLER.create)
 router.openapi(APPOINTMENT_ROUTES.getById, APPOINTMENT_ROUTES_HANDLER.getById)
 router.openapi(APPOINTMENT_ROUTES.updateStartedAt, APPOINTMENT_ROUTES_HANDLER.updateStartedAt)
 router.openapi(APPOINTMENT_ROUTES.markAsCompleted, APPOINTMENT_ROUTES_HANDLER.markAsCompleted)
-router.openapi(APPOINTMENT_ROUTES.submitSessionReason, APPOINTMENT_ROUTES_HANDLER.submitSessionReason)
+router.openapi(
+  APPOINTMENT_ROUTES.submitSessionReason,
+  APPOINTMENT_ROUTES_HANDLER.submitSessionReason
+)
+router.openapi(
+  APPOINTMENT_ROUTES.upsertAppointmentNotes,
+  APPOINTMENT_ROUTES_HANDLER.upsertAppointmentNotes
+)
+router.openapi(
+  APPOINTMENT_ROUTES.getAppointmentNotes,
+  APPOINTMENT_ROUTES_HANDLER.getAppointmentNotes
+)
 router.openapi(APPOINTMENT_ROUTES.updateStatus, APPOINTMENT_ROUTES_HANDLER.updateStatus)
 
 // Register the general /appointments route LAST to avoid conflicts

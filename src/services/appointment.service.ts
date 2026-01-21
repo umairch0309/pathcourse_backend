@@ -101,7 +101,6 @@ export const APPOINTMENT_SERVICES = {
     // Enforce per-patient weekly limit: max 3 sessions per calendar week
     // Week is considered Monday (0:00) to Sunday (23:59:59.999) based on scheduledAt
     const scheduledDay = scheduledAt.getDay() // 0 (Sun) - 6 (Sat)
-    const mondayIndex = 1
     // Calculate how many days to subtract to get Monday
     const diffToMonday = (scheduledDay + 6) % 7 // maps Mon->0, Tue->1, ..., Sun->6
 
@@ -643,6 +642,50 @@ export const APPOINTMENT_SERVICES = {
   },
 
   /**
+   * Get last N completed sessions for a patient (session history)
+   * Default: last 5 completed appointments
+   */
+  getPatientSessionHistory: async (patientId: string, limit = 5) => {
+    const appointments = await prisma.appointment.findMany({
+      where: {
+        patientId,
+        status: 'COMPLETED',
+      },
+      orderBy: {
+        // Most recently ended sessions first
+        endedAt: 'desc',
+      },
+      take: limit,
+      include: {
+        doctor: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            image: true,
+            role: true,
+            isAnonymous: true,
+            employeeCode: true,
+          },
+        },
+        patient: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            image: true,
+            role: true,
+            isAnonymous: true,
+            employeeCode: true,
+          },
+        },
+      },
+    })
+
+    return appointments
+  },
+
+  /**
    * Get last N session reason records for a doctor
    * Default: last 3 records (completed appointments with a sessionReason)
    */
@@ -802,7 +845,9 @@ export const APPOINTMENT_SERVICES = {
     }))
 
     for (const appointment of appointments) {
-      if (!appointment.scheduledAt || !appointment.sessionReason) continue
+      if (!appointment.scheduledAt || !appointment.sessionReason) {
+        continue
+      }
       const monthIndex = appointment.scheduledAt.getMonth() // 0-11
       const bucket = initialPerMonth[monthIndex]
 
@@ -864,6 +909,121 @@ export const APPOINTMENT_SERVICES = {
       year,
       totalAppointments,
       completedAppointments,
+    }
+  },
+
+  /**
+   * Get monthly stats for a patient's appointments
+   * Returns total and completed appointments for the given month/year
+   */
+  getPatientMonthlyStats: async (patientId: string, month: number, year: number) => {
+    // month is 1-12; Date expects 0-11
+    const startOfMonth = new Date(year, month - 1, 1, 0, 0, 0, 0)
+    const endOfMonth = new Date(year, month, 0, 23, 59, 59, 999)
+
+    const [totalAppointments, completedAppointments] = await Promise.all([
+      prisma.appointment.count({
+        where: {
+          patientId,
+          scheduledAt: {
+            gte: startOfMonth,
+            lte: endOfMonth,
+          },
+        },
+      }),
+      prisma.appointment.count({
+        where: {
+          patientId,
+          status: 'COMPLETED',
+          scheduledAt: {
+            gte: startOfMonth,
+            lte: endOfMonth,
+          },
+        },
+      }),
+    ])
+
+    return {
+      month,
+      year,
+      totalAppointments,
+      completedAppointments,
+    }
+  },
+
+  /**
+   * Get weekly activity stats for a patient's appointments
+   * Returns counts per weekday for the current week (Mon-Sun)
+   * Designed for simple bar chart activity graphs.
+   */
+  getPatientWeeklyActivityStats: async (patientId: string, referenceDate: Date) => {
+    // Compute start of week (Monday) and end of week (Sunday) based on reference date
+    const day = referenceDate.getDay() // 0 (Sun) - 6 (Sat)
+    const diffToMonday = (day + 6) % 7 // days since Monday
+    const startOfWeek = new Date(
+      referenceDate.getFullYear(),
+      referenceDate.getMonth(),
+      referenceDate.getDate() - diffToMonday,
+      0,
+      0,
+      0,
+      0
+    )
+    const endOfWeek = new Date(
+      startOfWeek.getFullYear(),
+      startOfWeek.getMonth(),
+      startOfWeek.getDate() + 6,
+      23,
+      59,
+      59,
+      999
+    )
+
+    const appointments = await prisma.appointment.findMany({
+      where: {
+        patientId,
+        status: 'COMPLETED',
+        scheduledAt: {
+          gte: startOfWeek,
+          lte: endOfWeek,
+        },
+      },
+      select: {
+        scheduledAt: true,
+      },
+    })
+
+    const weekdayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const
+
+    const days = weekdayLabels.map((label, index) => {
+      const date = new Date(
+        startOfWeek.getFullYear(),
+        startOfWeek.getMonth(),
+        startOfWeek.getDate() + index
+      )
+      return {
+        weekday: label,
+        date,
+        count: 0,
+      }
+    })
+
+    for (const apt of appointments) {
+      if (!apt.scheduledAt) {
+        continue
+      }
+      const idx = Math.floor(
+        (apt.scheduledAt.getTime() - startOfWeek.getTime()) / (24 * 60 * 60 * 1000)
+      )
+      if (idx >= 0 && idx < days.length) {
+        days[idx].count += 1
+      }
+    }
+
+    return {
+      weekStart: startOfWeek,
+      weekEnd: endOfWeek,
+      days,
     }
   },
 

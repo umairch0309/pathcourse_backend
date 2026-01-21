@@ -1,3 +1,4 @@
+import type { Prisma } from '@prisma/client'
 import * as HttpStatusCodes from 'stoker/http-status-codes'
 
 import { HttpError } from '~/lib/error'
@@ -6,7 +7,13 @@ import type { SERVICE_PRICING_ROUTES } from '~/routes/service-pricing/service-pr
 import { SERVICE_PRICING_SERVICES } from '~/services/service-pricing.service'
 import type { HandlerMapFromRoutes } from '~/types'
 
-const formatServicePricingResponse = (pricing: any) => ({
+type ServicePricingWithService = Prisma.ServicePricingGetPayload<{
+  include: {
+    service: true
+  }
+}>
+
+const formatServicePricingResponse = (pricing: ServicePricingWithService) => ({
   id: pricing.id,
   serviceId: pricing.serviceId,
   service: pricing.service
@@ -44,7 +51,7 @@ export const SERVICE_PRICING_ROUTES_HANDLER: HandlerMapFromRoutes<typeof SERVICE
     const { duration } = c.req.valid('param')
     const durationNum = parseInt(duration, 10)
 
-    if (isNaN(durationNum)) {
+    if (Number.isNaN(durationNum)) {
       throw new HttpError('Invalid duration', HttpStatusCodes.BAD_REQUEST)
     }
 
@@ -94,11 +101,11 @@ export const SERVICE_PRICING_ROUTES_HANDLER: HandlerMapFromRoutes<typeof SERVICE
         },
         HttpStatusCodes.CREATED
       )
-    } catch (error: any) {
-      if (error.code === 'P2002') {
+    } catch (error: unknown) {
+      if (error instanceof Error && 'code' in error && error.code === 'P2002') {
         throw new HttpError('Service pricing for this duration already exists', HttpStatusCodes.CONFLICT)
       }
-      if (error.message.includes('must equal')) {
+      if (error instanceof Error && error.message.includes('must equal')) {
         throw new HttpError(error.message, HttpStatusCodes.UNPROCESSABLE_ENTITY)
       }
       throw error
@@ -130,11 +137,11 @@ export const SERVICE_PRICING_ROUTES_HANDLER: HandlerMapFromRoutes<typeof SERVICE
         },
         HttpStatusCodes.OK
       )
-    } catch (error: any) {
-      if (error.code === 'P2025') {
+    } catch (error: unknown) {
+      if (error instanceof Error && 'code' in error && error.code === 'P2025') {
         throw new HttpError('Service pricing not found', HttpStatusCodes.NOT_FOUND)
       }
-      if (error.message.includes('must equal')) {
+      if (error instanceof Error && error.message.includes('must equal')) {
         throw new HttpError(error.message, HttpStatusCodes.UNPROCESSABLE_ENTITY)
       }
       throw error
@@ -155,7 +162,7 @@ export const SERVICE_PRICING_ROUTES_HANDLER: HandlerMapFromRoutes<typeof SERVICE
     const { duration } = c.req.valid('param')
     const durationNum = parseInt(duration, 10)
 
-    if (isNaN(durationNum)) {
+    if (Number.isNaN(durationNum)) {
       throw new HttpError('Invalid duration', HttpStatusCodes.BAD_REQUEST)
     }
 
@@ -166,7 +173,7 @@ export const SERVICE_PRICING_ROUTES_HANDLER: HandlerMapFromRoutes<typeof SERVICE
     let finalServiceId: string = query.serviceId || ''
     if (!finalServiceId) {
       // Try to find the "Open Ear" service
-      const openEarService = await (prisma as any).service.findUnique({
+      const openEarService = await prisma.service.findUnique({
         where: { name: 'Open Ear' },
       })
       if (!openEarService) {
@@ -186,11 +193,14 @@ export const SERVICE_PRICING_ROUTES_HANDLER: HandlerMapFromRoutes<typeof SERVICE
         },
         HttpStatusCodes.OK
       )
-    } catch (error: any) {
-      if (error.code === 'P2025' || error.message.includes('not found')) {
+    } catch (error: unknown) {
+      if (error instanceof Error && 'code' in error && error.code === 'P2025') {
         throw new HttpError('Service pricing not found', HttpStatusCodes.NOT_FOUND)
       }
-      if (error.message.includes('must equal')) {
+      if (error instanceof Error && error.message.includes('not found')) {
+        throw new HttpError('Service pricing not found', HttpStatusCodes.NOT_FOUND)
+      }
+      if (error instanceof Error && error.message.includes('must equal')) {
         throw new HttpError(error.message, HttpStatusCodes.UNPROCESSABLE_ENTITY)
       }
       throw error
@@ -220,8 +230,8 @@ export const SERVICE_PRICING_ROUTES_HANDLER: HandlerMapFromRoutes<typeof SERVICE
         },
         HttpStatusCodes.OK
       )
-    } catch (error: any) {
-      if (error.code === 'P2025') {
+    } catch (error: unknown) {
+      if (error instanceof Error && 'code' in error && error.code === 'P2025') {
         throw new HttpError('Service pricing not found', HttpStatusCodes.NOT_FOUND)
       }
       throw error

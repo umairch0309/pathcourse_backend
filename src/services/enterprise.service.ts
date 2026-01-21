@@ -28,7 +28,7 @@ export const ENTERPRISE_SERVICES = {
       throw new Error('Enterprise name already exists')
     }
 
-    let code = data.code
+    let code: string = data.code || ''
 
     // If generateCode is true or code is not provided, generate code from name
     if (data.generateCode || !code) {
@@ -45,10 +45,15 @@ export const ENTERPRISE_SERVICES = {
       }
     }
 
+    // At this point, code is guaranteed to be defined
+    if (!code) {
+      throw new Error('Enterprise code is required')
+    }
+
     const enterprise = await prisma.enterprise.create({
       data: {
         name: data.name,
-        code: code!,
+        code,
         sessionsPerMonth: data.sessionsPerMonth,
       },
     })

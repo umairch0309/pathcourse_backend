@@ -16,7 +16,7 @@ export const auth = betterAuth({
       ? {
           crossSubDomainCookies: {
             enabled: true,
-            domain: '.teleneo.ai',
+            domain: '.hasseebmayo.com',
           },
         }
       : {}),

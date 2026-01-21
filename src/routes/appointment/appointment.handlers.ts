@@ -1,19 +1,30 @@
+import type { Appointment, Education } from '@prisma/client'
 import * as HttpStatusCodes from 'stoker/http-status-codes'
-
 import { formatUserForAppointment } from '~/lib/anonymize-user'
 import { HttpError } from '~/lib/error'
 import { extractS3KeyFromUrl, keysToSignedUrls } from '~/lib/s3'
 import type { APPOINTMENT_ROUTES } from '~/routes/appointment/appointment.routes'
 import { APPOINTMENT_SERVICES } from '~/services/appointment.service'
+import { APPOINTMENT_NOTES_SERVICES } from '~/services/appointment-notes.service'
 import type { HandlerMapFromRoutes } from '~/types'
 
+type GetAllAppointmentFilters = {
+  page: number
+  limit: number
+  doctorId?: string
+  patientId?: string
+  status?: 'BOOKED' | 'COMPLETED' | 'NO_SHOW'
+}
+
 // Helper function to convert documents to signed URLs
-const convertDocumentsToSignedUrls = async (documents: {
-  id: string
-  resume: string | null
-  medicalLicense: string | null
-  introductionVideo: string | null
-} | null) => {
+const convertDocumentsToSignedUrls = async (
+  documents: {
+    id: string
+    resume: string | null
+    medicalLicense: string | null
+    introductionVideo: string | null
+  } | null
+) => {
   if (!documents) {
     return null
   }
@@ -62,7 +73,9 @@ const convertEducationDocumentToSignedUrl = async (documentUrl: string | null) =
 }
 
 // Helper function to convert user image key to signed URL
-const convertUserImageToSignedUrl = async (imageKeyOrUrl: string | null): Promise<string | null> => {
+const convertUserImageToSignedUrl = async (
+  imageKeyOrUrl: string | null
+): Promise<string | null> => {
   if (!imageKeyOrUrl) {
     return null
   }
@@ -78,9 +91,13 @@ const convertUserImageToSignedUrl = async (imageKeyOrUrl: string | null): Promis
 }
 
 // Format full appointment response with complete doctor and patient objects
+// biome-ignore lint/suspicious/noExplicitAny: appointment contains multiple nested relations
 const formatFullAppointmentResponse = async (appointment: any, currentUserId?: string) => {
   // Check if current user is viewing their own appointment
-  const isViewingOwnAppointment = currentUserId && (appointment.doctorId === currentUserId || appointment.patientId === currentUserId)
+  const isViewingOwnAppointment = !!(
+    currentUserId &&
+    (appointment.doctorId === currentUserId || appointment.patientId === currentUserId)
+  )
 
   // Format doctor with full details
   const doctorUser = appointment.doctor
@@ -90,7 +107,7 @@ const formatFullAppointmentResponse = async (appointment: any, currentUserId?: s
   if (doctorUser.doctor) {
     const documents = await convertDocumentsToSignedUrls(doctorUser.doctor.documents)
     const education = await Promise.all(
-      (doctorUser.doctor.education || []).map(async (edu: any) => ({
+      (doctorUser.doctor.education || []).map(async (edu: Education) => ({
         ...edu,
         document: await convertEducationDocumentToSignedUrl(edu.document),
       }))
@@ -139,8 +156,35 @@ const formatFullAppointmentResponse = async (appointment: any, currentUserId?: s
   }
 
   // Apply anonymization if needed (but keep userInfo for own appointments)
-  const finalDoctor = formatUserForAppointment(formattedDoctor, 'doctor', isViewingOwnAppointment && appointment.doctorId === currentUserId)
-  const finalPatient = formatUserForAppointment(formattedPatient, 'patient', isViewingOwnAppointment && appointment.patientId === currentUserId)
+  const anonymizedDoctor = formatUserForAppointment(
+    formattedDoctor,
+    'doctor',
+    isViewingOwnAppointment && appointment.doctorId === currentUserId
+  )
+  const anonymizedPatient = formatUserForAppointment(
+    formattedPatient,
+    'patient',
+    isViewingOwnAppointment && appointment.patientId === currentUserId
+  )
+
+  // Preserve isAnonymous and userInfo fields in both doctor and patient objects
+  const finalDoctor = {
+    ...anonymizedDoctor,
+    isAnonymous: formattedDoctor.isAnonymous,
+    userInfo: formattedDoctor.userInfo,
+    doctor: formattedDoctor.doctor,
+  }
+
+  const finalPatient = {
+    ...anonymizedPatient,
+    isAnonymous: formattedPatient.isAnonymous,
+    userInfo: formattedPatient.userInfo,
+  }
+
+  // Convert uploadId to signed URL if present
+  const uploadIdSignedUrl = appointment.uploadId
+    ? await convertUserImageToSignedUrl(appointment.uploadId)
+    : null
 
   // Build base appointment object
   const baseAppointment = {
@@ -157,7 +201,7 @@ const formatFullAppointmentResponse = async (appointment: any, currentUserId?: s
     age: appointment.age,
     appointmentFor: appointment.appointmentFor,
     issue: appointment.issue,
-    uploadId: appointment.uploadId,
+    uploadId: uploadIdSignedUrl,
     relationWithPatient: appointment.relationWithPatient,
     patientName: appointment.patientName,
     patientAge: appointment.patientAge,
@@ -187,9 +231,33 @@ const formatFullAppointmentResponse = async (appointment: any, currentUserId?: s
   }
 }
 
-const formatAppointmentResponse = (appointment: any, currentUserId?: string) => {
+// biome-ignore lint/suspicious/noExplicitAny: appointment contains multiple nested relations
+const formatAppointmentResponse = async (appointment: any, currentUserId?: string) => {
   // Check if current user is viewing their own appointment
-  const isViewingOwnAppointment = currentUserId && (appointment.doctorId === currentUserId || appointment.patientId === currentUserId)
+  const isViewingOwnAppointment = !!(
+    currentUserId &&
+    (appointment.doctorId === currentUserId || appointment.patientId === currentUserId)
+  )
+
+  // Ensure doctor and patient images are signed URLs
+  const doctorForFormat = appointment.doctor
+    ? {
+        ...appointment.doctor,
+        image: await convertUserImageToSignedUrl(appointment.doctor.image),
+      }
+    : appointment.doctor
+
+  const patientForFormat = appointment.patient
+    ? {
+        ...appointment.patient,
+        image: await convertUserImageToSignedUrl(appointment.patient.image),
+      }
+    : appointment.patient
+
+  // Convert uploadId to signed URL if present
+  const uploadIdSignedUrl = appointment.uploadId
+    ? await convertUserImageToSignedUrl(appointment.uploadId)
+    : null
 
   return {
     id: appointment.id,
@@ -205,13 +273,17 @@ const formatAppointmentResponse = (appointment: any, currentUserId?: string) => 
     age: appointment.age,
     appointmentFor: appointment.appointmentFor,
     issue: appointment.issue,
-    uploadId: appointment.uploadId,
+    uploadId: uploadIdSignedUrl,
     relationWithPatient: appointment.relationWithPatient,
     patientName: appointment.patientName,
     patientAge: appointment.patientAge,
-    doctor: formatUserForAppointment(appointment.doctor, 'doctor', isViewingOwnAppointment && appointment.doctorId === currentUserId),
+    doctor: formatUserForAppointment(
+      doctorForFormat,
+      'doctor',
+      isViewingOwnAppointment && appointment.doctorId === currentUserId
+    ),
     patient: formatUserForAppointment(
-      appointment.patient,
+      patientForFormat,
       'patient',
       isViewingOwnAppointment && appointment.patientId === currentUserId
     ),
@@ -226,8 +298,17 @@ export const APPOINTMENT_ROUTES_HANDLER: HandlerMapFromRoutes<typeof APPOINTMENT
     }
 
     const body = c.req.valid('json')
-    const { doctorId, appointmentFor, issue, age, uploadId, scheduledAt, relationWithPatient, patientName, patientAge } =
-      body
+    const {
+      doctorId,
+      appointmentFor,
+      issue,
+      age,
+      uploadId,
+      scheduledAt,
+      relationWithPatient,
+      patientName,
+      patientAge,
+    } = body
 
     try {
       const appointment = await APPOINTMENT_SERVICES.create({
@@ -247,21 +328,30 @@ export const APPOINTMENT_ROUTES_HANDLER: HandlerMapFromRoutes<typeof APPOINTMENT
         {
           message: 'Appointment created successfully',
           success: true,
-          data: formatAppointmentResponse(appointment, user.id),
+          data: await formatAppointmentResponse(appointment, user.id),
         },
         HttpStatusCodes.CREATED
       )
-    } catch (error: any) {
-      if (error.message === 'Doctor not found') {
-        throw new HttpError('Doctor not found', HttpStatusCodes.NOT_FOUND)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        if (error.message === 'Doctor not found') {
+          throw new HttpError('Doctor not found', HttpStatusCodes.NOT_FOUND)
+        }
+        if (error.message === 'Doctor is not available for appointments at this time') {
+          throw new HttpError(
+            'Doctor is not available for appointments at this time',
+            HttpStatusCodes.BAD_REQUEST
+          )
+        }
+        if (error.message.includes('required when booking for someone else')) {
+          throw new HttpError(error.message, HttpStatusCodes.BAD_REQUEST)
+        }
+        throw new HttpError(
+          error.message || 'Failed to create appointment',
+          HttpStatusCodes.INTERNAL_SERVER_ERROR
+        )
       }
-      if (error.message === 'Doctor is not available for appointments at this time') {
-        throw new HttpError('Doctor is not available for appointments at this time', HttpStatusCodes.BAD_REQUEST)
-      }
-      if (error.message.includes('required when booking for someone else')) {
-        throw new HttpError(error.message, HttpStatusCodes.BAD_REQUEST)
-      }
-      throw new HttpError(error.message || 'Failed to create appointment', HttpStatusCodes.INTERNAL_SERVER_ERROR)
+      throw new HttpError('Failed to create appointment', HttpStatusCodes.INTERNAL_SERVER_ERROR)
     }
   },
 
@@ -281,7 +371,11 @@ export const APPOINTMENT_ROUTES_HANDLER: HandlerMapFromRoutes<typeof APPOINTMENT
       }
 
       // Check if user has access to this appointment (doctor or patient)
-      if (appointment.doctorId !== user.id && appointment.patientId !== user.id && user.role !== 'admin') {
+      if (
+        appointment.doctorId !== user.id &&
+        appointment.patientId !== user.id &&
+        user.role !== 'admin'
+      ) {
         throw new HttpError('Forbidden', HttpStatusCodes.FORBIDDEN)
       }
 
@@ -289,15 +383,16 @@ export const APPOINTMENT_ROUTES_HANDLER: HandlerMapFromRoutes<typeof APPOINTMENT
         {
           message: 'Appointment retrieved successfully',
           success: true,
-          data: formatAppointmentResponse(appointment, user.id),
+          data: await formatAppointmentResponse(appointment, user.id),
         },
         HttpStatusCodes.OK
       )
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof HttpError) {
         throw error
       }
-      throw new HttpError(error.message || 'Failed to retrieve appointment', HttpStatusCodes.INTERNAL_SERVER_ERROR)
+      const message = error instanceof Error ? error.message : 'Failed to retrieve appointment'
+      throw new HttpError(message, HttpStatusCodes.INTERNAL_SERVER_ERROR)
     }
   },
 
@@ -310,9 +405,9 @@ export const APPOINTMENT_ROUTES_HANDLER: HandlerMapFromRoutes<typeof APPOINTMENT
     const query = c.req.valid('query')
 
     // If user is not admin, filter by their role
-    const filters: any = {
-      page: query.page ? parseInt(query.page) : 1,
-      limit: query.limit ? parseInt(query.limit) : 10,
+    const filters: GetAllAppointmentFilters = {
+      page: query.page ? parseInt(query.page, 10) : 1,
+      limit: query.limit ? parseInt(query.limit, 10) : 10,
     }
 
     if (user.role === 'doctor') {
@@ -336,19 +431,24 @@ export const APPOINTMENT_ROUTES_HANDLER: HandlerMapFromRoutes<typeof APPOINTMENT
     try {
       const result = await APPOINTMENT_SERVICES.getAll(filters)
 
+      const formattedAppointments = await Promise.all(
+        result.appointments.map((apt: Appointment) => formatAppointmentResponse(apt, user.id))
+      )
+
       return c.json(
         {
           message: 'Appointments retrieved successfully',
           success: true,
           data: {
-            appointments: result.appointments.map((apt: any) => formatAppointmentResponse(apt, user.id)),
+            appointments: formattedAppointments,
             pagination: result.pagination,
           },
         },
         HttpStatusCodes.OK
       )
-    } catch (error: any) {
-      throw new HttpError(error.message || 'Failed to retrieve appointments', HttpStatusCodes.INTERNAL_SERVER_ERROR)
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to retrieve appointments'
+      throw new HttpError(message, HttpStatusCodes.INTERNAL_SERVER_ERROR)
     }
   },
 
@@ -370,7 +470,10 @@ export const APPOINTMENT_ROUTES_HANDLER: HandlerMapFromRoutes<typeof APPOINTMENT
 
       // Only doctor or admin can update status
       if (appointment.doctorId !== user.id && user.role !== 'admin') {
-        throw new HttpError('Only the doctor or admin can update appointment status', HttpStatusCodes.FORBIDDEN)
+        throw new HttpError(
+          'Only the doctor or admin can update appointment status',
+          HttpStatusCodes.FORBIDDEN
+        )
       }
 
       const updatedAppointment = await APPOINTMENT_SERVICES.updateStatus(id, status)
@@ -379,15 +482,16 @@ export const APPOINTMENT_ROUTES_HANDLER: HandlerMapFromRoutes<typeof APPOINTMENT
         {
           message: 'Appointment status updated successfully',
           success: true,
-          data: formatAppointmentResponse(updatedAppointment, user.id),
+          data: await formatAppointmentResponse(updatedAppointment, user.id),
         },
         HttpStatusCodes.OK
       )
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof HttpError) {
         throw error
       }
-      throw new HttpError(error.message || 'Failed to update appointment status', HttpStatusCodes.INTERNAL_SERVER_ERROR)
+      const message = error instanceof Error ? error.message : 'Failed to update appointment status'
+      throw new HttpError(message, HttpStatusCodes.INTERNAL_SERVER_ERROR)
     }
   },
 
@@ -399,7 +503,10 @@ export const APPOINTMENT_ROUTES_HANDLER: HandlerMapFromRoutes<typeof APPOINTMENT
 
     // Only doctors can update startedAt
     if (user.role !== 'doctor') {
-      throw new HttpError('Only doctors can update appointment startedAt', HttpStatusCodes.FORBIDDEN)
+      throw new HttpError(
+        'Only doctors can update appointment startedAt',
+        HttpStatusCodes.FORBIDDEN
+      )
     }
 
     const { id } = c.req.valid('param')
@@ -413,25 +520,35 @@ export const APPOINTMENT_ROUTES_HANDLER: HandlerMapFromRoutes<typeof APPOINTMENT
         {
           message: 'Appointment startedAt updated successfully',
           success: true,
-          data: formatAppointmentResponse(updatedAppointment, user.id),
+          data: await formatAppointmentResponse(updatedAppointment, user.id),
         },
         HttpStatusCodes.OK
       )
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof HttpError) {
         throw error
       }
 
-      // Handle specific error messages from service
-      if (error.message?.includes('not found')) {
-        throw new HttpError('Appointment not found', HttpStatusCodes.NOT_FOUND)
-      }
-      if (error.message?.includes('permission')) {
-        throw new HttpError('Only the doctor can update this appointment', HttpStatusCodes.FORBIDDEN)
+      if (error instanceof Error) {
+        // Handle specific error messages from service
+        if (error.message?.includes('not found')) {
+          throw new HttpError('Appointment not found', HttpStatusCodes.NOT_FOUND)
+        }
+        if (error.message?.includes('permission')) {
+          throw new HttpError(
+            'Only the doctor can update this appointment',
+            HttpStatusCodes.FORBIDDEN
+          )
+        }
+
+        throw new HttpError(
+          error.message || 'Failed to update appointment startedAt',
+          HttpStatusCodes.INTERNAL_SERVER_ERROR
+        )
       }
 
       throw new HttpError(
-        error.message || 'Failed to update appointment startedAt',
+        'Failed to update appointment startedAt',
         HttpStatusCodes.INTERNAL_SERVER_ERROR
       )
     }
@@ -454,12 +571,18 @@ export const APPOINTMENT_ROUTES_HANDLER: HandlerMapFromRoutes<typeof APPOINTMENT
 
       // Only the assigned doctor can mark appointment as completed
       if (appointment.doctorId !== user.id && user.role !== 'admin') {
-        throw new HttpError('Only the doctor can mark appointment as completed', HttpStatusCodes.FORBIDDEN)
+        throw new HttpError(
+          'Only the doctor can mark appointment as completed',
+          HttpStatusCodes.FORBIDDEN
+        )
       }
 
       // Check if appointment is already completed
       if (appointment.status === 'COMPLETED') {
-        throw new HttpError('Appointment is already marked as completed', HttpStatusCodes.BAD_REQUEST)
+        throw new HttpError(
+          'Appointment is already marked as completed',
+          HttpStatusCodes.BAD_REQUEST
+        )
       }
 
       // Mark as completed
@@ -469,15 +592,17 @@ export const APPOINTMENT_ROUTES_HANDLER: HandlerMapFromRoutes<typeof APPOINTMENT
         {
           message: 'Appointment marked as completed successfully',
           success: true,
-          data: formatAppointmentResponse(updatedAppointment, user.id),
+          data: await formatAppointmentResponse(updatedAppointment, user.id),
         },
         HttpStatusCodes.OK
       )
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof HttpError) {
         throw error
       }
-      throw new HttpError(error.message || 'Failed to mark appointment as completed', HttpStatusCodes.INTERNAL_SERVER_ERROR)
+      const message =
+        error instanceof Error ? error.message : 'Failed to mark appointment as completed'
+      throw new HttpError(message, HttpStatusCodes.INTERNAL_SERVER_ERROR)
     }
   },
 
@@ -497,7 +622,11 @@ export const APPOINTMENT_ROUTES_HANDLER: HandlerMapFromRoutes<typeof APPOINTMENT
       }
 
       // Check if user has access to this appointment (doctor or patient)
-      if (appointment.doctorId !== user.id && appointment.patientId !== user.id && user.role !== 'admin') {
+      if (
+        appointment.doctorId !== user.id &&
+        appointment.patientId !== user.id &&
+        user.role !== 'admin'
+      ) {
         throw new HttpError('Forbidden', HttpStatusCodes.FORBIDDEN)
       }
 
@@ -511,11 +640,12 @@ export const APPOINTMENT_ROUTES_HANDLER: HandlerMapFromRoutes<typeof APPOINTMENT
         },
         HttpStatusCodes.OK
       )
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof HttpError) {
         throw error
       }
-      throw new HttpError(error.message || 'Failed to retrieve appointment', HttpStatusCodes.INTERNAL_SERVER_ERROR)
+      const message = error instanceof Error ? error.message : 'Failed to retrieve appointment'
+      throw new HttpError(message, HttpStatusCodes.INTERNAL_SERVER_ERROR)
     }
   },
 
@@ -534,8 +664,8 @@ export const APPOINTMENT_ROUTES_HANDLER: HandlerMapFromRoutes<typeof APPOINTMENT
 
     const filters = {
       status: query.status as 'BOOKED' | 'COMPLETED' | 'NO_SHOW' | undefined,
-      page: query.page ? parseInt(query.page) : 1,
-      limit: query.limit ? parseInt(query.limit) : 10,
+      page: query.page ? parseInt(query.page, 10) : 1,
+      limit: query.limit ? parseInt(query.limit, 10) : 10,
     }
 
     try {
@@ -543,7 +673,7 @@ export const APPOINTMENT_ROUTES_HANDLER: HandlerMapFromRoutes<typeof APPOINTMENT
 
       // Format all appointments with full details
       const formattedAppointments = await Promise.all(
-        result.appointments.map((apt: any) => formatFullAppointmentResponse(apt, user.id))
+        result.appointments.map((apt: Appointment) => formatFullAppointmentResponse(apt, user.id))
       )
 
       return c.json(
@@ -557,8 +687,10 @@ export const APPOINTMENT_ROUTES_HANDLER: HandlerMapFromRoutes<typeof APPOINTMENT
         },
         HttpStatusCodes.OK
       )
-    } catch (error: any) {
-      throw new HttpError(error.message || 'Failed to retrieve patient appointments', HttpStatusCodes.INTERNAL_SERVER_ERROR)
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : 'Failed to retrieve patient appointments'
+      throw new HttpError(message, HttpStatusCodes.INTERNAL_SERVER_ERROR)
     }
   },
 
@@ -577,8 +709,8 @@ export const APPOINTMENT_ROUTES_HANDLER: HandlerMapFromRoutes<typeof APPOINTMENT
 
     const filters = {
       status: query.status as 'BOOKED' | 'COMPLETED' | 'NO_SHOW' | undefined,
-      page: query.page ? parseInt(query.page) : 1,
-      limit: query.limit ? parseInt(query.limit) : 10,
+      page: query.page ? parseInt(query.page, 10) : 1,
+      limit: query.limit ? parseInt(query.limit, 10) : 10,
     }
 
     try {
@@ -586,7 +718,7 @@ export const APPOINTMENT_ROUTES_HANDLER: HandlerMapFromRoutes<typeof APPOINTMENT
 
       // Format all appointments with full details
       const formattedAppointments = await Promise.all(
-        result.appointments.map((apt: any) => formatFullAppointmentResponse(apt, user.id))
+        result.appointments.map((apt: Appointment) => formatFullAppointmentResponse(apt, user.id))
       )
 
       return c.json(
@@ -600,11 +732,10 @@ export const APPOINTMENT_ROUTES_HANDLER: HandlerMapFromRoutes<typeof APPOINTMENT
         },
         HttpStatusCodes.OK
       )
-    } catch (error: any) {
-      throw new HttpError(
-        error.message || 'Failed to retrieve doctor appointments',
-        HttpStatusCodes.INTERNAL_SERVER_ERROR
-      )
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : 'Failed to retrieve doctor appointments'
+      throw new HttpError(message, HttpStatusCodes.INTERNAL_SERVER_ERROR)
     }
   },
 
@@ -627,16 +758,18 @@ export const APPOINTMENT_ROUTES_HANDLER: HandlerMapFromRoutes<typeof APPOINTMENT
     try {
       const appointments = await APPOINTMENT_SERVICES.getDoctorSessionHistory(user.id, limit)
 
-      const data = appointments.map(appointment => ({
-        ...formatAppointmentResponse(appointment, user.id),
-        sessionReason: appointment.sessionReason
-          ? {
-              reason: appointment.sessionReason.reason,
-              createdAt: appointment.sessionReason.createdAt.toISOString(),
-              updatedAt: appointment.sessionReason.updatedAt.toISOString(),
-            }
-          : null,
-      }))
+      const data = await Promise.all(
+        appointments.map(async appointment => ({
+          ...(await formatAppointmentResponse(appointment, user.id)),
+          sessionReason: appointment.sessionReason
+            ? {
+                reason: appointment.sessionReason.reason,
+                createdAt: appointment.sessionReason.createdAt.toISOString(),
+                updatedAt: appointment.sessionReason.updatedAt.toISOString(),
+              }
+            : null,
+        }))
+      )
 
       return c.json(
         {
@@ -646,11 +779,50 @@ export const APPOINTMENT_ROUTES_HANDLER: HandlerMapFromRoutes<typeof APPOINTMENT
         },
         HttpStatusCodes.OK
       )
-    } catch (error: any) {
-      throw new HttpError(
-        error.message || 'Failed to get doctor session history',
-        HttpStatusCodes.INTERNAL_SERVER_ERROR
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : 'Failed to get doctor session history'
+      throw new HttpError(message, HttpStatusCodes.INTERNAL_SERVER_ERROR)
+    }
+  },
+
+  /**
+   * Patient dashboard: last N completed sessions (session history)
+   */
+  getPatientSessionHistory: async c => {
+    const user = c.get('user')
+    if (!user) {
+      throw new HttpError('Unauthorized', HttpStatusCodes.UNAUTHORIZED)
+    }
+
+    if (user.role !== 'patient') {
+      throw new HttpError('Only patients can access this endpoint', HttpStatusCodes.FORBIDDEN)
+    }
+
+    const query = c.req.valid('query')
+    const limit = query.limit ? parseInt(query.limit, 10) || 5 : 5
+
+    try {
+      const appointments = await APPOINTMENT_SERVICES.getPatientSessionHistory(user.id, limit)
+
+      const data = await Promise.all(
+        appointments.map(async appointment => ({
+          ...(await formatAppointmentResponse(appointment, user.id)),
+        }))
       )
+
+      return c.json(
+        {
+          message: 'Patient session history retrieved successfully',
+          success: true,
+          data,
+        },
+        HttpStatusCodes.OK
+      )
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : 'Failed to get patient session history'
+      throw new HttpError(message, HttpStatusCodes.INTERNAL_SERVER_ERROR)
     }
   },
 
@@ -673,22 +845,31 @@ export const APPOINTMENT_ROUTES_HANDLER: HandlerMapFromRoutes<typeof APPOINTMENT
     try {
       const appointments = await APPOINTMENT_SERVICES.getDoctorSessionReasonHistory(user.id, limit)
 
-      const data = appointments.map(appointment => ({
-        appointmentId: appointment.id,
-        doctorId: appointment.doctorId,
-        patientId: appointment.patientId,
-        scheduledAt: appointment.scheduledAt?.toISOString() || null,
-        startedAt: appointment.startedAt?.toISOString() || null,
-        endedAt: appointment.endedAt?.toISOString() || null,
-        patient: formatUserForAppointment(appointment.patient, 'patient', false),
-        sessionReason: appointment.sessionReason
-          ? {
-              reason: appointment.sessionReason.reason,
-              createdAt: appointment.sessionReason.createdAt.toISOString(),
-              updatedAt: appointment.sessionReason.updatedAt.toISOString(),
-            }
-          : null,
-      }))
+      const data = await Promise.all(
+        appointments.map(async appointment => {
+          const patientWithSignedImage = {
+            ...appointment.patient,
+            image: await convertUserImageToSignedUrl(appointment.patient.image),
+          }
+
+          return {
+            appointmentId: appointment.id,
+            doctorId: appointment.doctorId,
+            patientId: appointment.patientId,
+            scheduledAt: appointment.scheduledAt?.toISOString() || null,
+            startedAt: appointment.startedAt?.toISOString() || null,
+            endedAt: appointment.endedAt?.toISOString() || null,
+            patient: formatUserForAppointment(patientWithSignedImage, 'patient', false),
+            sessionReason: appointment.sessionReason
+              ? {
+                  reason: appointment.sessionReason.reason,
+                  createdAt: appointment.sessionReason.createdAt.toISOString(),
+                  updatedAt: appointment.sessionReason.updatedAt.toISOString(),
+                }
+              : null,
+          }
+        })
+      )
 
       return c.json(
         {
@@ -698,11 +879,10 @@ export const APPOINTMENT_ROUTES_HANDLER: HandlerMapFromRoutes<typeof APPOINTMENT
         },
         HttpStatusCodes.OK
       )
-    } catch (error: any) {
-      throw new HttpError(
-        error.message || 'Failed to get doctor session reason history',
-        HttpStatusCodes.INTERNAL_SERVER_ERROR
-      )
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : 'Failed to get doctor session reason history'
+      throw new HttpError(message, HttpStatusCodes.INTERNAL_SERVER_ERROR)
     }
   },
 
@@ -730,9 +910,9 @@ export const APPOINTMENT_ROUTES_HANDLER: HandlerMapFromRoutes<typeof APPOINTMENT
         limit,
       })
 
-      const data = {
-        appointments: result.appointments.map(appointment => ({
-          ...formatAppointmentResponse(appointment, user.id),
+      const formattedAppointments = await Promise.all(
+        result.appointments.map(async appointment => ({
+          ...(await formatAppointmentResponse(appointment, user.id)),
           sessionReason: appointment.sessionReason
             ? {
                 reason: appointment.sessionReason.reason,
@@ -740,7 +920,11 @@ export const APPOINTMENT_ROUTES_HANDLER: HandlerMapFromRoutes<typeof APPOINTMENT
                 updatedAt: appointment.sessionReason.updatedAt.toISOString(),
               }
             : null,
-        })),
+        }))
+      )
+
+      const data = {
+        appointments: formattedAppointments,
         pagination: result.pagination,
       }
 
@@ -752,11 +936,10 @@ export const APPOINTMENT_ROUTES_HANDLER: HandlerMapFromRoutes<typeof APPOINTMENT
         },
         HttpStatusCodes.OK
       )
-    } catch (error: any) {
-      throw new HttpError(
-        error.message || 'Failed to get doctor full session reason history',
-        HttpStatusCodes.INTERNAL_SERVER_ERROR
-      )
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : 'Failed to get doctor full session reason history'
+      throw new HttpError(message, HttpStatusCodes.INTERNAL_SERVER_ERROR)
     }
   },
 
@@ -792,11 +975,10 @@ export const APPOINTMENT_ROUTES_HANDLER: HandlerMapFromRoutes<typeof APPOINTMENT
         },
         HttpStatusCodes.OK
       )
-    } catch (error: any) {
-      throw new HttpError(
-        error.message || 'Failed to get doctor yearly session reason stats',
-        HttpStatusCodes.INTERNAL_SERVER_ERROR
-      )
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : 'Failed to get doctor yearly session reason stats'
+      throw new HttpError(message, HttpStatusCodes.INTERNAL_SERVER_ERROR)
     }
   },
 
@@ -833,11 +1015,95 @@ export const APPOINTMENT_ROUTES_HANDLER: HandlerMapFromRoutes<typeof APPOINTMENT
         },
         HttpStatusCodes.OK
       )
-    } catch (error: any) {
-      throw new HttpError(
-        error.message || 'Failed to get doctor monthly stats',
-        HttpStatusCodes.INTERNAL_SERVER_ERROR
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to get doctor monthly stats'
+      throw new HttpError(message, HttpStatusCodes.INTERNAL_SERVER_ERROR)
+    }
+  },
+
+  /**
+   * Patient dashboard: monthly stats
+   */
+  getPatientMonthlyStats: async c => {
+    const user = c.get('user')
+    if (!user) {
+      throw new HttpError('Unauthorized', HttpStatusCodes.UNAUTHORIZED)
+    }
+
+    if (user.role !== 'patient') {
+      throw new HttpError('Only patients can access this endpoint', HttpStatusCodes.FORBIDDEN)
+    }
+
+    const query = c.req.valid('query')
+
+    const month = parseInt(query.month, 10)
+    const year = parseInt(query.year, 10)
+
+    if (!month || !year || month < 1 || month > 12) {
+      throw new HttpError('Invalid month or year', HttpStatusCodes.BAD_REQUEST)
+    }
+
+    try {
+      const stats = await APPOINTMENT_SERVICES.getPatientMonthlyStats(user.id, month, year)
+
+      return c.json(
+        {
+          message: 'Patient monthly appointment stats retrieved successfully',
+          success: true,
+          data: stats,
+        },
+        HttpStatusCodes.OK
       )
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to get patient monthly stats'
+      throw new HttpError(message, HttpStatusCodes.INTERNAL_SERVER_ERROR)
+    }
+  },
+
+  /**
+   * Patient dashboard: weekly activity stats (for activity graph)
+   */
+  getPatientWeeklyActivityStats: async c => {
+    const user = c.get('user')
+    if (!user) {
+      throw new HttpError('Unauthorized', HttpStatusCodes.UNAUTHORIZED)
+    }
+
+    if (user.role !== 'patient') {
+      throw new HttpError('Only patients can access this endpoint', HttpStatusCodes.FORBIDDEN)
+    }
+
+    const query = c.req.valid('query')
+
+    const referenceDate = query.referenceDate ? new Date(query.referenceDate) : new Date()
+
+    if (Number.isNaN(referenceDate.getTime())) {
+      throw new HttpError('Invalid referenceDate', HttpStatusCodes.BAD_REQUEST)
+    }
+
+    try {
+      const stats = await APPOINTMENT_SERVICES.getPatientWeeklyActivityStats(user.id, referenceDate)
+
+      return c.json(
+        {
+          message: 'Patient weekly activity stats retrieved successfully',
+          success: true,
+          data: {
+            weekStart: stats.weekStart.toISOString(),
+            weekEnd: stats.weekEnd.toISOString(),
+            days: stats.days.map(day => ({
+              weekday: day.weekday,
+              date: day.date.toISOString(),
+              count: day.count,
+            })),
+          },
+        },
+        HttpStatusCodes.OK
+      )
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : 'Failed to get patient weekly activity stats'
+      throw new HttpError(message, HttpStatusCodes.INTERNAL_SERVER_ERROR)
     }
   },
 
@@ -859,7 +1125,10 @@ export const APPOINTMENT_ROUTES_HANDLER: HandlerMapFromRoutes<typeof APPOINTMENT
       const sessionReason = await APPOINTMENT_SERVICES.submitSessionReason({
         appointmentId: id,
         doctorId: user.id,
-        reason: reason as 'LETTING_OFF_STEAM' | 'TALKING_THROUGH_STRESS_OR_UNCERTAINTY' | 'NEEDING_PERSPECTIVE_DURING_A_DEMANDING_PERIOD',
+        reason: reason as
+          | 'LETTING_OFF_STEAM'
+          | 'TALKING_THROUGH_STRESS_OR_UNCERTAINTY'
+          | 'NEEDING_PERSPECTIVE_DURING_A_DEMANDING_PERIOD',
       })
 
       return c.json(
@@ -876,33 +1145,158 @@ export const APPOINTMENT_ROUTES_HANDLER: HandlerMapFromRoutes<typeof APPOINTMENT
         },
         HttpStatusCodes.CREATED
       )
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof HttpError) {
         throw error
       }
 
-      // Handle specific error messages from service
-      if (error.message?.includes('not found')) {
-        throw new HttpError('Appointment not found', HttpStatusCodes.NOT_FOUND)
-      }
-      if (error.message?.includes('permission')) {
+      if (error instanceof Error) {
+        // Handle specific error messages from service
+        if (error.message?.includes('not found')) {
+          throw new HttpError('Appointment not found', HttpStatusCodes.NOT_FOUND)
+        }
+        if (error.message?.includes('permission')) {
+          throw new HttpError(
+            'Only the doctor can submit session reason for this appointment',
+            HttpStatusCodes.FORBIDDEN
+          )
+        }
+        if (error.message?.includes('completed')) {
+          throw new HttpError(
+            'Session reason can only be submitted for completed appointments',
+            HttpStatusCodes.BAD_REQUEST
+          )
+        }
+
         throw new HttpError(
-          'Only the doctor can submit session reason for this appointment',
-          HttpStatusCodes.FORBIDDEN
-        )
-      }
-      if (error.message?.includes('completed')) {
-        throw new HttpError(
-          'Session reason can only be submitted for completed appointments',
-          HttpStatusCodes.BAD_REQUEST
+          error.message || 'Failed to submit session reason',
+          HttpStatusCodes.INTERNAL_SERVER_ERROR
         )
       }
 
+      throw new HttpError('Failed to submit session reason', HttpStatusCodes.INTERNAL_SERVER_ERROR)
+    }
+  },
+
+  upsertAppointmentNotes: async c => {
+    const user = c.get('user')
+    if (!user) {
+      throw new HttpError('Unauthorized', HttpStatusCodes.UNAUTHORIZED)
+    }
+
+    // Only doctors can create or update notes
+    if (user.role !== 'doctor') {
+      throw new HttpError('Only doctors can submit notes', HttpStatusCodes.FORBIDDEN)
+    }
+
+    const { id } = c.req.valid('param')
+    const { notes } = c.req.valid('json')
+
+    try {
+      const result = await APPOINTMENT_NOTES_SERVICES.upsertForAppointment({
+        appointmentId: id,
+        doctorId: user.id,
+        notes,
+      })
+
+      return c.json(
+        {
+          message: 'Appointment notes created or updated successfully',
+          success: true,
+          data: {
+            id: result.id,
+            appointmentId: result.appointmentId,
+            doctorId: result.doctorId,
+            notes: result.notes,
+            createdAt: result.createdAt.toISOString(),
+            updatedAt: result.updatedAt.toISOString(),
+          },
+        },
+        HttpStatusCodes.OK
+      )
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        if (error.message === 'Appointment not found') {
+          throw new HttpError('Appointment not found', HttpStatusCodes.NOT_FOUND)
+        }
+        if (error.message.includes('permission')) {
+          throw new HttpError(
+            'Only the assigned doctor can manage notes for this appointment',
+            HttpStatusCodes.FORBIDDEN
+          )
+        }
+      }
+
       throw new HttpError(
-        error.message || 'Failed to submit session reason',
+        error instanceof Error
+          ? error.message || 'Failed to create or update appointment notes'
+          : 'Failed to create or update appointment notes',
+        HttpStatusCodes.INTERNAL_SERVER_ERROR
+      )
+    }
+  },
+
+  getAppointmentNotes: async c => {
+    const user = c.get('user')
+    if (!user) {
+      throw new HttpError('Unauthorized', HttpStatusCodes.UNAUTHORIZED)
+    }
+
+    // Only doctors can view notes
+    if (user.role !== 'doctor') {
+      throw new HttpError('Only doctors can view notes', HttpStatusCodes.FORBIDDEN)
+    }
+
+    const { id } = c.req.valid('param')
+
+    try {
+      const notes = await APPOINTMENT_NOTES_SERVICES.getByAppointmentId({
+        appointmentId: id,
+        doctorId: user.id,
+      })
+
+      if (!notes) {
+        throw new HttpError('Appointment notes not found', HttpStatusCodes.NOT_FOUND)
+      }
+
+      return c.json(
+        {
+          message: 'Appointment notes retrieved successfully',
+          success: true,
+          data: {
+            id: notes.id,
+            appointmentId: notes.appointmentId,
+            doctorId: notes.doctorId,
+            notes: notes.notes,
+            createdAt: notes.createdAt.toISOString(),
+            updatedAt: notes.updatedAt.toISOString(),
+          },
+        },
+        HttpStatusCodes.OK
+      )
+    } catch (error: unknown) {
+      if (error instanceof HttpError) {
+        throw error
+      }
+
+      if (error instanceof Error) {
+        if (error.message === 'Appointment not found') {
+          throw new HttpError('Appointment not found', HttpStatusCodes.NOT_FOUND)
+        }
+        if (error.message.includes('permission')) {
+          throw new HttpError(
+            'Only the assigned doctor can view notes for this appointment',
+            HttpStatusCodes.FORBIDDEN
+          )
+        }
+      }
+
+      throw new HttpError(
+        error instanceof Error
+          ? error.message || 'Failed to retrieve appointment notes'
+          : 'Failed to retrieve appointment notes',
         HttpStatusCodes.INTERNAL_SERVER_ERROR
       )
     }
   },
 }
-

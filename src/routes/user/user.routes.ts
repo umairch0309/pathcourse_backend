@@ -42,6 +42,22 @@ const userInfoResponseSchema = z
   })
   .describe('User info with related user data (null values when user info not created yet)')
 
+const updateUserProfileBodySchema = z
+  .object({
+    name: z.string().min(1).max(100).optional().describe('User full name'),
+    image: z.string().max(500).nullable().optional().describe('User profile image URL'),
+    gender: z.string().max(20).nullable().optional().describe('User gender'),
+    dateOfBirth: z
+      .string()
+      .datetime()
+      .nullable()
+      .optional()
+      .describe('User date of birth in UTC (ISO 8601 format)'),
+    phone: z.string().max(50).nullable().optional().describe('User phone number'),
+    address: z.string().nullable().optional().describe('User address'),
+  })
+  .describe('Request body for updating user and patient info (Patient only)')
+
 export const USER_ROUTES = {
   selectRole: createRoute({
     path: '/user/select-role',
@@ -77,6 +93,54 @@ export const USER_ROUTES = {
         'Unprocessable Entity'
       ),
       [HttpStatusCodes.UNAUTHORIZED]: jsonContent(zodResponseSchema(), 'Unauthorized'),
+      [HttpStatusCodes.BAD_REQUEST]: jsonContent(zodResponseSchema(), 'Bad Request'),
+    },
+  }),
+
+  getPatientProfile: createRoute({
+    path: '/patient/profile',
+    method: 'get',
+    tags: [TAGS.user],
+    summary: 'Get current patient profile (user + patient info)',
+    request: {},
+    responses: {
+      [HttpStatusCodes.OK]: jsonContent(
+        zodResponseSchema(userInfoResponseSchema),
+        'Patient profile retrieved successfully (returns default structure if user info not created yet)'
+      ),
+      [HttpStatusCodes.UNAUTHORIZED]: jsonContent(zodResponseSchema(), 'Unauthorized'),
+      [HttpStatusCodes.FORBIDDEN]: jsonContent(
+        zodResponseSchema(),
+        'Forbidden - Only patients can access this endpoint'
+      ),
+    },
+  }),
+
+  updateUserProfile: createRoute({
+    path: '/user/profile',
+    method: 'put',
+    tags: [TAGS.user],
+    summary: 'Update user basic profile and patient info (Patient only)',
+    request: {
+      body: jsonContentRequired(
+        updateUserProfileBodySchema,
+        'Request body for updating user and patient info'
+      ),
+    },
+    responses: {
+      [HttpStatusCodes.OK]: jsonContent(
+        zodResponseSchema(userInfoResponseSchema),
+        'User profile updated successfully'
+      ),
+      [HttpStatusCodes.UNPROCESSABLE_ENTITY]: jsonContent(
+        createErrorSchema(updateUserProfileBodySchema),
+        'Unprocessable Entity'
+      ),
+      [HttpStatusCodes.UNAUTHORIZED]: jsonContent(zodResponseSchema(), 'Unauthorized'),
+      [HttpStatusCodes.FORBIDDEN]: jsonContent(
+        zodResponseSchema(),
+        'Forbidden - Only patients can access this endpoint'
+      ),
       [HttpStatusCodes.BAD_REQUEST]: jsonContent(zodResponseSchema(), 'Bad Request'),
     },
   }),

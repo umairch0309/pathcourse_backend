@@ -1,10 +1,20 @@
+import type { Prisma } from '@prisma/client'
 import * as HttpStatusCodes from 'stoker/http-status-codes'
 import { HttpError } from '~/lib/error'
 import type { ADMIN_ROUTES } from '~/routes/admin/admin.routes'
 import { DOCTOR_SERVICES } from '~/services/doctor.service'
 import type { HandlerMapFromRoutes } from '~/types'
 
-const formatDoctorRequestResponse = (doctor: any) => ({
+type DoctorWithRelations = Prisma.DoctorGetPayload<{
+  include: {
+    user: true
+    documents: true
+    education: true
+    professionalExperience: true
+  }
+}>
+
+const formatDoctorRequestResponse = (doctor: DoctorWithRelations) => ({
   id: doctor.id,
   userid: doctor.userid,
   professional_contact: doctor.professional_contact,
@@ -32,7 +42,7 @@ const formatDoctorRequestResponse = (doctor: any) => ({
         introductionVideo: doctor.documents.introductionVideo,
       }
     : null,
-  education: doctor.education.map((edu: any) => ({
+  education: doctor.education.map(edu => ({
     id: edu.id,
     degree: edu.degree,
     institution_name: edu.institution_name,
@@ -50,7 +60,13 @@ const formatDoctorRequestResponse = (doctor: any) => ({
     : null,
 })
 
-const formatDoctorStatusResponse = (doctor: any) => ({
+type DoctorWithUser = Prisma.DoctorGetPayload<{
+  include: {
+    user: true
+  }
+}>
+
+const formatDoctorStatusResponse = (doctor: DoctorWithUser) => ({
   id: doctor.id,
   userid: doctor.userid,
   professional_contact: doctor.professional_contact,

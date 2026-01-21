@@ -94,6 +94,38 @@ const doctorMonthlyStatsResponseSchema = z
   })
   .describe('Monthly appointment statistics for a doctor')
 
+const patientActivityDaySchema = z
+  .object({
+    weekday: z
+      .enum(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'])
+      .describe('Weekday label for the activity bar'),
+    date: z.string().datetime().describe('Date in UTC (ISO 8601 format)'),
+    count: z.number().int().describe('Number of completed sessions on this day'),
+  })
+  .describe('Patient activity for a single day')
+
+const patientActivityStatsResponseSchema = z
+  .object({
+    weekStart: z
+      .string()
+      .datetime()
+      .describe('Start of the week (Monday) in UTC (ISO 8601 format)'),
+    weekEnd: z.string().datetime().describe('End of the week (Sunday) in UTC (ISO 8601 format)'),
+    days: z.array(patientActivityDaySchema).length(7).describe('Activity per weekday (Mon-Sun)'),
+  })
+  .describe('Weekly activity stats for a patient (for activity graph)')
+
+const appointmentNotesResponseSchema = z
+  .object({
+    id: z.string(),
+    appointmentId: z.string(),
+    doctorId: z.string(),
+    notes: z.string(),
+    createdAt: z.string().datetime(),
+    updatedAt: z.string().datetime(),
+  })
+  .describe('Appointment notes (doctor-only)')
+
 export const APPOINTMENT_ROUTES = {
   create: createRoute({
     path: '/appointment',
@@ -289,10 +321,7 @@ export const APPOINTMENT_ROUTES = {
     summary: 'Get last completed sessions for authenticated doctor (default last 4)',
     request: {
       query: z.object({
-        limit: z
-          .string()
-          .optional()
-          .describe('Number of records to return (default: 4)'),
+        limit: z.string().optional().describe('Number of records to return (default: 4)'),
       }),
     },
     responses: {
@@ -319,10 +348,7 @@ export const APPOINTMENT_ROUTES = {
     summary: 'Get last session reasons for authenticated doctor (default last 3)',
     request: {
       query: z.object({
-        limit: z
-          .string()
-          .optional()
-          .describe('Number of records to return (default: 3)'),
+        limit: z.string().optional().describe('Number of records to return (default: 3)'),
       }),
     },
     responses: {
@@ -408,6 +434,97 @@ export const APPOINTMENT_ROUTES = {
   }),
 
   /**
+   * Patient dashboard: last 5 completed sessions (session history)
+   */
+  getPatientSessionHistory: createRoute({
+    path: '/appointments/patient/session-history',
+    method: 'get',
+    tags: [TAGS.appointment],
+    middleware: [isAuthenticated],
+    summary: 'Get last completed sessions for authenticated patient (default last 5)',
+    request: {
+      query: z.object({
+        limit: z.string().optional().describe('Number of records to return (default: 5)'),
+      }),
+    },
+    responses: {
+      [HttpStatusCodes.OK]: jsonContent(
+        zodResponseSchema(z.any()),
+        'Patient session history retrieved successfully'
+      ),
+      [HttpStatusCodes.UNAUTHORIZED]: jsonContent(zodResponseSchema(), 'Unauthorized'),
+      [HttpStatusCodes.FORBIDDEN]: jsonContent(
+        zodResponseSchema(),
+        'Only patients can access this endpoint'
+      ),
+    },
+  }),
+
+  /**
+   * Patient dashboard: monthly appointment stats
+   */
+  getPatientMonthlyStats: createRoute({
+    path: '/appointments/patient/stats/monthly',
+    method: 'get',
+    tags: [TAGS.appointment],
+    middleware: [isAuthenticated],
+    summary: 'Get monthly appointment statistics for authenticated patient',
+    request: {
+      query: z.object({
+        month: z.string().describe('Month number (1-12)'),
+        year: z.string().describe('Full year (e.g. 2026)'),
+      }),
+    },
+    responses: {
+      [HttpStatusCodes.OK]: jsonContent(
+        zodResponseSchema(doctorMonthlyStatsResponseSchema),
+        'Patient monthly appointment stats retrieved successfully'
+      ),
+      [HttpStatusCodes.UNAUTHORIZED]: jsonContent(zodResponseSchema(), 'Unauthorized'),
+      [HttpStatusCodes.FORBIDDEN]: jsonContent(
+        zodResponseSchema(),
+        'Only patients can access this endpoint'
+      ),
+      [HttpStatusCodes.BAD_REQUEST]: jsonContent(zodResponseSchema(), 'Bad Request'),
+    },
+  }),
+
+  /**
+   * Patient dashboard: weekly activity stats (for activity graph)
+   */
+  getPatientWeeklyActivityStats: createRoute({
+    path: '/appointments/patient/stats/activity',
+    method: 'get',
+    tags: [TAGS.appointment],
+    middleware: [isAuthenticated],
+    summary:
+      'Get weekly activity stats for authenticated patient (Mon-Sun completed sessions for activity graph)',
+    request: {
+      query: z.object({
+        referenceDate: z
+          .string()
+          .datetime()
+          .optional()
+          .describe(
+            'Reference date in UTC (ISO 8601 format). Defaults to current date on server if not provided.'
+          ),
+      }),
+    },
+    responses: {
+      [HttpStatusCodes.OK]: jsonContent(
+        zodResponseSchema(patientActivityStatsResponseSchema),
+        'Patient weekly activity stats retrieved successfully'
+      ),
+      [HttpStatusCodes.UNAUTHORIZED]: jsonContent(zodResponseSchema(), 'Unauthorized'),
+      [HttpStatusCodes.FORBIDDEN]: jsonContent(
+        zodResponseSchema(),
+        'Only patients can access this endpoint'
+      ),
+      [HttpStatusCodes.BAD_REQUEST]: jsonContent(zodResponseSchema(), 'Bad Request'),
+    },
+  }),
+
+  /**
    * Doctor dashboard: monthly appointment stats
    */
   getDoctorMonthlyStats: createRoute({
@@ -418,12 +535,8 @@ export const APPOINTMENT_ROUTES = {
     summary: 'Get monthly appointment statistics for authenticated doctor',
     request: {
       query: z.object({
-        month: z
-          .string()
-          .describe('Month number (1-12)'),
-        year: z
-          .string()
-          .describe('Full year (e.g. 2026)'),
+        month: z.string().describe('Month number (1-12)'),
+        year: z.string().describe('Full year (e.g. 2026)'),
       }),
     },
     responses: {
@@ -446,7 +559,8 @@ export const APPOINTMENT_ROUTES = {
     tags: [TAGS.appointment],
     middleware: [isAuthenticated],
     summary: 'Update appointment startedAt timestamp (Doctor only)',
-    description: 'Allows doctors to set or update the startedAt timestamp for an appointment. If startedAt is not provided in the request body, it will default to the current time.',
+    description:
+      'Allows doctors to set or update the startedAt timestamp for an appointment. If startedAt is not provided in the request body, it will default to the current time.',
     request: {
       params: z.object({
         id: z.string().describe('Appointment ID'),
@@ -458,7 +572,9 @@ export const APPOINTMENT_ROUTES = {
               .string()
               .datetime()
               .optional()
-              .describe('Start time in UTC (ISO 8601 format). If not provided, current time will be used.'),
+              .describe(
+                'Start time in UTC (ISO 8601 format). If not provided, current time will be used.'
+              ),
           })
           .describe('Request body for updating appointment startedAt'),
         'Request body for updating appointment startedAt'
@@ -562,6 +678,71 @@ export const APPOINTMENT_ROUTES = {
         zodResponseSchema(),
         'Bad Request - Session reason can only be submitted for completed appointments'
       ),
+    },
+  }),
+
+  /**
+   * Appointment notes: create or update notes for an appointment (Doctor only)
+   */
+  upsertAppointmentNotes: createRoute({
+    path: '/appointment/{id}/notes',
+    method: 'post',
+    tags: [TAGS.appointment],
+    middleware: [isAuthenticated],
+    summary: 'Create or update appointment notes (Doctor only)',
+    request: {
+      params: z.object({
+        id: z.string().describe('Appointment ID'),
+      }),
+      body: jsonContentRequired(
+        z
+          .object({
+            notes: z.string().min(1).describe('Notes for this appointment (internal doctor notes)'),
+          })
+          .describe('Request body for creating or updating appointment notes'),
+        'Request body for creating or updating appointment notes'
+      ),
+    },
+    responses: {
+      [HttpStatusCodes.OK]: jsonContent(
+        zodResponseSchema(appointmentNotesResponseSchema),
+        'Appointment notes created or updated successfully'
+      ),
+      [HttpStatusCodes.UNAUTHORIZED]: jsonContent(zodResponseSchema(), 'Unauthorized'),
+      [HttpStatusCodes.FORBIDDEN]: jsonContent(
+        zodResponseSchema(),
+        'Only the assigned doctor can manage notes for this appointment'
+      ),
+      [HttpStatusCodes.NOT_FOUND]: jsonContent(zodResponseSchema(), 'Appointment not found'),
+      [HttpStatusCodes.BAD_REQUEST]: jsonContent(zodResponseSchema(), 'Bad Request'),
+    },
+  }),
+
+  /**
+   * Appointment notes: fetch notes for an appointment (Doctor only)
+   */
+  getAppointmentNotes: createRoute({
+    path: '/appointment/{id}/notes',
+    method: 'get',
+    tags: [TAGS.appointment],
+    middleware: [isAuthenticated],
+    summary: 'Get appointment notes (Doctor only)',
+    request: {
+      params: z.object({
+        id: z.string().describe('Appointment ID'),
+      }),
+    },
+    responses: {
+      [HttpStatusCodes.OK]: jsonContent(
+        zodResponseSchema(appointmentNotesResponseSchema),
+        'Appointment notes retrieved successfully'
+      ),
+      [HttpStatusCodes.UNAUTHORIZED]: jsonContent(zodResponseSchema(), 'Unauthorized'),
+      [HttpStatusCodes.FORBIDDEN]: jsonContent(
+        zodResponseSchema(),
+        'Only the assigned doctor can view notes for this appointment'
+      ),
+      [HttpStatusCodes.NOT_FOUND]: jsonContent(zodResponseSchema(), 'Appointment notes not found'),
     },
   }),
 }

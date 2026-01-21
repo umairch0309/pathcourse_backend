@@ -1,4 +1,4 @@
-/** biome-ignore-all lint/suspicious/noExplicitAny: <explanation> */
+/** biome-ignore-all lint/suspicious/noExplicitAny: complex Prisma query types with dynamic includes */
 import prisma from '~/lib/prisma'
 
 export const USER_QUERY_SERVICES = {
