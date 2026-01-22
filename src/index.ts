@@ -1,9 +1,9 @@
 import { cors } from 'hono/cors'
 import { registerRoutes } from '~/app'
+import { appointmentNoShowCron } from '~/lib/appointment-no-show-cron'
 import { auth } from '~/lib/auth'
 import configureOpenAPI from '~/lib/configure-open-api'
 import createApp from '~/lib/create-app'
-import { appointmentNoShowCron } from '~/lib/appointment-no-show-cron'
 import { doctorConnectionTracker } from '~/lib/doctor-connection-tracker'
 import { DOCTOR_SERVICES } from '~/services/doctor.service'
 import { ORIGINS } from './config/origins'
@@ -11,6 +11,28 @@ import { ORIGINS } from './config/origins'
 // parseENV()
 const app = createApp()
 
+// CORS must be configured FIRST to handle preflight OPTIONS requests
+app.use(
+  '*',
+  cors({
+    origin: ORIGINS,
+    allowHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Requested-With',
+      'Accept',
+      'Origin',
+      'Cookie',
+      'Set-Cookie',
+    ],
+    allowMethods: ['POST', 'GET', 'OPTIONS', 'DELETE', 'PUT', 'PATCH'],
+    exposeHeaders: ['Content-Length', 'Set-Cookie'],
+    maxAge: 86400, // 24 hours for preflight cache
+    credentials: true,
+  })
+)
+
+// Authentication middleware (runs after CORS)
 app.use('*', async (c, next) => {
   const session = await auth.api.getSession({ headers: c.req.raw.headers })
   if (!session) {
@@ -22,17 +44,6 @@ app.use('*', async (c, next) => {
   c.set('session', session.session)
   return next()
 })
-app.use(
-  '*', // or replace with "*" to enable cors for all routes
-  cors({
-    origin: ORIGINS, // replace with your origin
-    allowHeaders: ['Content-Type', 'Authorization'],
-    allowMethods: ['POST', 'GET', 'OPTIONS', 'DELETE', 'PUT', 'PATCH'],
-    exposeHeaders: ['Content-Length'],
-    maxAge: 600,
-    credentials: true,
-  })
-)
 
 // Register custom routes first (before better-auth catch-all)
 registerRoutes(app)
@@ -60,7 +71,9 @@ appointmentNoShowCron.start()
 console.log('Auth reference available at http://localhost:8080/api/auth/reference')
 console.log('API reference available at http://localhost:8080/reference')
 console.log('Doctor connection tracker started - checking for stale connections every 15 seconds')
-console.log('Appointment no-show cron job started - checking every 5 minutes for appointments past 20-minute mark')
+console.log(
+  'Appointment no-show cron job started - checking every 5 minutes for appointments past 20-minute mark'
+)
 
 export default {
   fetch: app.fetch,

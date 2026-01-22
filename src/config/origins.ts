@@ -7,4 +7,5 @@ export const ORIGINS = [
   'http://localhost:8000',
   'http://localhost:9000',
   'https://pathcourse.hasseebmayo.com',
+  'https://pathcourse-backend.hasseebmayo.com',
 ]
