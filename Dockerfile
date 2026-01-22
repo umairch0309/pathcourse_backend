@@ -20,11 +20,11 @@ COPY tsconfig.json ./
 # Copy Prisma schema
 COPY prisma ./prisma
 
-# Generate Prisma client
-RUN bun run db:generate
-
-# Copy source code
+# Copy source code (needed for Prisma generate to work properly)
 COPY src ./src
+
+# Generate Prisma client and Zod schemas (generates to ./src/zod)
+RUN bun run db:generate
 
 # Build the application
 RUN bun run build
