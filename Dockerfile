@@ -32,6 +32,9 @@ RUN bun run build
 # Production stage
 FROM oven/bun:1.2-slim AS production
 
+# Install OpenSSL (required by Prisma)
+RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
+
 # Set working directory
 WORKDIR /app
 
