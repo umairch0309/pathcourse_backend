@@ -32,9 +32,6 @@ RUN bun run build
 # Production stage
 FROM oven/bun:1.2-slim AS production
 
-# Install OpenSSL (required by Prisma)
-RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
-
 # Set working directory
 WORKDIR /app
 
@@ -49,12 +46,12 @@ COPY --from=build --chown=bunjs:bunjs /app/bun.lockb* ./
 # Copy Prisma schema
 COPY --from=build --chown=bunjs:bunjs /app/prisma ./prisma
 
-# Install production dependencies (includes @prisma/client and prisma CLI)
+# Install production dependencies (includes @prisma/client)
 RUN bun install --frozen-lockfile --production
 
-# Regenerate Prisma client with correct binary targets for production environment
-# (We use bunx prisma generate directly instead of bun run db:generate to avoid needing prisma-zod-generator)
-RUN bunx prisma generate
+# Copy generated Prisma client from build stage (more reliable than regenerating)
+COPY --from=build --chown=bunjs:bunjs /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=build --chown=bunjs:bunjs /app/node_modules/@prisma ./node_modules/@prisma
 
 # Copy the built application
 COPY --from=build --chown=bunjs:bunjs /app/dist ./dist
