@@ -9,14 +9,12 @@ import educationRouter from '~/routes/education'
 import enterpriseRouter from '~/routes/enterprise'
 import filesRouter from '~/routes/files'
 import servicePricingRouter from '~/routes/service-pricing'
-import router from '~/routes/test'
 import userRouter from '~/routes/user'
 import userQueryRouter from '~/routes/user-query'
 import type { AppOpenAPI } from '~/types'
 
 export function registerRoutes(app: AppOpenAPI) {
   return app
-    .route('/test', router)
     .route('/api', authRouter)
     .route('/api', userRouter)
     .route('/api', servicePricingRouter)
