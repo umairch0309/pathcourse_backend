@@ -6,5 +6,5 @@ export const ORIGINS = [
   'http://localhost:5000',
   'http://localhost:8000',
   'http://localhost:9000',
-  'https://org.teleneo.ai',
+  'https://pathcourse.hasseebmayo.com',
 ]
