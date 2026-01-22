@@ -39,7 +39,18 @@ WORKDIR /app
 RUN addgroup --system --gid 1001 bunjs
 RUN adduser --system --uid 1001 bunjs
 
-# Copy only the built application
+# Copy package.json and bun.lockb for dependency installation
+COPY --from=build --chown=bunjs:bunjs /app/package.json ./
+COPY --from=build --chown=bunjs:bunjs /app/bun.lockb* ./
+
+# Install only production dependencies (needed for @prisma/client package)
+RUN bun install --frozen-lockfile --production
+
+# Copy the generated Prisma client from build stage
+# This is necessary because Prisma client generation requires the prisma CLI (dev dependency)
+COPY --from=build --chown=bunjs:bunjs /app/node_modules/.prisma ./node_modules/.prisma
+
+# Copy the built application
 COPY --from=build --chown=bunjs:bunjs /app/dist ./dist
 
 # Switch to non-root user
