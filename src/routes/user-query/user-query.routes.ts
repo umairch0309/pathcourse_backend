@@ -9,6 +9,8 @@ const userQueryResponseSchema = z
   .object({
     id: z.string(),
     message: z.string(),
+    organizationName: z.string(),
+    organizationEmail: z.string(),
     name: z.string(),
     number: z.string(),
     email: z.string(),
@@ -29,9 +31,8 @@ const userQueryResponseSchema = z
 const createUserQueryBodySchema = z
   .object({
     message: z.string().min(1).describe('Query message'),
-    name: z.string().min(1).max(100).describe('User name'),
-    number: z.string().min(1).max(50).describe('User phone number'),
-    email: z.string().email().describe('User email address'),
+    organizationName: z.string().min(1).max(200).describe('Organization name'),
+    organizationEmail: z.string().email().describe('Organization email address'),
   })
   .describe('Request body for creating user query')
 
@@ -78,7 +79,7 @@ export const USER_QUERY_ROUTES = {
       query: z.object({
         page: z.string().optional().describe('Page number (default: 1)'),
         limit: z.string().optional().describe('Items per page (default: 10)'),
-        search: z.string().optional().describe('Search term for name, email, number, or message'),
+        search: z.string().optional().describe('Search term for organization name, organization email, name, email, number, or message'),
       }),
     },
     responses: {

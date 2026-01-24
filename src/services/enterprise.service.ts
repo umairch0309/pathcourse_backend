@@ -1,5 +1,5 @@
-import prisma from '~/lib/prisma'
 import { generateUniqueEnterpriseCode } from '~/lib/generate-enterprise-code'
+import prisma from '~/lib/prisma'
 
 export const ENTERPRISE_SERVICES = {
   getByCode: async (code: string) => {
@@ -102,10 +102,7 @@ export const ENTERPRISE_SERVICES = {
     return enterprise
   },
 
-  update: async (
-    id: string,
-    data: { name?: string; code?: string; sessionsPerMonth?: number }
-  ) => {
+  update: async (id: string, data: { name?: string; code?: string; sessionsPerMonth?: number }) => {
     // If updating name, check uniqueness
     if (data.name) {
       const existingByName = await prisma.enterprise.findFirst({
@@ -143,10 +140,31 @@ export const ENTERPRISE_SERVICES = {
   },
 
   delete: async (id: string) => {
+    // First, get the enterprise to retrieve its code
+    const enterprise = await prisma.enterprise.findUnique({
+      where: { id },
+    })
+
+    if (!enterprise) {
+      throw new Error('Enterprise not found')
+    }
+
+    // Check if there are any users associated with this enterprise
+    const usersCount = await prisma.user.count({
+      where: {
+        enterpriseCode: enterprise.code,
+      },
+    })
+
+    if (usersCount > 0) {
+      throw new Error(
+        `Cannot delete enterprise: ${usersCount} user(s) are associated with this enterprise.`
+      )
+    }
+
+    // Proceed with deletion if no users are associated
     await prisma.enterprise.delete({
       where: { id },
     })
   },
 }
-
-

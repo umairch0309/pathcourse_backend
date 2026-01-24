@@ -3,6 +3,7 @@ import * as z from 'zod'
 // Create zod schema for env variables
 const envSchema = z.object({
   PORT_NO: z.coerce.number(),
+  FRONTEND_URL: z.string().url().default('https://pathcourse.hasseebmayo.com'),
 })
 
 export async function parseENV() {

@@ -11,6 +11,7 @@ const TAGS = {
   enterprise: 'Enterprise',
   appointment: 'Appointment',
   agora: 'Agora',
+  notification: 'Notification',
 } as const
 
 export default TAGS

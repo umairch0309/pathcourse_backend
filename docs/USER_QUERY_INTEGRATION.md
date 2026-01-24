@@ -19,21 +19,26 @@ Base URL: https://your-api-domain.com/api
 
 ### 1. Create User Query (Public)
 
-Submit a new user query/contact form. This endpoint is public and does not require authentication.
+Submit a new user query/contact form with organization information. This endpoint is public and does not require authentication.
 
 **Endpoint:** `POST /api/user-queries`
 
 **Authentication:** Not required (public endpoint)
 
+
 **Request Body:**
 ```json
 {
   "message": "I have a question about your services",
-  "name": "John Doe",
-  "number": "+1234567890",
-  "email": "john.doe@example.com"
+  "organizationName": "Acme Corporation",
+  "organizationEmail": "contact@acme.com"
 }
 ```
+
+**Request Schema:**
+- `message` (string, required): Query message (minimum 1 character)
+- `organizationName` (string, required): Organization name (1-200 characters)
+- `organizationEmail` (string, required): Organization email address (valid email format)
 
 **Response:**
 ```json
@@ -43,9 +48,11 @@ Submit a new user query/contact form. This endpoint is public and does not requi
   "data": {
     "id": "clx123...",
     "message": "I have a question about your services",
-    "name": "John Doe",
-    "number": "+1234567890",
-    "email": "john.doe@example.com",
+    "organizationName": "Acme Corporation",
+    "organizationEmail": "contact@acme.com",
+    "name": "",
+    "number": "",
+    "email": "",
     "userId": null,
     "createdAt": "2024-01-01T00:00:00.000Z",
     "updatedAt": "2024-01-01T00:00:00.000Z",
@@ -60,9 +67,8 @@ Submit a new user query/contact form. This endpoint is public and does not requi
 ```typescript
 async function createUserQuery(data: {
   message: string
-  name: string
-  number: string
-  email: string
+  organizationName: string
+  organizationEmail: string
 }) {
   const response = await fetch('/api/user-queries', {
     method: 'POST',
@@ -80,6 +86,13 @@ async function createUserQuery(data: {
   const result = await response.json()
   return result.data
 }
+
+// Usage
+const query = await createUserQuery({
+  message: 'I have a question about your services',
+  organizationName: 'Acme Corporation',
+  organizationEmail: 'contact@acme.com'
+})
 ```
 
 **Example Usage (React Component):**
@@ -89,9 +102,8 @@ import { useState } from 'react'
 export default function ContactForm() {
   const [formData, setFormData] = useState({
     message: '',
-    name: '',
-    number: '',
-    email: '',
+    organizationName: '',
+    organizationEmail: '',
   })
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
@@ -112,7 +124,7 @@ export default function ContactForm() {
 
       if (response.ok) {
         setSuccess(true)
-        setFormData({ message: '', name: '', number: '', email: '' })
+        setFormData({ message: '', organizationName: '', organizationEmail: '' })
       } else {
         const error = await response.json()
         alert(error.message || 'Failed to submit query')
@@ -128,35 +140,28 @@ export default function ContactForm() {
     <form onSubmit={handleSubmit}>
       <input
         type="text"
-        placeholder="Name"
-        value={formData.name}
-        onChange={e => setFormData({ ...formData, name: e.target.value })}
+        placeholder="Organization Name"
+        value={formData.organizationName}
+        onChange={e => setFormData({ ...formData, organizationName: e.target.value })}
         required
       />
       <input
         type="email"
-        placeholder="Email"
-        value={formData.email}
-        onChange={e => setFormData({ ...formData, email: e.target.value })}
-        required
-      />
-      <input
-        type="tel"
-        placeholder="Phone Number"
-        value={formData.number}
-        onChange={e => setFormData({ ...formData, number: e.target.value })}
+        placeholder="Organization Email"
+        value={formData.organizationEmail}
+        onChange={e => setFormData({ ...formData, organizationEmail: e.target.value })}
         required
       />
       <textarea
-        placeholder="Your message"
+        placeholder="Write message"
         value={formData.message}
         onChange={e => setFormData({ ...formData, message: e.target.value })}
         required
       />
       <button type="submit" disabled={loading}>
-        {loading ? 'Submitting...' : 'Submit Query'}
+        {loading ? 'Submitting...' : 'Send Message'}
       </button>
-      {success && <p>Query submitted successfully!</p>}
+      {success && <p>Message sent successfully!</p>}
     </form>
   )
 }
@@ -166,16 +171,16 @@ export default function ContactForm() {
 
 ### 2. Get All User Queries (Admin Only)
 
-Retrieve all user queries with pagination and search functionality.
+Retrieve all user queries with pagination and search functionality. Also available via admin routes.
 
-**Endpoint:** `GET /api/user-queries`
+**Endpoint:** `GET /api/user-queries` or `GET /api/admin/user-queries`
 
 **Authentication:** Required (Admin role)
 
 **Query Parameters:**
 - `page` (optional): Page number (default: 1)
 - `limit` (optional): Items per page (default: 10)
-- `search` (optional): Search term for name, email, number, or message
+- `search` (optional): Search term for organization name, organization email, name, email, number, or message
 
 **Response:**
 ```json
@@ -187,9 +192,11 @@ Retrieve all user queries with pagination and search functionality.
       {
         "id": "clx123...",
         "message": "I have a question about your services",
-        "name": "John Doe",
-        "number": "+1234567890",
-        "email": "john.doe@example.com",
+        "organizationName": "Acme Corporation",
+        "organizationEmail": "contact@acme.com",
+        "name": "",
+        "number": "",
+        "email": "",
         "userId": "user123...",
         "createdAt": "2024-01-01T00:00:00.000Z",
         "updatedAt": "2024-01-01T00:00:00.000Z",
@@ -243,9 +250,9 @@ async function getAllUserQueries(filters?: {
 
 ### 3. Get User Query by ID (Admin Only)
 
-Retrieve a specific user query by its ID.
+Retrieve a specific user query by its ID. Also available via admin routes.
 
-**Endpoint:** `GET /api/user-queries/{id}`
+**Endpoint:** `GET /api/user-queries/{id}` or `GET /api/admin/user-queries/{id}`
 
 **Authentication:** Required (Admin role)
 
@@ -260,9 +267,11 @@ Retrieve a specific user query by its ID.
   "data": {
     "id": "clx123...",
     "message": "I have a question about your services",
-    "name": "John Doe",
-    "number": "+1234567890",
-    "email": "john.doe@example.com",
+    "organizationName": "Acme Corporation",
+    "organizationEmail": "contact@acme.com",
+    "name": "",
+    "number": "",
+    "email": "",
     "userId": "user123...",
     "createdAt": "2024-01-01T00:00:00.000Z",
     "updatedAt": "2024-01-01T00:00:00.000Z",
@@ -554,9 +563,8 @@ export default function AdminQueriesDashboard() {
       <table>
         <thead>
           <tr>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Number</th>
+            <th>Organization Name</th>
+            <th>Organization Email</th>
             <th>Message</th>
             <th>Date</th>
             <th>Actions</th>
@@ -565,9 +573,8 @@ export default function AdminQueriesDashboard() {
         <tbody>
           {queries.map(query => (
             <tr key={query.id}>
-              <td>{query.name}</td>
-              <td>{query.email}</td>
-              <td>{query.number}</td>
+              <td>{query.organizationName}</td>
+              <td>{query.organizationEmail}</td>
               <td>{query.message.substring(0, 50)}...</td>
               <td>{new Date(query.createdAt).toLocaleDateString()}</td>
               <td>
@@ -611,9 +618,8 @@ import { useState } from 'react'
 export default function ContactForm() {
   const [formData, setFormData] = useState({
     message: '',
-    name: '',
-    number: '',
-    email: '',
+    organizationName: '',
+    organizationEmail: '',
   })
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
@@ -638,7 +644,7 @@ export default function ContactForm() {
 
       if (response.ok) {
         setSuccess(true)
-        setFormData({ message: '', name: '', number: '', email: '' })
+        setFormData({ message: '', organizationName: '', organizationEmail: '' })
       } else {
         setError(data.message || 'Failed to submit query')
       }
@@ -655,7 +661,7 @@ export default function ContactForm() {
 
       {success && (
         <div className="success-message">
-          Thank you! Your query has been submitted successfully.
+          Thank you! Your message has been sent successfully.
         </div>
       )}
 
@@ -666,36 +672,26 @@ export default function ContactForm() {
       )}
 
       <div>
-        <label htmlFor="name">Name *</label>
+        <label htmlFor="organizationName">Organization Name *</label>
         <input
-          id="name"
+          id="organizationName"
           type="text"
-          value={formData.name}
-          onChange={e => setFormData({ ...formData, name: e.target.value })}
+          placeholder="Organization name"
+          value={formData.organizationName}
+          onChange={e => setFormData({ ...formData, organizationName: e.target.value })}
           required
           disabled={loading}
         />
       </div>
 
       <div>
-        <label htmlFor="email">Email *</label>
+        <label htmlFor="organizationEmail">Organization Email *</label>
         <input
-          id="email"
+          id="organizationEmail"
           type="email"
-          value={formData.email}
-          onChange={e => setFormData({ ...formData, email: e.target.value })}
-          required
-          disabled={loading}
-        />
-      </div>
-
-      <div>
-        <label htmlFor="number">Phone Number *</label>
-        <input
-          id="number"
-          type="tel"
-          value={formData.number}
-          onChange={e => setFormData({ ...formData, number: e.target.value })}
+          placeholder="Organization email"
+          value={formData.organizationEmail}
+          onChange={e => setFormData({ ...formData, organizationEmail: e.target.value })}
           required
           disabled={loading}
         />
@@ -705,6 +701,7 @@ export default function ContactForm() {
         <label htmlFor="message">Message *</label>
         <textarea
           id="message"
+          placeholder="Write message"
           value={formData.message}
           onChange={e => setFormData({ ...formData, message: e.target.value })}
           required
@@ -714,7 +711,7 @@ export default function ContactForm() {
       </div>
 
       <button type="submit" disabled={loading}>
-        {loading ? 'Submitting...' : 'Submit Query'}
+        {loading ? 'Sending...' : 'Send Message'}
       </button>
     </form>
   )
@@ -745,9 +742,8 @@ export interface UserQuery {
 
 export interface CreateUserQueryInput {
   message: string
-  name: string
-  number: string
-  email: string
+  organizationName: string
+  organizationEmail: string
 }
 
 export interface UserQueryListResponse {
@@ -775,13 +771,24 @@ export interface UserQueryFilters {
 
 2. **Admin Access**: All read and delete operations require admin authentication. Ensure your admin users have the `role: 'admin'` in their user profile.
 
-3. **Pagination**: The list endpoint supports pagination with configurable page size. Default is 10 items per page.
+3. **Admin Routes**: In addition to the standard routes, admin-specific routes are available:
+   - `GET /api/admin/user-queries` - Get all user queries (same as `/api/user-queries`)
+   - `GET /api/admin/user-queries/{id}` - Get user query by ID (same as `/api/user-queries/{id}`)
+   These routes provide the same functionality but are organized under the admin namespace for better API organization.
 
-4. **Search**: The search functionality searches across name, email, number, and message fields (case-insensitive).
+4. **Form Fields**: The contact form now requires:
+   - `organizationName` (required): The name of the organization
+   - `organizationEmail` (required): The email address of the organization
+   - `message` (required): The query/message content
+   The legacy fields (`name`, `number`, `email`) are still stored in the database but are optional and default to empty strings.
 
-5. **User Association**: If a logged-in user submits a query, the `userId` field will be populated and the `user` object will be included in responses.
+5. **Pagination**: The list endpoint supports pagination with configurable page size. Default is 10 items per page.
 
-6. **Error Handling**: Always handle errors appropriately in your frontend code. The API returns descriptive error messages that can be displayed to users.
+6. **Search**: The search functionality searches across organization name, organization email, name, email, number, and message fields (case-insensitive).
+
+7. **User Association**: If a logged-in user submits a query, the `userId` field will be populated and the `user` object will be included in responses.
+
+8. **Error Handling**: Always handle errors appropriately in your frontend code. The API returns descriptive error messages that can be displayed to users.
 
 ---
 

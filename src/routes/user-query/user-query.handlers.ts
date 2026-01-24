@@ -15,6 +15,8 @@ type UserQueryWithUser = Prisma.UserQueryGetPayload<{
 const formatUserQueryResponse = (query: UserQueryWithUser) => ({
   id: query.id,
   message: query.message,
+  organizationName: query.organizationName,
+  organizationEmail: query.organizationEmail,
   name: query.name,
   number: query.number,
   email: query.email,
@@ -35,13 +37,12 @@ export const USER_QUERY_ROUTES_HANDLER: HandlerMapFromRoutes<typeof USER_QUERY_R
     // Public endpoint - no authentication required
     const user = c.get('user') // Optional - if user is logged in, we'll associate the query
 
-    const { message, name, number, email } = c.req.valid('json')
+    const { message, organizationName, organizationEmail } = c.req.valid('json')
 
     const userQuery = await USER_QUERY_SERVICES.create({
       message,
-      name,
-      number,
-      email,
+      organizationName,
+      organizationEmail,
       userId: user?.id || null,
     })
 

@@ -1,4 +1,25 @@
 import prisma from '~/lib/prisma'
+import { extractS3KeyFromUrl, keysToSignedUrls } from '~/lib/s3'
+
+// Helper function to convert user image key to signed URL
+const convertUserImageToSignedUrl = async (
+  imageKeyOrUrl: string | null
+): Promise<string | null> => {
+  if (!imageKeyOrUrl) {
+    return null
+  }
+  // If it's already a URL starting with https, return as is
+  if (imageKeyOrUrl.startsWith('http://') || imageKeyOrUrl.startsWith('https://')) {
+    return imageKeyOrUrl
+  }
+  // Otherwise, treat it as a key and convert to signed URL
+  const key = extractS3KeyFromUrl(imageKeyOrUrl)
+  if (!key) {
+    return imageKeyOrUrl
+  }
+  const signedUrl = await keysToSignedUrls(key, 7 * 24 * 3600) // 7 days
+  return Array.isArray(signedUrl) ? signedUrl[0] : signedUrl
+}
 
 export const USER_SERVICES = {
   updateRole: async (data: { userId: string; role: string }) => {
@@ -121,5 +142,173 @@ export const USER_SERVICES = {
     })
 
     return updatedUser
+  },
+
+  // Get all patients (admin only)
+  getAllPatients: async (filters?: { page?: number; limit?: number; search?: string }) => {
+    const page = filters?.page || 1
+    const limit = filters?.limit || 10
+    const skip = (page - 1) * limit
+
+    const where = {
+      role: 'patient',
+      ...(filters?.search && {
+        OR: [
+          { name: { contains: filters.search, mode: 'insensitive' as const } },
+          { email: { contains: filters.search, mode: 'insensitive' as const } },
+          { employeeCode: { contains: filters.search, mode: 'insensitive' as const } },
+          { enterpriseCode: { contains: filters.search, mode: 'insensitive' as const } },
+        ],
+      }),
+    }
+
+    const [patients, total] = await Promise.all([
+      prisma.user.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          image: true,
+          phone: true,
+          role: true,
+          banned: true,
+          banReason: true,
+          banExpires: true,
+          onboardingStage: true,
+          enterpriseCode: true,
+          employeeCode: true,
+          isAnonymous: true,
+          createdAt: true,
+          updatedAt: true,
+          userInfo: {
+            select: {
+              id: true,
+              gender: true,
+              dateOfBirth: true,
+              phone: true,
+              address: true,
+            },
+          },
+        },
+      }),
+      prisma.user.count({ where }),
+    ])
+
+    // Convert user images to signed URLs
+    const patientsWithSignedUrls = await Promise.all(
+      patients.map(async patient => ({
+        ...patient,
+        image: await convertUserImageToSignedUrl(patient.image),
+      }))
+    )
+
+    return {
+      patients: patientsWithSignedUrls,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    }
+  },
+
+  // Get patient by ID (admin only)
+  getPatientById: async (patientId: string) => {
+    const patient = await prisma.user.findFirst({
+      where: {
+        id: patientId,
+        role: 'patient',
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        image: true,
+        phone: true,
+        role: true,
+        banned: true,
+        banReason: true,
+        banExpires: true,
+        onboardingStage: true,
+        enterpriseCode: true,
+        employeeCode: true,
+        isAnonymous: true,
+        createdAt: true,
+        updatedAt: true,
+        userInfo: {
+          select: {
+            id: true,
+            gender: true,
+            dateOfBirth: true,
+            phone: true,
+            address: true,
+          },
+        },
+      },
+    })
+
+    if (!patient) {
+      return null
+    }
+
+    // Convert user image to signed URL
+    const image = await convertUserImageToSignedUrl(patient.image)
+
+    return {
+      ...patient,
+      image,
+    }
+  },
+
+  // Update admin profile
+  updateAdminProfile: async (data: {
+    userId: string
+    name?: string
+    image?: string | null
+    phone?: string | null
+  }) => {
+    const updateData: {
+      name?: string
+      image?: string | null
+      phone?: string | null
+    } = {}
+
+    if (data.name !== undefined) {
+      updateData.name = data.name
+    }
+    if (data.image !== undefined) {
+      updateData.image = data.image
+    }
+    if (data.phone !== undefined) {
+      updateData.phone = data.phone
+    }
+
+    const user = await prisma.user.update({
+      where: { id: data.userId },
+      data: updateData,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        image: true,
+        phone: true,
+        role: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    })
+
+    // Convert image to signed URL
+    const image = await convertUserImageToSignedUrl(user.image)
+
+    return {
+      ...user,
+      image,
+    }
   },
 }

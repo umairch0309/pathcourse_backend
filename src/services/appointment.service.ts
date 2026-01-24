@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/suspicious/noExplicitAny: <explanation> */
 import { doctorConnectionTracker } from '~/lib/doctor-connection-tracker'
 import prisma from '~/lib/prisma'
 import { DOCTOR_SERVICES } from '~/services/doctor.service'
@@ -189,6 +190,17 @@ export const APPOINTMENT_SERVICES = {
         isAvailable: false,
       },
     })
+
+    // Create notification for doctor about new appointment
+    const { createNotificationForUser, NOTIFICATION_TYPES } = await import(
+      '~/lib/notification-helper'
+    )
+    await createNotificationForUser(
+      data.doctorId,
+      NOTIFICATION_TYPES.APPOINTMENT_BOOKED,
+      `New appointment booked with ${appointment.patient.name || 'a patient'}. Click to join the session.`,
+      appointment.id
+    )
 
     return appointment
   },
@@ -541,6 +553,42 @@ export const APPOINTMENT_SERVICES = {
         },
       },
     })
+
+    // Create notifications based on status
+    const { createNotificationForUser, NOTIFICATION_TYPES } = await import(
+      '~/lib/notification-helper'
+    )
+    if (status === 'COMPLETED') {
+      await Promise.all([
+        createNotificationForUser(
+          updatedAppointment.doctorId,
+          NOTIFICATION_TYPES.APPOINTMENT_COMPLETED,
+          `Appointment with ${updatedAppointment.patient.name || 'patient'} has been completed.`,
+          updatedAppointment.id
+        ),
+        createNotificationForUser(
+          updatedAppointment.patientId,
+          NOTIFICATION_TYPES.APPOINTMENT_COMPLETED,
+          `Your appointment with ${updatedAppointment.doctor.name} has been completed.`,
+          updatedAppointment.id
+        ),
+      ])
+    } else if (status === 'NO_SHOW') {
+      await Promise.all([
+        createNotificationForUser(
+          updatedAppointment.doctorId,
+          NOTIFICATION_TYPES.APPOINTMENT_NO_SHOW,
+          `Appointment with ${updatedAppointment.patient.name || 'patient'} was marked as no-show.`,
+          updatedAppointment.id
+        ),
+        createNotificationForUser(
+          updatedAppointment.patientId,
+          NOTIFICATION_TYPES.APPOINTMENT_NO_SHOW,
+          `Your appointment with ${updatedAppointment.doctor.name} was marked as no-show.`,
+          updatedAppointment.id
+        ),
+      ])
+    }
 
     // If appointment is completed, automatically set doctor availability to true
     // But only if there are no other active or upcoming appointments within 15 minutes
@@ -1072,6 +1120,26 @@ export const APPOINTMENT_SERVICES = {
       },
     })
 
+    // Create notifications for no-show appointments
+    const { createNotificationForUser, NOTIFICATION_TYPES } = await import(
+      '~/lib/notification-helper'
+    )
+    const notificationPromises = appointmentsToMark.flatMap(apt => [
+      createNotificationForUser(
+        apt.doctorId,
+        NOTIFICATION_TYPES.APPOINTMENT_NO_SHOW,
+        `Appointment was marked as no-show.`,
+        apt.id
+      ),
+      createNotificationForUser(
+        apt.patientId,
+        NOTIFICATION_TYPES.APPOINTMENT_NO_SHOW,
+        `Your appointment was marked as no-show.`,
+        apt.id
+      ),
+    ])
+    await Promise.all(notificationPromises)
+
     // Get unique doctor IDs to check availability restoration
     const uniqueDoctorIds = Array.from(new Set(appointmentsToMark.map(apt => apt.doctorId)))
 
@@ -1143,5 +1211,185 @@ export const APPOINTMENT_SERVICES = {
     })
 
     return sessionReason
+  },
+
+  // Get all appointments for admin (with full details)
+  getAllForAdmin: async (filters?: {
+    doctorId?: string
+    patientId?: string
+    status?: 'BOOKED' | 'COMPLETED' | 'NO_SHOW'
+    page?: number
+    limit?: number
+    search?: string
+  }) => {
+    const page = filters?.page || 1
+    const limit = filters?.limit || 10
+    const skip = (page - 1) * limit
+
+    const where: any = {}
+
+    if (filters?.doctorId) {
+      where.doctorId = filters.doctorId
+    }
+
+    if (filters?.patientId) {
+      where.patientId = filters.patientId
+    }
+
+    if (filters?.status) {
+      where.status = filters.status
+    }
+
+    // Search functionality
+    if (filters?.search) {
+      where.OR = [
+        { issue: { contains: filters.search, mode: 'insensitive' } },
+        { patientName: { contains: filters.search, mode: 'insensitive' } },
+        { doctor: { name: { contains: filters.search, mode: 'insensitive' } } },
+        { doctor: { email: { contains: filters.search, mode: 'insensitive' } } },
+        { patient: { name: { contains: filters.search, mode: 'insensitive' } } },
+        { patient: { email: { contains: filters.search, mode: 'insensitive' } } },
+      ]
+    }
+
+    const [appointments, total] = await Promise.all([
+      prisma.appointment.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          doctor: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              image: true,
+              phone: true,
+              role: true,
+              isAnonymous: true,
+              employeeCode: true,
+              enterpriseCode: true,
+              banned: true,
+              onboardingStage: true,
+            },
+          },
+          patient: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              image: true,
+              phone: true,
+              role: true,
+              isAnonymous: true,
+              employeeCode: true,
+              enterpriseCode: true,
+              banned: true,
+              onboardingStage: true,
+            },
+          },
+          appointmentNotes: true,
+          sessionReason: true,
+        },
+      }),
+      prisma.appointment.count({ where }),
+    ])
+
+    return {
+      appointments,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    }
+  },
+
+  // Get appointment by ID for admin (with full details)
+  getByIdForAdmin: async (id: string) => {
+    const appointment = await prisma.appointment.findUnique({
+      where: { id },
+      include: {
+        doctor: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            image: true,
+            phone: true,
+            role: true,
+            isAnonymous: true,
+            employeeCode: true,
+            enterpriseCode: true,
+            banned: true,
+            onboardingStage: true,
+            createdAt: true,
+          },
+        },
+        patient: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            image: true,
+            phone: true,
+            role: true,
+            isAnonymous: true,
+            employeeCode: true,
+            enterpriseCode: true,
+            banned: true,
+            onboardingStage: true,
+            createdAt: true,
+          },
+        },
+        appointmentNotes: true,
+        sessionReason: true,
+      },
+    })
+
+    return appointment
+  },
+
+  // Get last N appointments
+  getLastN: async (limit: number = 5) => {
+    const appointments = await prisma.appointment.findMany({
+      take: limit,
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        doctorId: true,
+        patientId: true,
+        status: true,
+        scheduledAt: true,
+        startedAt: true,
+        endedAt: true,
+        createdAt: true,
+        updatedAt: true,
+        appointmentFor: true,
+        issue: true,
+        doctor: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            image: true,
+            role: true,
+          },
+        },
+        patient: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            image: true,
+            role: true,
+          },
+        },
+      },
+    })
+
+    return appointments
   },
 }

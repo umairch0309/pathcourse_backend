@@ -8,6 +8,7 @@ import doctorProfileCompleteRouter from '~/routes/doctor-profile-complete'
 import educationRouter from '~/routes/education'
 import enterpriseRouter from '~/routes/enterprise'
 import filesRouter from '~/routes/files'
+import notificationRouter from '~/routes/notification'
 import servicePricingRouter from '~/routes/service-pricing'
 import userRouter from '~/routes/user'
 import userQueryRouter from '~/routes/user-query'
@@ -27,5 +28,6 @@ export function registerRoutes(app: AppOpenAPI) {
     .route('/api', enterpriseRouter)
     .route('/api', appointmentRouter)
     .route('/api', agoraRouter)
+    .route('/api', notificationRouter)
     .route('/api', adminRouter) // chained router.
 }

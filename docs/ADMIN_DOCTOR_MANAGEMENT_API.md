@@ -1,6 +1,6 @@
 # Admin Doctor Management API Documentation
 
-This document provides comprehensive integration instructions for the Admin Doctor Management API endpoints. All endpoints are **admin-only** and require authentication.
+This document provides comprehensive integration instructions for the Admin Doctor Management API endpoints, including fetching approved doctors, creating new doctors, and blocking/unblocking doctors.
 
 ## Base URL
 
@@ -12,79 +12,73 @@ Base URL: https://your-api-domain.com/api
 
 ## Authentication
 
-- **All endpoints**: Admin authentication required
-- Users must have `role: "admin"` to access these endpoints
-- Authentication is handled via better-auth session cookies
-
-## Doctor Request Status
-
-Doctor profile status is managed through the `onboardingStage` field on the User model:
-
-- **`WAITING_FOR_ADMIN`**: Pending approval (doctor has submitted their profile)
-- **`COMPLETED`**: Approved by admin
-- **`REJECTED`**: Rejected by admin (rejection reason stored in `Doctor.rejectReason`)
+All endpoints require admin authentication via better-auth session. The user must have the `admin` role.
 
 ## Admin Doctor Management Endpoints
 
-### 1. Get All Doctor Requests
+### 1. Get Approved Doctors
 
-Retrieve all pending doctor requests with pagination and optional search.
+Retrieve a paginated list of all approved doctors (doctors with `onboardingStage = 'COMPLETED'` and `banned = false`).
 
-**Endpoint:** `GET /api/admin/doctor-requests`
+**Endpoint:** `GET /api/admin/doctors/approved`
 
 **Authentication:** Required (Admin only)
 
 **Query Parameters:**
 - `page` (string, optional): Page number (default: 1)
 - `limit` (string, optional): Items per page (default: 10)
-- `search` (string, optional): Search by name, email, or professional email (case-insensitive)
+- `search` (string, optional): Search by name, email, or professional email
 
 **Response (200 OK):**
 ```json
 {
-  "message": "Doctor requests retrieved successfully",
+  "message": "Approved doctors retrieved successfully",
   "success": true,
   "data": {
     "doctors": [
       {
         "id": "clx123...",
-        "userid": "user456...",
-        "professional_contact": "+1234567890",
+        "userid": "clx456...",
+        "professional_contact": "(321) 123-456",
         "professional_email": "doctor@example.com",
-        "secondary_contact": null,
-        "isAvailable": false,
+        "secondary_contact": "(321) 123-457",
+        "isAvailable": true,
         "isInMeeting": false,
-        "rejectReason": null,
-        "createdAt": "2024-01-01T00:00:00.000Z",
-        "updatedAt": "2024-01-01T00:00:00.000Z",
+        "createdAt": "2024-01-15T10:00:00.000Z",
+        "updatedAt": "2024-01-15T10:00:00.000Z",
         "user": {
-          "id": "user456...",
+          "id": "clx456...",
           "name": "Dr. Jane Smith",
           "email": "jane.smith@example.com",
-          "image": "https://...",
+          "image": "https://signed-url...",
           "role": "doctor",
-          "onboardingStage": "DOCTOR_INFO",
-          "createdAt": "2024-01-01T00:00:00.000Z"
+          "phone": "(321) 123-456",
+          "banned": false,
+          "banReason": null,
+          "banExpires": null,
+          "onboardingStage": "COMPLETED",
+          "createdAt": "2024-01-15T10:00:00.000Z"
         },
         "documents": {
-          "id": "doc123...",
-          "resume": "https://...",
-          "medicalLicense": "https://...",
-          "introductionVideo": "https://..."
+          "id": "clx789...",
+          "resume": "https://signed-url...",
+          "medicalLicense": "https://signed-url...",
+          "introductionVideo": "https://signed-url..."
         },
         "education": [
           {
-            "id": "edu123...",
+            "id": "clx101...",
             "degree": "MD",
-            "institution_name": "Medical School",
-            "startYear": "2010-09-01T00:00:00.000Z",
-            "endYear": "2014-06-01T00:00:00.000Z"
+            "institution_name": "Medical University",
+            "startYear": "2010-01-01T00:00:00.000Z",
+            "endYear": "2014-01-01T00:00:00.000Z",
+            "document": "https://signed-url..."
           }
         ],
         "professionalExperience": {
-          "id": "exp123...",
+          "id": "clx202...",
           "profession": "Psychiatrist",
-          "special_interest_area": "Mental Health",
+          "special_interest_area": "Anxiety Disorders",
           "age_group": "Adults",
           "languages": ["English", "Spanish"]
         }
@@ -93,8 +87,8 @@ Retrieve all pending doctor requests with pagination and optional search.
     "pagination": {
       "page": 1,
       "limit": 10,
-      "total": 25,
-      "totalPages": 3
+      "total": 50,
+      "totalPages": 5
     }
   }
 }
@@ -110,7 +104,7 @@ Retrieve all pending doctor requests with pagination and optional search.
   }
   ```
 
-- **403 Forbidden**: Not an admin
+- **403 Forbidden**: Not an admin user
   ```json
   {
     "message": "Forbidden - Admin only",
@@ -118,9 +112,15 @@ Retrieve all pending doctor requests with pagination and optional search.
   }
   ```
 
-**Example Usage:**
+**Business Logic:**
+1. Only returns doctors with `onboardingStage = 'COMPLETED'` and `banned = false`
+2. Includes full doctor profile with user information, documents, education, and professional experience
+3. Converts S3 file URLs to signed URLs (valid for 7 days)
+4. Supports pagination and search functionality
+
+**Example Usage (JavaScript/TypeScript):**
 ```typescript
-async function getDoctorRequests(filters?: {
+async function getApprovedDoctors(filters?: {
   page?: number
   limit?: number
   search?: string
@@ -130,14 +130,17 @@ async function getDoctorRequests(filters?: {
   if (filters?.limit) params.append('limit', filters.limit.toString())
   if (filters?.search) params.append('search', filters.search)
 
-  const response = await fetch(`/api/admin/doctor-requests?${params.toString()}`, {
+  const response = await fetch(`/api/admin/doctors/approved?${params.toString()}`, {
     method: 'GET',
-    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      // Include authentication headers (cookies/session)
+    },
   })
 
   if (!response.ok) {
     const error = await response.json()
-    throw new Error(error.message || 'Failed to retrieve doctor requests')
+    throw new Error(error.message || 'Failed to fetch approved doctors')
   }
 
   const result = await response.json()
@@ -145,141 +148,102 @@ async function getDoctorRequests(filters?: {
 }
 
 // Usage
-const data = await getDoctorRequests({
+const doctors = await getApprovedDoctors({
   page: 1,
-  limit: 10,
-  search: 'Jane',
+  limit: 20,
+  search: 'Smith'
 })
 ```
 
-### 2. Approve Doctor
+---
 
-Approve a doctor request. Sets the doctor's onboarding stage to `COMPLETED` and clears any previous rejection reason.
+### 2. Create New Doctor
 
-**Endpoint:** `POST /api/admin/doctor-requests/approve`
+Create a new doctor account with credentials. The doctor is automatically approved (pre-approved by admin).
+
+**Endpoint:** `POST /api/admin/doctors`
 
 **Authentication:** Required (Admin only)
 
 **Request Body:**
 ```json
 {
-  "doctorId": "clx123..."
+  "name": "Dr. John Doe",
+  "email": "john.doe@example.com",
+  "password": "securePassword123",
+  "professional_email": "doctor.john@clinic.com",
+  "professional_contact": "(321) 123-456",
+  "secondary_contact": "(321) 123-457",
+  "phone": "(321) 123-456"
 }
 ```
 
 **Request Schema:**
-- `doctorId` (string, required): Doctor ID to approve
+- `name` (string, required): Doctor name (1-100 characters)
+- `email` (string, required): Doctor email for login (must be unique)
+- `password` (string, required): Password (minimum 8 characters)
+- `professional_email` (string, required): Professional email address (must be unique)
+- `professional_contact` (string, required): Professional contact number
+- `secondary_contact` (string, optional): Secondary contact number
+- `phone` (string, optional): Phone number
 
-**Response (200 OK):**
+**Response (201 Created):**
 ```json
 {
-  "message": "Doctor approved successfully",
+  "message": "Doctor created successfully",
   "success": true,
   "data": {
     "id": "clx123...",
-    "userid": "user456...",
-    "professional_contact": "+1234567890",
-    "professional_email": "doctor@example.com",
-    "rejectReason": null,
+    "userid": "clx456...",
+    "professional_contact": "(321) 123-456",
+    "professional_email": "doctor.john@clinic.com",
+    "secondary_contact": "(321) 123-457",
+    "isAvailable": false,
+    "isInMeeting": false,
+    "createdAt": "2024-01-15T10:00:00.000Z",
+    "updatedAt": "2024-01-15T10:00:00.000Z",
     "user": {
-      "id": "user456...",
-      "name": "Dr. Jane Smith",
-      "email": "jane.smith@example.com",
-      "onboardingStage": "COMPLETED"
-    }
+      "id": "clx456...",
+      "name": "Dr. John Doe",
+      "email": "john.doe@example.com",
+      "image": null,
+      "role": "doctor",
+      "phone": "(321) 123-456",
+      "banned": false,
+      "banReason": null,
+      "banExpires": null,
+      "onboardingStage": "COMPLETED",
+      "createdAt": "2024-01-15T10:00:00.000Z"
+    },
+    "documents": null,
+    "education": [],
+    "professionalExperience": null
   }
 }
 ```
 
 **Error Responses:**
 
-- **404 Not Found**: Doctor not found
+- **401 Unauthorized**: Not authenticated
   ```json
   {
-    "message": "Doctor not found",
+    "message": "Unauthorized",
     "success": false
   }
   ```
 
-**Business Logic:**
-1. Verifies the doctor exists
-2. Updates user's `onboardingStage` to `"COMPLETED"`
-3. Clears any existing `rejectReason` in the Doctor record
-4. Returns updated doctor information
-
-**Example Usage:**
-```typescript
-async function approveDoctor(doctorId: string) {
-  const response = await fetch('/api/admin/doctor-requests/approve', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    credentials: 'include',
-    body: JSON.stringify({ doctorId }),
-  })
-
-  if (!response.ok) {
-    const error = await response.json()
-    throw new Error(error.message || 'Failed to approve doctor')
-  }
-
-  const result = await response.json()
-  return result.data
-}
-
-// Usage
-const approvedDoctor = await approveDoctor('clx123...')
-console.log('Doctor approved:', approvedDoctor.user.onboardingStage) // "COMPLETED"
-```
-
-### 3. Reject Doctor
-
-Reject a doctor request. Sets the doctor's onboarding stage to `REJECTED` and saves the rejection reason.
-
-**Endpoint:** `POST /api/admin/doctor-requests/reject`
-
-**Authentication:** Required (Admin only)
-
-**Request Body:**
-```json
-{
-  "doctorId": "clx123...",
-  "rejectReason": "Incomplete documentation. Please provide valid medical license."
-}
-```
-
-**Request Schema:**
-- `doctorId` (string, required): Doctor ID to reject
-- `rejectReason` (string, required): Reason for rejection (minimum 1 character)
-
-**Response (200 OK):**
-```json
-{
-  "message": "Doctor rejected successfully",
-  "success": true,
-  "data": {
-    "id": "clx123...",
-    "userid": "user456...",
-    "professional_contact": "+1234567890",
-    "professional_email": "doctor@example.com",
-    "rejectReason": "Incomplete documentation. Please provide valid medical license.",
-    "user": {
-      "id": "user456...",
-      "name": "Dr. Jane Smith",
-      "email": "jane.smith@example.com",
-      "onboardingStage": "REJECTED"
-    }
-  }
-}
-```
-
-**Error Responses:**
-
-- **404 Not Found**: Doctor not found
+- **403 Forbidden**: Not an admin user
   ```json
   {
-    "message": "Doctor not found",
+    "message": "Forbidden - Admin only",
+    "success": false
+  }
+  ```
+
+- **409 Conflict**: Email or professional email already exists
+  ```json
+  {
+    "message": "Email already exists",
     "success": false
   }
   ```
@@ -289,32 +253,43 @@ Reject a doctor request. Sets the doctor's onboarding stage to `REJECTED` and sa
   {
     "message": "Validation failed",
     "errors": {
-      "rejectReason": "Reject reason is required"
+      "email": "Invalid email format",
+      "password": "Password must be at least 8 characters"
     }
   }
   ```
 
 **Business Logic:**
-1. Verifies the doctor exists
-2. Updates user's `onboardingStage` to `"REJECTED"`
-3. Saves the `rejectReason` in the Doctor record
-4. Returns updated doctor information with rejection reason
+1. Creates a new user account using better-auth (password is automatically hashed)
+2. Sets user role to `doctor`
+3. Sets onboarding stage to `COMPLETED` (pre-approved by admin)
+4. Creates doctor record with professional information
+5. Doctor starts with `isAvailable = false` (must manually toggle availability)
+6. Validates that email and professional_email are unique
 
-**Example Usage:**
+**Example Usage (JavaScript/TypeScript):**
 ```typescript
-async function rejectDoctor(doctorId: string, rejectReason: string) {
-  const response = await fetch('/api/admin/doctor-requests/reject', {
+async function createDoctor(data: {
+  name: string
+  email: string
+  password: string
+  professional_email: string
+  professional_contact: string
+  secondary_contact?: string
+  phone?: string
+}) {
+  const response = await fetch('/api/admin/doctors', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      // Include authentication headers (cookies/session)
     },
-    credentials: 'include',
-    body: JSON.stringify({ doctorId, rejectReason }),
+    body: JSON.stringify(data),
   })
 
   if (!response.ok) {
     const error = await response.json()
-    throw new Error(error.message || 'Failed to reject doctor')
+    throw new Error(error.message || 'Failed to create doctor')
   }
 
   const result = await response.json()
@@ -322,227 +297,225 @@ async function rejectDoctor(doctorId: string, rejectReason: string) {
 }
 
 // Usage
-const rejectedDoctor = await rejectDoctor(
-  'clx123...',
-  'Incomplete documentation. Please provide valid medical license.'
-)
-console.log('Rejection reason:', rejectedDoctor.rejectReason)
-console.log('Status:', rejectedDoctor.user.onboardingStage) // "REJECTED"
+const doctor = await createDoctor({
+  name: 'Dr. John Doe',
+  email: 'john.doe@example.com',
+  password: 'securePassword123',
+  professional_email: 'doctor.john@clinic.com',
+  professional_contact: '(321) 123-456',
+  secondary_contact: '(321) 123-457',
+  phone: '(321) 123-456'
+})
+
+// Note: In a real application, you would send credentials to the doctor's personal email
+// This is typically done via email service (not included in this API)
 ```
 
-## Integration Notes
+---
 
-1. **Admin-Only Access**: All endpoints require admin authentication. Ensure your frontend checks user role before displaying admin UI.
+### 3. Block Doctor
 
-2. **Pending Doctors**: The system identifies pending doctors by checking for `onboardingStage` values of `"DOCTOR_INFO"` or `"ROLE_SELECTION"`.
+Block a doctor, preventing them from accessing the system. This sets `banned = true` on the user account.
 
-3. **Status Management**: Doctor approval/rejection status is managed through the User's `onboardingStage` field:
-   - `COMPLETED`: Doctor is approved and can use the platform
-   - `REJECTED`: Doctor is rejected (reason stored in `Doctor.rejectReason`)
+**Endpoint:** `POST /api/admin/doctors/{doctorId}/block`
 
-4. **Rejection Reason**: When rejecting a doctor, the reason is required and will be stored in the `Doctor.rejectReason` field. This can be displayed to the doctor for feedback.
+**Authentication:** Required (Admin only)
 
-5. **Approval Clears Rejection**: When approving a previously rejected doctor, the `rejectReason` is automatically cleared.
+**Path Parameters:**
+- `doctorId` (string, required): Doctor ID to block
 
-## React Component Example
-
-```tsx
-import { useState, useEffect } from 'react'
-
-function DoctorRequestsManagement() {
-  const [requests, setRequests] = useState<any[]>([])
-  const [loading, setLoading] = useState(false)
-  const [selectedDoctor, setSelectedDoctor] = useState<string | null>(null)
-  const [rejectReason, setRejectReason] = useState('')
-
-  useEffect(() => {
-    fetchRequests()
-  }, [])
-
-  const fetchRequests = async () => {
-    setLoading(true)
-    try {
-      const response = await fetch('/api/admin/doctor-requests?page=1&limit=10', {
-        credentials: 'include',
-      })
-      const result = await response.json()
-      setRequests(result.data.doctors)
-    } catch (error) {
-      console.error('Failed to fetch requests:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleApprove = async (doctorId: string) => {
-    try {
-      const response = await fetch('/api/admin/doctor-requests/approve', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ doctorId }),
-      })
-
-      if (!response.ok) throw new Error('Failed to approve')
-
-      alert('Doctor approved successfully')
-      fetchRequests()
-    } catch (error) {
-      alert('Failed to approve doctor')
-    }
-  }
-
-  const handleReject = async (doctorId: string) => {
-    if (!rejectReason.trim()) {
-      alert('Please provide a rejection reason')
-      return
-    }
-
-    try {
-      const response = await fetch('/api/admin/doctor-requests/reject', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ doctorId, rejectReason }),
-      })
-
-      if (!response.ok) throw new Error('Failed to reject')
-
-      alert('Doctor rejected successfully')
-      setSelectedDoctor(null)
-      setRejectReason('')
-      fetchRequests()
-    } catch (error) {
-      alert('Failed to reject doctor')
-    }
-  }
-
-  if (loading) return <div>Loading...</div>
-
-  return (
-    <div>
-      <h2>Doctor Requests</h2>
-      {requests.map((doctor) => (
-        <div key={doctor.id} className="doctor-request-card">
-          <h3>{doctor.user.name}</h3>
-          <p>Email: {doctor.user.email}</p>
-          <p>Professional Email: {doctor.professional_email}</p>
-          <p>Status: {doctor.user.onboardingStage}</p>
-
-          {doctor.documents && (
-            <div>
-              <p>Documents: ✓ Submitted</p>
-            </div>
-          )}
-
-          {doctor.education.length > 0 && (
-            <div>
-              <p>Education: {doctor.education.length} record(s)</p>
-            </div>
-          )}
-
-          <div className="actions">
-            <button onClick={() => handleApprove(doctor.id)}>
-              Approve
-            </button>
-            <button onClick={() => setSelectedDoctor(doctor.id)}>
-              Reject
-            </button>
-          </div>
-
-          {selectedDoctor === doctor.id && (
-            <div className="reject-form">
-              <textarea
-                placeholder="Enter rejection reason..."
-                value={rejectReason}
-                onChange={(e) => setRejectReason(e.target.value)}
-                rows={4}
-              />
-              <button onClick={() => handleReject(doctor.id)}>
-                Confirm Rejection
-              </button>
-              <button onClick={() => {
-                setSelectedDoctor(null)
-                setRejectReason('')
-              }}>
-                Cancel
-              </button>
-            </div>
-          )}
-        </div>
-      ))}
-    </div>
-  )
+**Request Body:**
+```json
+{
+  "banReason": "Violation of terms of service"
 }
 ```
 
-## Error Handling Best Practices
+**Request Schema:**
+- `banReason` (string, optional): Reason for blocking the doctor
+
+**Response (200 OK):**
+```json
+{
+  "message": "Doctor blocked successfully",
+  "success": true,
+  "data": {
+    "id": "clx123...",
+    "userid": "clx456...",
+    "professional_contact": "(321) 123-456",
+    "professional_email": "doctor.john@clinic.com",
+    "user": {
+      "id": "clx456...",
+      "name": "Dr. John Doe",
+      "email": "john.doe@example.com",
+      "image": "https://signed-url...",
+      "role": "doctor",
+      "phone": "(321) 123-456",
+      "banned": true,
+      "banReason": "Violation of terms of service",
+      "banExpires": null,
+      "onboardingStage": "COMPLETED"
+    }
+  }
+}
+```
+
+**Error Responses:**
+
+- **401 Unauthorized**: Not authenticated
+- **403 Forbidden**: Not an admin user
+- **404 Not Found**: Doctor not found
+
+**Business Logic:**
+1. Sets `banned = true` on the user account
+2. Optionally stores `banReason` for audit purposes
+3. Sets `banExpires = null` (permanent ban unless manually unblocked)
+4. Blocked doctors are excluded from approved doctors list
+
+**Example Usage (JavaScript/TypeScript):**
+```typescript
+async function blockDoctor(doctorId: string, banReason?: string) {
+  const response = await fetch(`/api/admin/doctors/${doctorId}/block`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      // Include authentication headers (cookies/session)
+    },
+    body: JSON.stringify({ banReason }),
+  })
+
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.message || 'Failed to block doctor')
+  }
+
+  const result = await response.json()
+  return result.data
+}
+
+// Usage
+const blockedDoctor = await blockDoctor('clx123...', 'Violation of terms of service')
+```
+
+---
+
+### 4. Unblock Doctor
+
+Unblock a previously blocked doctor, restoring their access to the system.
+
+**Endpoint:** `POST /api/admin/doctors/{doctorId}/unblock`
+
+**Authentication:** Required (Admin only)
+
+**Path Parameters:**
+- `doctorId` (string, required): Doctor ID to unblock
+
+**Response (200 OK):**
+```json
+{
+  "message": "Doctor unblocked successfully",
+  "success": true,
+  "data": {
+    "id": "clx123...",
+    "userid": "clx456...",
+    "professional_contact": "(321) 123-456",
+    "professional_email": "doctor.john@clinic.com",
+    "user": {
+      "id": "clx456...",
+      "name": "Dr. John Doe",
+      "email": "john.doe@example.com",
+      "image": "https://signed-url...",
+      "role": "doctor",
+      "phone": "(321) 123-456",
+      "banned": false,
+      "banReason": null,
+      "banExpires": null,
+      "onboardingStage": "COMPLETED"
+    }
+  }
+}
+```
+
+**Error Responses:**
+
+- **401 Unauthorized**: Not authenticated
+- **403 Forbidden**: Not an admin user
+- **404 Not Found**: Doctor not found
+
+**Business Logic:**
+1. Sets `banned = false` on the user account
+2. Clears `banReason` and `banExpires`
+3. Doctor becomes available in approved doctors list again
+
+**Example Usage (JavaScript/TypeScript):**
+```typescript
+async function unblockDoctor(doctorId: string) {
+  const response = await fetch(`/api/admin/doctors/${doctorId}/unblock`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      // Include authentication headers (cookies/session)
+    },
+  })
+
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.message || 'Failed to unblock doctor')
+  }
+
+  const result = await response.json()
+  return result.data
+}
+
+// Usage
+const unblockedDoctor = await unblockDoctor('clx123...')
+```
+
+---
+
+## Complete Example: Admin Doctor Management Workflow
 
 ```typescript
-async function handleDoctorAction(
-  action: 'approve' | 'reject',
-  doctorId: string,
-  rejectReason?: string
-) {
-  try {
-    const endpoint = action === 'approve'
-      ? '/api/admin/doctor-requests/approve'
-      : '/api/admin/doctor-requests/reject'
+// 1. Get all approved doctors
+const approvedDoctors = await getApprovedDoctors({ page: 1, limit: 10 })
 
-    const body = action === 'approve'
-      ? { doctorId }
-      : { doctorId, rejectReason }
+// 2. Create a new doctor
+const newDoctor = await createDoctor({
+  name: 'Dr. Jane Smith',
+  email: 'jane.smith@example.com',
+  password: 'securePassword123',
+  professional_email: 'doctor.jane@clinic.com',
+  professional_contact: '(321) 123-456',
+  phone: '(321) 123-456'
+})
 
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify(body),
-    })
+// 3. Block a doctor (if needed)
+const blockedDoctor = await blockDoctor(newDoctor.id, 'Violation of terms')
 
-    if (!response.ok) {
-      const error = await response.json()
-
-      if (response.status === 401) {
-        // Redirect to login
-        window.location.href = '/login'
-        return
-      }
-
-      if (response.status === 403) {
-        alert('You do not have permission to perform this action')
-        return
-      }
-
-      if (response.status === 404) {
-        alert('Doctor not found')
-        return
-      }
-
-      throw new Error(error.message || 'Operation failed')
-    }
-
-    const result = await response.json()
-    return { success: true, data: result.data }
-  } catch (error) {
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'An error occurred',
-    }
-  }
-}
+// 4. Unblock a doctor (if needed)
+const unblockedDoctor = await unblockDoctor(blockedDoctor.id)
 ```
+
+---
 
 ## Related Endpoints
 
-- **Doctor Signup**: `/api/auth/doctor/signup` - Doctors sign up and start with `DOCTOR_INFO` stage
-- **Doctor Profile**: `/api/doctor-profile` - Doctors complete their profile information
-- **User Management**: Admin endpoints for managing users
+- **Get Pending Doctor Requests**: `/api/admin/doctor-requests` - Get doctors waiting for approval
+- **Approve Doctor Request**: `/api/admin/doctor-requests/approve` - Approve a pending doctor request
+- **Reject Doctor Request**: `/api/admin/doctor-requests/reject` - Reject a pending doctor request
 
 ## Security Considerations
 
-1. **Admin-Only Access**: All endpoints are protected and require admin role
-2. **Input Validation**: All inputs are validated using Zod schemas
-3. **Rejection Reason**: Required when rejecting to ensure proper documentation
-4. **Status Tracking**: Doctor status is tracked through onboardingStage for audit purposes
+1. **Admin-Only Access**: All endpoints require admin authentication and role verification
+2. **Password Security**: Passwords are automatically hashed using better-auth's secure hashing
+3. **Email Uniqueness**: Both login email and professional email must be unique
+4. **Pre-Approved Doctors**: Doctors created by admin are automatically approved (onboardingStage = 'COMPLETED')
+5. **Blocking Mechanism**: Blocked doctors are excluded from approved doctors list and cannot access the system
+6. **Audit Trail**: Ban reasons are stored for audit purposes
 
+## Notes
+
+- When creating a new doctor, the credentials (email and password) should be sent to the doctor's personal email address (as shown in the form). This email sending functionality is not included in this API and should be implemented separately using an email service.
+- Blocked doctors are automatically excluded from the approved doctors list (filtered by `banned = false`)
+- Doctors created by admin start with `isAvailable = false` and must manually toggle their availability
+- All file URLs (images, documents) are converted to signed S3 URLs valid for 7 days

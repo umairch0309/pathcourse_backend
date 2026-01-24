@@ -89,6 +89,23 @@ export const DOCTOR_PROFILE_ROUTES_HANDLER: HandlerMapFromRoutes<typeof DOCTOR_P
         data: { onboardingStage: 'WAITING_FOR_ADMIN' },
       })
 
+      // Create notifications for doctor onboarding request
+      const { createNotificationForUser, createNotificationForAllAdmins, NOTIFICATION_TYPES } =
+        await import('~/lib/notification-helper')
+      await Promise.all([
+        // Notify doctor
+        createNotificationForUser(
+          user.id,
+          NOTIFICATION_TYPES.DOCTOR_ONBOARDING_REQUEST,
+          'Your doctor profile has been submitted and is pending admin approval.'
+        ),
+        // Notify all admins
+        createNotificationForAllAdmins(
+          NOTIFICATION_TYPES.DOCTOR_ONBOARDING_REQUEST,
+          `New doctor profile submission from ${user.name} is pending approval.`
+        ),
+      ])
+
       return c.json(
         {
           message: 'Doctor profile created or updated successfully',

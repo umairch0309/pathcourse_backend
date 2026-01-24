@@ -1,3 +1,4 @@
+import { auth } from '~/lib/auth'
 import { doctorConnectionTracker } from '~/lib/doctor-connection-tracker'
 import prisma from '~/lib/prisma'
 import { keysToSignedUrls } from '~/lib/s3'
@@ -387,6 +388,23 @@ export const DOCTOR_SERVICES = {
       },
     })
 
+    // Create notifications
+    const { createNotificationForUser, createNotificationForAllAdmins, NOTIFICATION_TYPES } =
+      await import('~/lib/notification-helper')
+    await Promise.all([
+      // Notify doctor
+      createNotificationForUser(
+        doctor.userid,
+        NOTIFICATION_TYPES.DOCTOR_APPROVED,
+        `Your doctor profile has been approved! You can now start accepting appointments.`
+      ),
+      // Notify all admins
+      createNotificationForAllAdmins(
+        NOTIFICATION_TYPES.DOCTOR_APPROVED,
+        `Doctor ${updatedDoctor.user.name} has been approved.`
+      ),
+    ])
+
     // Convert user image to signed URL
     const userImage = await convertUserImageToSignedUrl(updatedDoctor.user.image)
 
@@ -436,6 +454,23 @@ export const DOCTOR_SERVICES = {
         },
       },
     })
+
+    // Create notifications
+    const { createNotificationForUser, createNotificationForAllAdmins, NOTIFICATION_TYPES } =
+      await import('~/lib/notification-helper')
+    await Promise.all([
+      // Notify doctor
+      createNotificationForUser(
+        doctor.userid,
+        NOTIFICATION_TYPES.DOCTOR_REJECTED,
+        `Your doctor profile has been rejected. Reason: ${rejectReason}`
+      ),
+      // Notify all admins
+      createNotificationForAllAdmins(
+        NOTIFICATION_TYPES.DOCTOR_REJECTED,
+        `Doctor ${updatedDoctor.user.name} has been rejected.`
+      ),
+    ])
 
     // Convert user image to signed URL
     const userImage = await convertUserImageToSignedUrl(updatedDoctor.user.image)
@@ -901,5 +936,303 @@ export const DOCTOR_SERVICES = {
     })
 
     return !!activeAppointment
+  },
+
+  // Get approved doctors (admin only)
+  getApprovedDoctors: async (filters?: { page?: number; limit?: number; search?: string }) => {
+    const page = filters?.page || 1
+    const limit = filters?.limit || 10
+    const skip = (page - 1) * limit
+
+    const where = {
+      user: {
+        role: 'doctor',
+        onboardingStage: 'COMPLETED', // Only approved doctors
+      },
+      ...(filters?.search && {
+        OR: [
+          { professional_email: { contains: filters.search, mode: 'insensitive' as const } },
+          { user: { name: { contains: filters.search, mode: 'insensitive' as const } } },
+          { user: { email: { contains: filters.search, mode: 'insensitive' as const } } },
+        ],
+      }),
+    }
+
+    const [doctors, total] = await Promise.all([
+      prisma.doctor.findMany({
+        where,
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              image: true,
+              role: true,
+              phone: true,
+              banned: true,
+              banReason: true,
+              banExpires: true,
+              onboardingStage: true,
+              createdAt: true,
+            },
+          },
+          documents: true,
+          education: true,
+          professionalExperience: true,
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      prisma.doctor.count({ where }),
+    ])
+
+    // Convert document URLs and user images to signed URLs for all doctors
+    const doctorsWithSignedUrls = await Promise.all(
+      doctors.map(async doctor => ({
+        ...doctor,
+        user: {
+          ...doctor.user,
+          image: await convertUserImageToSignedUrl(doctor.user.image),
+        },
+        documents: await convertDocumentsToSignedUrls(doctor.documents),
+        education: await Promise.all(
+          doctor.education.map(async edu => ({
+            ...edu,
+            document: await convertEducationDocumentToSignedUrl(edu.document),
+          }))
+        ),
+      }))
+    )
+
+    return {
+      doctors: doctorsWithSignedUrls,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    }
+  },
+
+  // Block a doctor (admin only)
+  blockDoctor: async (doctorId: string, banReason?: string) => {
+    const doctor = await prisma.doctor.findUnique({
+      where: { id: doctorId },
+      include: { user: true },
+    })
+
+    if (!doctor) {
+      throw new Error('Doctor not found')
+    }
+
+    // Update user to set banned status
+    await prisma.user.update({
+      where: { id: doctor.userid },
+      data: {
+        banned: true,
+        banReason: banReason || null,
+        banExpires: null, // Permanent ban unless specified
+      },
+    })
+
+    // Return doctor with updated user info
+    const updatedDoctor = await prisma.doctor.findUnique({
+      where: { id: doctorId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            image: true,
+            role: true,
+            phone: true,
+            banned: true,
+            banReason: true,
+            banExpires: true,
+            onboardingStage: true,
+          },
+        },
+      },
+    })
+
+    if (!updatedDoctor) {
+      throw new Error('Doctor not found after update')
+    }
+
+    // Convert user image to signed URL
+    const userImage = await convertUserImageToSignedUrl(updatedDoctor.user.image)
+
+    return {
+      ...updatedDoctor,
+      user: {
+        ...updatedDoctor.user,
+        image: userImage,
+      },
+    }
+  },
+
+  // Unblock a doctor (admin only)
+  unblockDoctor: async (doctorId: string) => {
+    const doctor = await prisma.doctor.findUnique({
+      where: { id: doctorId },
+      include: { user: true },
+    })
+
+    if (!doctor) {
+      throw new Error('Doctor not found')
+    }
+
+    // Update user to remove banned status
+    await prisma.user.update({
+      where: { id: doctor.userid },
+      data: {
+        banned: false,
+        banReason: null,
+        banExpires: null,
+      },
+    })
+
+    // Return doctor with updated user info
+    const updatedDoctor = await prisma.doctor.findUnique({
+      where: { id: doctorId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            image: true,
+            role: true,
+            phone: true,
+            banned: true,
+            banReason: true,
+            banExpires: true,
+            onboardingStage: true,
+          },
+        },
+      },
+    })
+
+    if (!updatedDoctor) {
+      throw new Error('Doctor not found after update')
+    }
+
+    // Convert user image to signed URL
+    const userImage = await convertUserImageToSignedUrl(updatedDoctor.user.image)
+
+    return {
+      ...updatedDoctor,
+      user: {
+        ...updatedDoctor.user,
+        image: userImage,
+      },
+    }
+  },
+
+  // Create a new doctor (admin only)
+  createDoctor: async (data: {
+    name: string
+    email: string
+    password: string
+    professional_email: string
+    professional_contact: string
+    secondary_contact?: string | null
+    phone?: string | null
+  }) => {
+    // Check if email already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { email: data.email },
+    })
+
+    if (existingUser) {
+      throw new Error('Email already exists')
+    }
+
+    // Check if professional email already exists
+    const existingDoctor = await prisma.doctor.findUnique({
+      where: { professional_email: data.professional_email },
+    })
+
+    if (existingDoctor) {
+      throw new Error('Professional email already exists')
+    }
+
+    // Create user account using better-auth
+    const signupResult = await auth.api.signUpEmail({
+      body: {
+        email: data.email,
+        password: data.password,
+        name: data.name,
+      },
+    })
+
+    if (!signupResult || !signupResult.user) {
+      throw new Error('Failed to create user account')
+    }
+
+    // Update user with doctor role and set onboarding stage to COMPLETED (pre-approved)
+    const updatedUser = await prisma.user.update({
+      where: { id: signupResult.user.id },
+      data: {
+        role: 'doctor',
+        onboardingStage: 'DOCTOR_INFO',
+        phone: data.phone || null,
+      },
+    })
+
+    // Create doctor record
+    const doctor = await prisma.doctor.create({
+      data: {
+        userid: updatedUser.id,
+        professional_email: data.professional_email,
+        professional_contact: data.professional_contact,
+        secondary_contact: data.secondary_contact || null,
+        isAvailable: false, // Start as unavailable
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            image: true,
+            role: true,
+            phone: true,
+            banned: true,
+            banReason: true,
+            banExpires: true,
+            onboardingStage: true,
+            createdAt: true,
+          },
+        },
+        documents: true,
+        education: true,
+        professionalExperience: true,
+      },
+    })
+
+    // Convert user image to signed URL
+    const userImage = await convertUserImageToSignedUrl(doctor.user.image)
+    const documents = await convertDocumentsToSignedUrls(doctor.documents)
+    const education = await Promise.all(
+      doctor.education.map(async edu => ({
+        ...edu,
+        document: await convertEducationDocumentToSignedUrl(edu.document),
+      }))
+    )
+
+    return {
+      ...doctor,
+      user: {
+        ...doctor.user,
+        image: userImage,
+      },
+      documents,
+      education,
+    }
   },
 }
