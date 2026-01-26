@@ -9,7 +9,10 @@ import educationRouter from '~/routes/education'
 import enterpriseRouter from '~/routes/enterprise'
 import filesRouter from '~/routes/files'
 import notificationRouter from '~/routes/notification'
+import permissionRouter from '~/routes/permission'
+import roleRouter from '~/routes/role'
 import servicePricingRouter from '~/routes/service-pricing'
+import teamMemberRouter from '~/routes/team-member'
 import userRouter from '~/routes/user'
 import userQueryRouter from '~/routes/user-query'
 import type { AppOpenAPI } from '~/types'
@@ -29,5 +32,8 @@ export function registerRoutes(app: AppOpenAPI) {
     .route('/api', appointmentRouter)
     .route('/api', agoraRouter)
     .route('/api', notificationRouter)
+    .route('/api', roleRouter)
+    .route('/api', permissionRouter)
+    .route('/api', teamMemberRouter)
     .route('/api', adminRouter) // chained router.
 }

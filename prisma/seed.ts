@@ -1,83 +1,106 @@
-import { PrismaClient } from '@prisma/client'
+import prisma from '../src/lib/prisma'
 
-const prisma = new PrismaClient()
+async function seedPermissions() {
+  console.log('Seeding permissions...')
 
-async function main() {
-  console.log('Seeding service and pricing data...')
-
-  // Create or get the "Open Ear" service
-  const service = await prisma.service.upsert({
-    where: { name: 'Open Ear' },
-    update: {},
-    create: {
-      name: 'Open Ear',
-    },
-  })
-  console.log(`✓ Seeded service: ${service.name}`)
-
-  // Service pricing data based on the pricing structure
-  const pricingData = [
+  const permissions = [
     {
-      duration: 15,
-      userPrice: 25.0,
-      doctorAmount: 12.0,
-      platformAmount: 13.0,
+      name: 'Dashboard View',
+      slug: 'dashboard.view',
+      description: 'View dashboard statistics and overview',
     },
     {
-      duration: 30,
-      userPrice: 55.0,
-      doctorAmount: 25.0,
-      platformAmount: 30.0,
+      name: 'Enterprise Add',
+      slug: 'enterprise.add',
+      description: 'Create new enterprises',
     },
     {
-      duration: 45,
-      userPrice: 70.0,
-      doctorAmount: 32.0,
-      platformAmount: 38.0,
+      name: 'Enterprise View',
+      slug: 'enterprise.view',
+      description: 'View enterprises',
     },
     {
-      duration: 60,
-      userPrice: 95.0,
-      doctorAmount: 45.0,
-      platformAmount: 50.0,
+      name: 'Enterprise Update',
+      slug: 'enterprise.update',
+      description: 'Update enterprise details',
+    },
+    {
+      name: 'Enterprise Delete',
+      slug: 'enterprise.delete',
+      description: 'Delete enterprises',
+    },
+    {
+      name: 'Specialists View',
+      slug: 'specialists.view',
+      description: 'View specialists/doctors',
+    },
+    {
+      name: 'Specialists Add',
+      slug: 'specialists.add',
+      description: 'Add new specialists/doctors',
+    },
+    {
+      name: 'Specialists Block/Unblock',
+      slug: 'specialists.block_unblock',
+      description: 'Block or unblock specialists/doctors',
+    },
+    {
+      name: 'Specialists Accept/Reject',
+      slug: 'specialists.accept_reject',
+      description: 'Accept or reject specialist/doctor requests',
+    },
+    {
+      name: 'Users View',
+      slug: 'users.view',
+      description: 'View users/patients',
+    },
+    {
+      name: 'Sessions View',
+      slug: 'sessions.view',
+      description: 'View appointments/sessions',
+    },
+    {
+      name: 'User Inquiries View',
+      slug: 'user_inquiries.view',
+      description: 'View user inquiries',
+    },
+    {
+      name: 'User Inquiries Delete',
+      slug: 'user_inquiries.delete',
+      description: 'Delete user inquiries',
+    },
+    {
+      name: 'Settings View',
+      slug: 'settings.view',
+      description: 'View and manage settings',
     },
   ]
 
-  for (const pricing of pricingData) {
-    await prisma.servicePricing.upsert({
-      where: {
-        serviceId_duration: {
-          serviceId: service.id,
-          duration: pricing.duration,
-        },
-      },
+  for (const permission of permissions) {
+    await (prisma as any).permission.upsert({
+      where: { slug: permission.slug },
       update: {
-        userPrice: pricing.userPrice,
-        doctorAmount: pricing.doctorAmount,
-        platformAmount: pricing.platformAmount,
-        isActive: true,
+        name: permission.name,
+        description: permission.description,
       },
-      create: {
-        serviceId: service.id,
-        duration: pricing.duration,
-        userPrice: pricing.userPrice,
-        doctorAmount: pricing.doctorAmount,
-        platformAmount: pricing.platformAmount,
-        isActive: true,
-      },
+      create: permission,
     })
-    console.log(`✓ Seeded pricing for ${pricing.duration} minutes`)
   }
 
-  console.log('Service and pricing seeding completed!')
+  console.log(`✓ Seeded ${permissions.length} permissions`)
+}
+
+async function main() {
+  try {
+    await seedPermissions()
+    console.log('✓ Seed completed successfully')
+  } catch (error) {
+    console.error('✗ Seed failed:', error)
+    throw error
+  } finally {
+    await prisma.$disconnect()
+  }
 }
 
 main()
-  .catch(e => {
-    console.error('Error seeding database:', e)
-    process.exit(1)
-  })
-  .finally(async () => {
-    await prisma.$disconnect()
-  })
 

@@ -12,6 +12,9 @@ const TAGS = {
   appointment: 'Appointment',
   agora: 'Agora',
   notification: 'Notification',
+  role: 'Role',
+  permission: 'Permission',
+  teamMember: 'Team Member',
 } as const
 
 export default TAGS

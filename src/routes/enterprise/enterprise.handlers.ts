@@ -1,5 +1,6 @@
 import * as HttpStatusCodes from 'stoker/http-status-codes'
 import { HttpError } from '~/lib/error'
+import { PERMISSION_SLUGS, requirePermission } from '~/lib/permission-check'
 import type { ENTERPRISE_ROUTES } from '~/routes/enterprise/enterprise.routes'
 import { ENTERPRISE_SERVICES } from '~/services/enterprise.service'
 import type { HandlerMapFromRoutes } from '~/types'
@@ -31,6 +32,9 @@ export const ENTERPRISE_ROUTES_HANDLER: HandlerMapFromRoutes<typeof ENTERPRISE_R
     if (user.role !== 'admin') {
       throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
     }
+
+    // Check permission
+    await requirePermission(user.id, PERMISSION_SLUGS.ENTERPRISE_ADD)
 
     const { name, code, sessionsPerMonth, generateCode } = c.req.valid('json')
 
@@ -76,6 +80,9 @@ export const ENTERPRISE_ROUTES_HANDLER: HandlerMapFromRoutes<typeof ENTERPRISE_R
       throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
     }
 
+    // Check permission
+    await requirePermission(user.id, PERMISSION_SLUGS.ENTERPRISE_VIEW)
+
     const query = c.req.valid('query')
     const filters = {
       page: query.page ? parseInt(query.page, 10) : 1,
@@ -109,6 +116,9 @@ export const ENTERPRISE_ROUTES_HANDLER: HandlerMapFromRoutes<typeof ENTERPRISE_R
       throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
     }
 
+    // Check permission
+    await requirePermission(user.id, PERMISSION_SLUGS.ENTERPRISE_VIEW)
+
     const { id } = c.req.valid('param')
 
     const enterprise = await ENTERPRISE_SERVICES.getById(id)
@@ -137,6 +147,9 @@ export const ENTERPRISE_ROUTES_HANDLER: HandlerMapFromRoutes<typeof ENTERPRISE_R
     if (user.role !== 'admin') {
       throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
     }
+
+    // Check permission
+    await requirePermission(user.id, PERMISSION_SLUGS.ENTERPRISE_UPDATE)
 
     const { id } = c.req.valid('param')
     const body = c.req.valid('json')
@@ -184,6 +197,9 @@ export const ENTERPRISE_ROUTES_HANDLER: HandlerMapFromRoutes<typeof ENTERPRISE_R
     if (user.role !== 'admin') {
       throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
     }
+
+    // Check permission
+    await requirePermission(user.id, PERMISSION_SLUGS.ENTERPRISE_DELETE)
 
     const { id } = c.req.valid('param')
 

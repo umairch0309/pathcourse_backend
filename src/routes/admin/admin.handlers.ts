@@ -2,6 +2,7 @@
 import type { Prisma } from '@prisma/client'
 import * as HttpStatusCodes from 'stoker/http-status-codes'
 import { HttpError } from '~/lib/error'
+import { PERMISSION_SLUGS, requirePermission } from '~/lib/permission-check'
 import { extractS3KeyFromUrl, keysToSignedUrls } from '~/lib/s3'
 import type { ADMIN_ROUTES } from '~/routes/admin/admin.routes'
 import { APPOINTMENT_SERVICES } from '~/services/appointment.service'
@@ -198,6 +199,9 @@ export const ADMIN_ROUTES_HANDLER: HandlerMapFromRoutes<typeof ADMIN_ROUTES> = {
       throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
     }
 
+    // Check permission
+    await requirePermission(user.id, PERMISSION_SLUGS.SPECIALISTS_VIEW)
+
     const query = c.req.valid('query')
     const filters = {
       page: query.page ? parseInt(query.page, 10) : 1,
@@ -231,6 +235,9 @@ export const ADMIN_ROUTES_HANDLER: HandlerMapFromRoutes<typeof ADMIN_ROUTES> = {
     if (user.role !== 'admin') {
       throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
     }
+
+    // Check permission
+    await requirePermission(user.id, PERMISSION_SLUGS.SPECIALISTS_ACCEPT_REJECT)
 
     const { doctorId } = c.req.valid('json')
 
@@ -269,6 +276,9 @@ export const ADMIN_ROUTES_HANDLER: HandlerMapFromRoutes<typeof ADMIN_ROUTES> = {
       throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
     }
 
+    // Check permission
+    await requirePermission(user.id, PERMISSION_SLUGS.SPECIALISTS_ACCEPT_REJECT)
+
     const { doctorId, rejectReason } = c.req.valid('json')
 
     try {
@@ -306,6 +316,9 @@ export const ADMIN_ROUTES_HANDLER: HandlerMapFromRoutes<typeof ADMIN_ROUTES> = {
       throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
     }
 
+    // Check permission
+    await requirePermission(user.id, PERMISSION_SLUGS.SPECIALISTS_VIEW)
+
     const query = c.req.valid('query')
     const filters = {
       page: query.page ? parseInt(query.page, 10) : 1,
@@ -339,6 +352,9 @@ export const ADMIN_ROUTES_HANDLER: HandlerMapFromRoutes<typeof ADMIN_ROUTES> = {
     if (user.role !== 'admin') {
       throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
     }
+
+    // Check permission
+    await requirePermission(user.id, PERMISSION_SLUGS.SPECIALISTS_ADD)
 
     const data = c.req.valid('json')
 
@@ -389,6 +405,9 @@ export const ADMIN_ROUTES_HANDLER: HandlerMapFromRoutes<typeof ADMIN_ROUTES> = {
       throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
     }
 
+    // Check permission
+    await requirePermission(user.id, PERMISSION_SLUGS.SPECIALISTS_BLOCK_UNBLOCK)
+
     const { doctorId } = c.req.valid('param')
     const { banReason } = c.req.valid('json')
 
@@ -427,6 +446,9 @@ export const ADMIN_ROUTES_HANDLER: HandlerMapFromRoutes<typeof ADMIN_ROUTES> = {
       throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
     }
 
+    // Check permission
+    await requirePermission(user.id, PERMISSION_SLUGS.SPECIALISTS_BLOCK_UNBLOCK)
+
     const { doctorId } = c.req.valid('param')
 
     try {
@@ -463,6 +485,9 @@ export const ADMIN_ROUTES_HANDLER: HandlerMapFromRoutes<typeof ADMIN_ROUTES> = {
     if (user.role !== 'admin') {
       throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
     }
+
+    // Check permission
+    await requirePermission(user.id, PERMISSION_SLUGS.USERS_VIEW)
 
     const query = c.req.valid('query')
     const filters = {
@@ -557,6 +582,9 @@ export const ADMIN_ROUTES_HANDLER: HandlerMapFromRoutes<typeof ADMIN_ROUTES> = {
       throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
     }
 
+    // Check permission
+    await requirePermission(user.id, PERMISSION_SLUGS.USER_INQUIRIES_VIEW)
+
     const query = c.req.valid('query')
     const filters = {
       page: query.page ? parseInt(query.page, 10) : 1,
@@ -608,6 +636,9 @@ export const ADMIN_ROUTES_HANDLER: HandlerMapFromRoutes<typeof ADMIN_ROUTES> = {
       throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
     }
 
+    // Check permission
+    await requirePermission(user.id, PERMISSION_SLUGS.USER_INQUIRIES_VIEW)
+
     const { id } = c.req.valid('param')
 
     const userQuery = await USER_QUERY_SERVICES.getById(id)
@@ -654,6 +685,9 @@ export const ADMIN_ROUTES_HANDLER: HandlerMapFromRoutes<typeof ADMIN_ROUTES> = {
     if (user.role !== 'admin') {
       throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
     }
+
+    // Check permission
+    await requirePermission(user.id, PERMISSION_SLUGS.SESSIONS_VIEW)
 
     const query = c.req.valid('query')
     const filters = {
@@ -748,6 +782,9 @@ export const ADMIN_ROUTES_HANDLER: HandlerMapFromRoutes<typeof ADMIN_ROUTES> = {
       throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
     }
 
+    // Check permission
+    await requirePermission(user.id, PERMISSION_SLUGS.SESSIONS_VIEW)
+
     const { id } = c.req.valid('param')
 
     try {
@@ -841,6 +878,9 @@ export const ADMIN_ROUTES_HANDLER: HandlerMapFromRoutes<typeof ADMIN_ROUTES> = {
       throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
     }
 
+    // Check permission (settings view allows profile updates)
+    await requirePermission(user.id, PERMISSION_SLUGS.SETTINGS_VIEW)
+
     const body = c.req.valid('json')
 
     try {
@@ -883,6 +923,9 @@ export const ADMIN_ROUTES_HANDLER: HandlerMapFromRoutes<typeof ADMIN_ROUTES> = {
       throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
     }
 
+    // Check permission
+    await requirePermission(user.id, PERMISSION_SLUGS.DASHBOARD_VIEW)
+
     try {
       const stats = await DASHBOARD_SERVICES.getStats()
 
@@ -913,6 +956,9 @@ export const ADMIN_ROUTES_HANDLER: HandlerMapFromRoutes<typeof ADMIN_ROUTES> = {
     if (user.role !== 'admin') {
       throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
     }
+
+    // Check permission
+    await requirePermission(user.id, PERMISSION_SLUGS.DASHBOARD_VIEW)
 
     const query = c.req.valid('query')
     const limit = query.limit ? parseInt(query.limit, 10) : 5
@@ -967,6 +1013,9 @@ export const ADMIN_ROUTES_HANDLER: HandlerMapFromRoutes<typeof ADMIN_ROUTES> = {
     if (user.role !== 'admin') {
       throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
     }
+
+    // Check permission
+    await requirePermission(user.id, PERMISSION_SLUGS.DASHBOARD_VIEW)
 
     const query = c.req.valid('query')
     const limit = query.limit ? parseInt(query.limit, 10) : 5
