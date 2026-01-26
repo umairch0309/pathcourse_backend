@@ -186,6 +186,11 @@ const formatFullAppointmentResponse = async (appointment: any, currentUserId?: s
     ? await convertUserImageToSignedUrl(appointment.uploadId)
     : null
 
+  // Check if patient is anonymous and current user is doctor
+  const patientIsAnonymous = formattedPatient.isAnonymous === true
+  const isDoctorViewing = currentUserId === appointment.doctorId
+  const shouldHideUploadId = patientIsAnonymous && isDoctorViewing
+
   // Build base appointment object
   const baseAppointment = {
     id: appointment.id,
@@ -201,7 +206,7 @@ const formatFullAppointmentResponse = async (appointment: any, currentUserId?: s
     age: appointment.age,
     appointmentFor: appointment.appointmentFor,
     issue: appointment.issue,
-    uploadId: uploadIdSignedUrl,
+    uploadId: shouldHideUploadId ? null : uploadIdSignedUrl,
     relationWithPatient: appointment.relationWithPatient,
     patientName: appointment.patientName,
     patientAge: appointment.patientAge,
@@ -259,6 +264,11 @@ const formatAppointmentResponse = async (appointment: any, currentUserId?: strin
     ? await convertUserImageToSignedUrl(appointment.uploadId)
     : null
 
+  // Check if patient is anonymous and current user is doctor
+  const patientIsAnonymous = appointment.patient?.isAnonymous === true
+  const isDoctorViewing = currentUserId === appointment.doctorId
+  const shouldHideUploadId = patientIsAnonymous && isDoctorViewing
+
   return {
     id: appointment.id,
     doctorId: appointment.doctorId,
@@ -273,7 +283,7 @@ const formatAppointmentResponse = async (appointment: any, currentUserId?: strin
     age: appointment.age,
     appointmentFor: appointment.appointmentFor,
     issue: appointment.issue,
-    uploadId: uploadIdSignedUrl,
+    uploadId: shouldHideUploadId ? null : uploadIdSignedUrl,
     relationWithPatient: appointment.relationWithPatient,
     patientName: appointment.patientName,
     patientAge: appointment.patientAge,
