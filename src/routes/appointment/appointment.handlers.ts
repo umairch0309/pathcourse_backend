@@ -1299,4 +1299,36 @@ export const APPOINTMENT_ROUTES_HANDLER: HandlerMapFromRoutes<typeof APPOINTMENT
       )
     }
   },
+
+  getMessages: async c => {
+    const user = c.get('user')
+    if (!user) {
+      throw new HttpError('Unauthorized', HttpStatusCodes.UNAUTHORIZED)
+    }
+
+    const { appointmentId } = c.req.valid('param')
+
+    try {
+      const { CHATROOM_MESSAGE_SERVICES } = await import('~/services/chatroom-message')
+      const result = await CHATROOM_MESSAGE_SERVICES.getMessages({
+        appointmentId,
+        userId: user.id,
+      })
+
+      return c.json(
+        {
+          message: 'Messages retrieved successfully',
+          success: true,
+          data: result,
+        },
+        HttpStatusCodes.OK
+      )
+    } catch (error: unknown) {
+      if (error instanceof HttpError) {
+        throw error
+      }
+      const message = error instanceof Error ? error.message : 'Failed to retrieve messages'
+      throw new HttpError(message, HttpStatusCodes.INTERNAL_SERVER_ERROR)
+    }
+  },
 }

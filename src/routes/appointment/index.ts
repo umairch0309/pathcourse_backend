@@ -51,6 +51,7 @@ router.openapi(
   APPOINTMENT_ROUTES_HANDLER.getPatientWeeklyActivityStats
 )
 router.openapi(APPOINTMENT_ROUTES.getByIdFull, APPOINTMENT_ROUTES_HANDLER.getByIdFull)
+router.openapi(APPOINTMENT_ROUTES.getMessages, APPOINTMENT_ROUTES_HANDLER.getMessages)
 
 // Register other routes
 router.openapi(APPOINTMENT_ROUTES.create, APPOINTMENT_ROUTES_HANDLER.create)

@@ -745,4 +745,29 @@ export const APPOINTMENT_ROUTES = {
       [HttpStatusCodes.NOT_FOUND]: jsonContent(zodResponseSchema(), 'Appointment notes not found'),
     },
   }),
+
+  getMessages: createRoute({
+    path: '/appointments/{appointmentId}/messages',
+    method: 'get',
+    tags: [TAGS.appointment],
+    middleware: [isAuthenticated],
+    summary: 'Get messages for an appointment',
+    request: {
+      params: z.object({
+        appointmentId: z.string().describe('Appointment ID'),
+      }),
+    },
+    responses: {
+      [HttpStatusCodes.OK]: jsonContent(
+        zodResponseSchema(z.any()),
+        'Messages retrieved successfully'
+      ),
+      [HttpStatusCodes.UNAUTHORIZED]: jsonContent(zodResponseSchema(), 'Unauthorized'),
+      [HttpStatusCodes.NOT_FOUND]: jsonContent(zodResponseSchema(), 'Appointment not found'),
+      [HttpStatusCodes.FORBIDDEN]: jsonContent(
+        zodResponseSchema(),
+        'Access denied to this appointment'
+      ),
+    },
+  }),
 }

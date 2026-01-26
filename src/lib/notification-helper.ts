@@ -12,7 +12,16 @@ const FRONTEND_URL = Bun.env.FRONTEND_URL || 'https://pathcourse.hasseebmayo.com
 /**
  * Build notification URL based on type and related entity ID
  */
-export function buildNotificationUrl(type: string, entityId?: string): string | null {
+export function buildNotificationUrl(
+  type: string,
+  entityId?: string,
+  customUrl?: string
+): string | null {
+  // If custom URL is provided, use it (for message notifications with specific URLs)
+  if (customUrl) {
+    return customUrl
+  }
+
   switch (type) {
     case NOTIFICATION_TYPES.DOCTOR_ONBOARDING_REQUEST:
       return `${FRONTEND_URL}/admin/specialists`
@@ -25,12 +34,22 @@ export function buildNotificationUrl(type: string, entityId?: string): string | 
       if (!entityId) {
         return null
       }
-      return `${FRONTEND_URL}/admin/sessions/${entityId}`
+      return `${FRONTEND_URL}/specialist/session`
     case NOTIFICATION_TYPES.USER_INQUIRY:
       if (!entityId) {
         return null
       }
       return `${FRONTEND_URL}/admin/user-inquiries/${entityId}`
+    case NOTIFICATION_TYPES.MESSAGE_RECEIVED_APPOINTMENT:
+      if (!entityId) {
+        return null
+      }
+      return `${FRONTEND_URL}/patient/session/${entityId}`
+    case NOTIFICATION_TYPES.MESSAGE_RECEIVED_CHATROOM:
+      if (!entityId) {
+        return null
+      }
+      return `${FRONTEND_URL}/chats/${entityId}`
     default:
       return null
   }
@@ -59,9 +78,10 @@ export async function createNotificationForUser(
   userId: string,
   type: NotificationType,
   message: string,
-  entityId?: string
+  entityId?: string,
+  customUrl?: string
 ) {
-  const url = buildNotificationUrl(type, entityId)
+  const url = buildNotificationUrl(type, entityId, customUrl)
   await NOTIFICATION_SERVICES.create({
     userId,
     title: type,
