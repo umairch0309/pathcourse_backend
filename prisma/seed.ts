@@ -55,9 +55,19 @@ async function seedPermissions() {
       description: 'View users/patients',
     },
     {
+      name: 'Users Block/Unblock',
+      slug: 'users.block_unblock',
+      description: 'Block or unblock users/patients',
+    },
+    {
       name: 'Sessions View',
       slug: 'sessions.view',
       description: 'View appointments/sessions',
+    },
+    {
+      name: 'Sessions Archive',
+      slug: 'sessions.archive',
+      description: 'Archive (soft delete) appointments/sessions',
     },
     {
       name: 'User Inquiries View',
@@ -73,6 +83,16 @@ async function seedPermissions() {
       name: 'Settings View',
       slug: 'settings.view',
       description: 'View and manage settings',
+    },
+    {
+      name: 'Notifications View All',
+      slug: 'notifications.view_all',
+      description: 'View all admin notifications (no filtering)',
+    },
+    {
+      name: 'Notifications View By Permission',
+      slug: 'notifications.view_by_permission',
+      description: 'View admin notifications filtered by the team member permissions',
     },
   ]
 

@@ -9,6 +9,7 @@ import educationRouter from '~/routes/education'
 import enterpriseRouter from '~/routes/enterprise'
 import filesRouter from '~/routes/files'
 import notificationRouter from '~/routes/notification'
+import adminNotificationRouter from '~/routes/admin-notification'
 import permissionRouter from '~/routes/permission'
 import roleRouter from '~/routes/role'
 import servicePricingRouter from '~/routes/service-pricing'
@@ -32,6 +33,7 @@ export function registerRoutes(app: AppOpenAPI) {
     .route('/api', appointmentRouter)
     .route('/api', agoraRouter)
     .route('/api', notificationRouter)
+    .route('/api', adminNotificationRouter)
     .route('/api', roleRouter)
     .route('/api', permissionRouter)
     .route('/api', teamMemberRouter)

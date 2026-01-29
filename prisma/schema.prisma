@@ -161,6 +161,7 @@ model Appointment {
   doctorId            String
   patientId           String
   status              AppointmentStatus  @default(BOOKED)
+  isArchived          Boolean            @default(false)
   scheduledAt         DateTime?
   startedAt           DateTime?
   endedAt             DateTime?

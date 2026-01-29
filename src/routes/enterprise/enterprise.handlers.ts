@@ -29,7 +29,7 @@ export const ENTERPRISE_ROUTES_HANDLER: HandlerMapFromRoutes<typeof ENTERPRISE_R
     }
 
     // Only admins can create enterprises
-    if (user.role !== 'admin') {
+    if (user.role !== 'admin' && user.role !== 'team_admin') {
       throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
     }
 
@@ -76,7 +76,7 @@ export const ENTERPRISE_ROUTES_HANDLER: HandlerMapFromRoutes<typeof ENTERPRISE_R
     }
 
     // Only admins can view all enterprises
-    if (user.role !== 'admin') {
+    if (user.role !== 'admin' && user.role !== 'team_admin') {
       throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
     }
 
@@ -112,7 +112,7 @@ export const ENTERPRISE_ROUTES_HANDLER: HandlerMapFromRoutes<typeof ENTERPRISE_R
     }
 
     // Only admins can view enterprise by ID
-    if (user.role !== 'admin') {
+    if (user.role !== 'admin' && user.role !== 'team_admin') {
       throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
     }
 
@@ -144,7 +144,7 @@ export const ENTERPRISE_ROUTES_HANDLER: HandlerMapFromRoutes<typeof ENTERPRISE_R
     }
 
     // Only admins can update enterprises
-    if (user.role !== 'admin') {
+    if (user.role !== 'admin' && user.role !== 'team_admin') {
       throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
     }
 
@@ -194,7 +194,7 @@ export const ENTERPRISE_ROUTES_HANDLER: HandlerMapFromRoutes<typeof ENTERPRISE_R
     }
 
     // Only admins can delete enterprises
-    if (user.role !== 'admin') {
+    if (user.role !== 'admin' && user.role !== 'team_admin') {
       throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
     }
 
@@ -225,4 +225,3 @@ export const ENTERPRISE_ROUTES_HANDLER: HandlerMapFromRoutes<typeof ENTERPRISE_R
     }
   },
 }
-

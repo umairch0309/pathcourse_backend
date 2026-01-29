@@ -144,11 +144,11 @@ export const TEAM_MEMBER_SERVICES = {
       throw new HttpError('Failed to create user', HttpStatusCodes.INTERNAL_SERVER_ERROR)
     }
 
-    // Update user role to admin
+    // Update user role to team admin (distinct from main platform admin)
     await (prisma as any).user.update({
       where: { id: user.user.id },
       data: {
-        role: 'admin',
+        role: 'team_admin',
         onboardingStage: 'COMPLETED',
       },
     })

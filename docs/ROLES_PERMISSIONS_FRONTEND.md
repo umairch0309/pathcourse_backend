@@ -26,7 +26,11 @@ The system includes the following permissions:
 | `specialists.block_unblock` | Block or unblock specialists/doctors |
 | `specialists.accept_reject` | Accept or reject specialist/doctor requests |
 | `users.view` | View users/patients |
+| `users.block_unblock` | Block or unblock users/patients |
 | `sessions.view` | View appointments/sessions |
+| `sessions.archive` | Archive (soft delete) appointments/sessions |
+| `notifications.view_all` | View all admin notifications (no filtering) |
+| `notifications.view_by_permission` | View admin notifications filtered by the team member permissions |
 | `user_inquiries.view` | View user inquiries |
 | `user_inquiries.delete` | Delete user inquiries |
 | `settings.view` | View and manage settings |
@@ -766,8 +770,20 @@ export const PERMISSIONS = {
 
 If you have existing admin users, you'll need to:
 1. Create roles with appropriate permissions
-2. Add existing admin users as team members with assigned roles
+2. (Recommended) Add existing admin users as team members with assigned roles
 3. Ensure all admin routes are protected with permission checks
 
-The system maintains backward compatibility - users with `role: 'admin'` can still access routes, but they must also have the required permissions through their team member role.
+### Main admin vs team admins
+
+- The **main platform admin** is the user with `user.role === 'admin'`.
+  - This user acts as a **super admin** for backward compatibility.
+  - If they do **not** have a `TeamMember` record, they automatically get **all permissions**.
+- **Team members** created via the team member API are saved with `user.role === 'team_admin'`.
+  - They are **not** super admins.
+  - Their access is controlled **only** via the role/permission system (`Role`, `Permission`, `RolePermission`, `TeamMember`).
+
+On the frontend, you can:
+- Treat `role === 'admin'` as the legacy super admin.
+- Treat `role === 'team_admin'` as staff/admin users whose permissions come from the RBAC system.
+
 

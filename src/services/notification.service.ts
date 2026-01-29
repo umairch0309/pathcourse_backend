@@ -88,6 +88,56 @@ export const NOTIFICATION_SERVICES = {
     }
   },
 
+  // Get all notifications for admin panel (across admin/team_admin users)
+  getAllForAdmin: async (filters?: {
+    page?: number
+    limit?: number
+    isRead?: boolean | null
+    allowedTypes?: string[] | null
+  }) => {
+    const page = filters?.page || 1
+    const limit = filters?.limit || 10
+    const skip = (page - 1) * limit
+
+    const where: any = {
+      user: {
+        role: {
+          in: ['admin', 'team_admin'],
+        },
+      },
+    }
+
+    if (filters?.isRead !== null && filters?.isRead !== undefined) {
+      where.isRead = filters.isRead
+    }
+
+    if (filters?.allowedTypes && filters.allowedTypes.length > 0) {
+      where.title = {
+        in: filters.allowedTypes,
+      }
+    }
+
+    const [notifications, total] = await Promise.all([
+      prisma.notification.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      prisma.notification.count({ where }),
+    ])
+
+    return {
+      notifications,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    }
+  },
+
   // Get notification by ID
   getById: async (id: string, userId: string) => {
     const notification = await prisma.notification.findFirst({

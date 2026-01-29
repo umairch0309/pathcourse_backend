@@ -118,8 +118,12 @@ export const PERMISSION_SLUGS = {
   SPECIALISTS_BLOCK_UNBLOCK: 'specialists.block_unblock',
   SPECIALISTS_ACCEPT_REJECT: 'specialists.accept_reject',
   USERS_VIEW: 'users.view',
+  USERS_BLOCK_UNBLOCK: 'users.block_unblock',
   SESSIONS_VIEW: 'sessions.view',
+  SESSIONS_ARCHIVE: 'sessions.archive',
   USER_INQUIRIES_VIEW: 'user_inquiries.view',
   USER_INQUIRIES_DELETE: 'user_inquiries.delete',
   SETTINGS_VIEW: 'settings.view',
+  NOTIFICATIONS_VIEW_ALL: 'notifications.view_all',
+  NOTIFICATIONS_VIEW_BY_PERMISSION: 'notifications.view_by_permission',
 } as const

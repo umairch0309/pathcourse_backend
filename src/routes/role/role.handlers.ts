@@ -12,7 +12,7 @@ export const ROLE_ROUTES_HANDLER: HandlerMapFromRoutes<typeof ROLE_ROUTES> = {
     }
 
     // Only admins can view roles
-    if (user.role !== 'admin') {
+    if (user.role !== 'admin' && user.role !== 'team_admin') {
       throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
     }
 
@@ -46,7 +46,7 @@ export const ROLE_ROUTES_HANDLER: HandlerMapFromRoutes<typeof ROLE_ROUTES> = {
     }
 
     // Only admins can view roles
-    if (user.role !== 'admin') {
+    if (user.role !== 'admin' && user.role !== 'team_admin') {
       throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
     }
 
@@ -83,7 +83,7 @@ export const ROLE_ROUTES_HANDLER: HandlerMapFromRoutes<typeof ROLE_ROUTES> = {
     }
 
     // Only admins can create roles
-    if (user.role !== 'admin') {
+    if (user.role !== 'admin' && user.role !== 'team_admin') {
       throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
     }
 
@@ -122,7 +122,7 @@ export const ROLE_ROUTES_HANDLER: HandlerMapFromRoutes<typeof ROLE_ROUTES> = {
     }
 
     // Only admins can update roles
-    if (user.role !== 'admin') {
+    if (user.role !== 'admin' && user.role !== 'team_admin') {
       throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
     }
 
@@ -162,7 +162,7 @@ export const ROLE_ROUTES_HANDLER: HandlerMapFromRoutes<typeof ROLE_ROUTES> = {
     }
 
     // Only admins can delete roles
-    if (user.role !== 'admin') {
+    if (user.role !== 'admin' && user.role !== 'team_admin') {
       throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
     }
 
@@ -195,7 +195,7 @@ export const ROLE_ROUTES_HANDLER: HandlerMapFromRoutes<typeof ROLE_ROUTES> = {
     }
 
     // Only admins can assign permissions
-    if (user.role !== 'admin') {
+    if (user.role !== 'admin' && user.role !== 'team_admin') {
       throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
     }
 
@@ -226,4 +226,3 @@ export const ROLE_ROUTES_HANDLER: HandlerMapFromRoutes<typeof ROLE_ROUTES> = {
     }
   },
 }
-

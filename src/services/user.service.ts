@@ -144,6 +144,79 @@ export const USER_SERVICES = {
     return updatedUser
   },
 
+  // Block a patient (admin only)
+  blockPatient: async (patientId: string, banReason?: string) => {
+    // Ensure the user is a patient
+    const patient = await prisma.user.findFirst({
+      where: {
+        id: patientId,
+        role: 'patient',
+      },
+      select: {
+        id: true,
+      },
+    })
+
+    if (!patient) {
+      throw new Error('Patient not found')
+    }
+
+    // Update user to set banned status
+    await prisma.user.update({
+      where: { id: patientId },
+      data: {
+        banned: true,
+        banReason: banReason || null,
+        banExpires: null, // Permanent ban unless specified
+      },
+    })
+
+    // Return updated patient using existing helper
+    const updated = await USER_SERVICES.getPatientById(patientId)
+
+    if (!updated) {
+      throw new Error('Patient not found after update')
+    }
+
+    return updated
+  },
+
+  // Unblock a patient (admin only)
+  unblockPatient: async (patientId: string) => {
+    // Ensure the user is a patient
+    const patient = await prisma.user.findFirst({
+      where: {
+        id: patientId,
+        role: 'patient',
+      },
+      select: {
+        id: true,
+      },
+    })
+
+    if (!patient) {
+      throw new Error('Patient not found')
+    }
+
+    // Update user to remove banned status
+    await prisma.user.update({
+      where: { id: patientId },
+      data: {
+        banned: false,
+        banReason: null,
+        banExpires: null,
+      },
+    })
+
+    const updated = await USER_SERVICES.getPatientById(patientId)
+
+    if (!updated) {
+      throw new Error('Patient not found after update')
+    }
+
+    return updated
+  },
+
   // Get all patients (admin only)
   getAllPatients: async (filters?: { page?: number; limit?: number; search?: string }) => {
     const page = filters?.page || 1

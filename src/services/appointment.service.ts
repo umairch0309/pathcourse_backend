@@ -1221,6 +1221,7 @@ export const APPOINTMENT_SERVICES = {
     page?: number
     limit?: number
     search?: string
+    isArchived?: boolean
   }) => {
     const page = filters?.page || 1
     const limit = filters?.limit || 10
@@ -1240,15 +1241,23 @@ export const APPOINTMENT_SERVICES = {
       where.status = filters.status
     }
 
+    if (filters?.isArchived !== undefined) {
+      where.isArchived = filters.isArchived
+    }
+
     // Search functionality
     if (filters?.search) {
-      where.OR = [
-        { issue: { contains: filters.search, mode: 'insensitive' } },
-        { patientName: { contains: filters.search, mode: 'insensitive' } },
-        { doctor: { name: { contains: filters.search, mode: 'insensitive' } } },
-        { doctor: { email: { contains: filters.search, mode: 'insensitive' } } },
-        { patient: { name: { contains: filters.search, mode: 'insensitive' } } },
-        { patient: { email: { contains: filters.search, mode: 'insensitive' } } },
+      where.AND = [
+        {
+          OR: [
+            { issue: { contains: filters.search, mode: 'insensitive' } },
+            { patientName: { contains: filters.search, mode: 'insensitive' } },
+            { doctor: { name: { contains: filters.search, mode: 'insensitive' } } },
+            { doctor: { email: { contains: filters.search, mode: 'insensitive' } } },
+            { patient: { name: { contains: filters.search, mode: 'insensitive' } } },
+            { patient: { email: { contains: filters.search, mode: 'insensitive' } } },
+          ],
+        },
       ]
     }
 
@@ -1350,6 +1359,36 @@ export const APPOINTMENT_SERVICES = {
     })
 
     return appointment
+  },
+
+  // Archive (soft delete) an appointment for admin
+  archiveForAdmin: async (id: string) => {
+    // Ensure appointment exists
+    const existing = await prisma.appointment.findUnique({
+      where: { id },
+      select: { id: true },
+    })
+
+    if (!existing) {
+      throw new Error('Appointment not found')
+    }
+
+    // Mark as archived
+    await prisma.appointment.update({
+      where: { id },
+      data: {
+        isArchived: true,
+      },
+    })
+
+    // Return full details using existing helper
+    const archived = await APPOINTMENT_SERVICES.getByIdForAdmin(id)
+
+    if (!archived) {
+      throw new Error('Appointment not found after archive')
+    }
+
+    return archived
   },
 
   // Get last N appointments

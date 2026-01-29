@@ -205,6 +205,41 @@ const blockDoctorResponseSchema = z
   })
   .describe('Doctor response after blocking')
 
+const blockPatientBodySchema = z
+  .object({
+    banReason: z.string().optional().nullable().describe('Reason for blocking the patient'),
+  })
+  .describe('Request body for blocking a patient')
+
+const patientResponseSchema = z
+  .object({
+    id: z.string(),
+    name: z.string(),
+    email: z.string(),
+    image: z.string().nullable(),
+    phone: z.string().nullable(),
+    role: z.string().nullable(),
+    banned: z.boolean().nullable(),
+    banReason: z.string().nullable(),
+    banExpires: z.string().datetime().nullable(),
+    onboardingStage: z.string().nullable(),
+    enterpriseCode: z.string().nullable(),
+    employeeCode: z.string().nullable(),
+    isAnonymous: z.boolean().nullable(),
+    createdAt: z.string().datetime(),
+    updatedAt: z.string().datetime(),
+    userInfo: z
+      .object({
+        id: z.string(),
+        gender: z.string().nullable(),
+        dateOfBirth: z.string().datetime().nullable(),
+        phone: z.string().nullable(),
+        address: z.string().nullable(),
+      })
+      .nullable(),
+  })
+  .describe('Patient with profile information')
+
 export const ADMIN_ROUTES = {
   getDoctorRequests: createRoute({
     path: '/admin/doctor-requests',
@@ -366,6 +401,53 @@ export const ADMIN_ROUTES = {
       [HttpStatusCodes.UNAUTHORIZED]: jsonContent(zodResponseSchema(), 'Unauthorized'),
       [HttpStatusCodes.FORBIDDEN]: jsonContent(zodResponseSchema(), 'Forbidden - Admin only'),
       [HttpStatusCodes.NOT_FOUND]: jsonContent(zodResponseSchema(), 'Doctor not found'),
+    },
+  }),
+
+  blockPatient: createRoute({
+    path: '/admin/patients/{patientId}/block',
+    method: 'post',
+    tags: [TAGS.user],
+    summary: 'Block a patient (Admin only)',
+    request: {
+      params: z.object({
+        patientId: z.string().describe('Patient ID to block'),
+      }),
+      body: jsonContentRequired(blockPatientBodySchema, 'Request body for blocking a patient'),
+    },
+    responses: {
+      [HttpStatusCodes.OK]: jsonContent(
+        zodResponseSchema(patientResponseSchema),
+        'Patient blocked successfully'
+      ),
+      [HttpStatusCodes.UNPROCESSABLE_ENTITY]: jsonContent(
+        createErrorSchema(blockPatientBodySchema),
+        'Unprocessable Entity'
+      ),
+      [HttpStatusCodes.UNAUTHORIZED]: jsonContent(zodResponseSchema(), 'Unauthorized'),
+      [HttpStatusCodes.FORBIDDEN]: jsonContent(zodResponseSchema(), 'Forbidden - Admin only'),
+      [HttpStatusCodes.NOT_FOUND]: jsonContent(zodResponseSchema(), 'Patient not found'),
+    },
+  }),
+
+  unblockPatient: createRoute({
+    path: '/admin/patients/{patientId}/unblock',
+    method: 'post',
+    tags: [TAGS.user],
+    summary: 'Unblock a patient (Admin only)',
+    request: {
+      params: z.object({
+        patientId: z.string().describe('Patient ID to unblock'),
+      }),
+    },
+    responses: {
+      [HttpStatusCodes.OK]: jsonContent(
+        zodResponseSchema(patientResponseSchema),
+        'Patient unblocked successfully'
+      ),
+      [HttpStatusCodes.UNAUTHORIZED]: jsonContent(zodResponseSchema(), 'Unauthorized'),
+      [HttpStatusCodes.FORBIDDEN]: jsonContent(zodResponseSchema(), 'Forbidden - Admin only'),
+      [HttpStatusCodes.NOT_FOUND]: jsonContent(zodResponseSchema(), 'Patient not found'),
     },
   }),
 
@@ -587,6 +669,7 @@ export const ADMIN_ROUTES = {
         doctorId: z.string().optional().describe('Filter by doctor ID'),
         patientId: z.string().optional().describe('Filter by patient ID'),
         search: z.string().optional().describe('Search by issue, patient name, doctor name, or email'),
+        isArchived: z.string().optional().describe('Filter by archived status (true or false)'),
       }),
     },
     responses: {
@@ -755,6 +838,94 @@ export const ADMIN_ROUTES = {
           })
         ),
         'Appointment retrieved successfully'
+      ),
+      [HttpStatusCodes.UNAUTHORIZED]: jsonContent(zodResponseSchema(), 'Unauthorized'),
+      [HttpStatusCodes.FORBIDDEN]: jsonContent(zodResponseSchema(), 'Forbidden - Admin only'),
+      [HttpStatusCodes.NOT_FOUND]: jsonContent(zodResponseSchema(), 'Appointment not found'),
+    },
+  }),
+
+  archiveAppointment: createRoute({
+    path: '/admin/appointments/{id}/archive',
+    method: 'post',
+    tags: [TAGS.appointment],
+    summary: 'Archive (soft delete) an appointment (Admin only)',
+    request: {
+      params: z.object({
+        id: z.string().describe('Appointment ID'),
+      }),
+    },
+    responses: {
+      [HttpStatusCodes.OK]: jsonContent(
+        zodResponseSchema(
+          z.object({
+            id: z.string(),
+            doctorId: z.string(),
+            patientId: z.string(),
+            status: z.enum(['BOOKED', 'COMPLETED', 'NO_SHOW']),
+            scheduledAt: z.string().datetime().nullable(),
+            startedAt: z.string().datetime().nullable(),
+            endedAt: z.string().datetime().nullable(),
+            createdAt: z.string().datetime(),
+            updatedAt: z.string().datetime(),
+            chatroomExpiry: z.string().datetime().nullable(),
+            age: z.number().int().nullable(),
+            appointmentFor: z.string(),
+            issue: z.string(),
+            uploadId: z.string().nullable(),
+            relationWithPatient: z.string().nullable(),
+            patientName: z.string().nullable(),
+            patientAge: z.number().int().nullable(),
+            doctor: z.object({
+              id: z.string(),
+              name: z.string(),
+              email: z.string(),
+              image: z.string().nullable(),
+              phone: z.string().nullable(),
+              role: z.string().nullable(),
+              isAnonymous: z.boolean().nullable(),
+              employeeCode: z.string().nullable(),
+              enterpriseCode: z.string().nullable(),
+              banned: z.boolean().nullable(),
+              onboardingStage: z.string().nullable(),
+              createdAt: z.string().datetime(),
+            }),
+            patient: z.object({
+              id: z.string(),
+              name: z.string().nullable(),
+              email: z.string().nullable(),
+              image: z.string().nullable(),
+              phone: z.string().nullable(),
+              role: z.string().nullable(),
+              isAnonymous: z.boolean().nullable(),
+              employeeCode: z.string().nullable(),
+              enterpriseCode: z.string().nullable(),
+              banned: z.boolean().nullable(),
+              onboardingStage: z.string().nullable(),
+              createdAt: z.string().datetime(),
+            }),
+            appointmentNotes: z
+              .object({
+                id: z.string(),
+                appointmentId: z.string(),
+                doctorId: z.string(),
+                notes: z.string(),
+                createdAt: z.string().datetime(),
+                updatedAt: z.string().datetime(),
+              })
+              .nullable(),
+            sessionReason: z
+              .object({
+                id: z.string(),
+                appointmentId: z.string(),
+                reason: z.string(),
+                createdAt: z.string().datetime(),
+                updatedAt: z.string().datetime(),
+              })
+              .nullable(),
+          })
+        ),
+        'Appointment archived successfully'
       ),
       [HttpStatusCodes.UNAUTHORIZED]: jsonContent(zodResponseSchema(), 'Unauthorized'),
       [HttpStatusCodes.FORBIDDEN]: jsonContent(zodResponseSchema(), 'Forbidden - Admin only'),

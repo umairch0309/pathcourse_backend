@@ -195,7 +195,7 @@ export const ADMIN_ROUTES_HANDLER: HandlerMapFromRoutes<typeof ADMIN_ROUTES> = {
     }
 
     // Only admins can view doctor requests
-    if (user.role !== 'admin') {
+    if (user.role !== 'admin' && user.role !== 'team_admin') {
       throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
     }
 
@@ -232,7 +232,7 @@ export const ADMIN_ROUTES_HANDLER: HandlerMapFromRoutes<typeof ADMIN_ROUTES> = {
     }
 
     // Only admins can approve doctors
-    if (user.role !== 'admin') {
+    if (user.role !== 'admin' && user.role !== 'team_admin') {
       throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
     }
 
@@ -272,7 +272,7 @@ export const ADMIN_ROUTES_HANDLER: HandlerMapFromRoutes<typeof ADMIN_ROUTES> = {
     }
 
     // Only admins can reject doctors
-    if (user.role !== 'admin') {
+    if (user.role !== 'admin' && user.role !== 'team_admin') {
       throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
     }
 
@@ -312,7 +312,7 @@ export const ADMIN_ROUTES_HANDLER: HandlerMapFromRoutes<typeof ADMIN_ROUTES> = {
     }
 
     // Only admins can view approved doctors
-    if (user.role !== 'admin') {
+    if (user.role !== 'admin' && user.role !== 'team_admin') {
       throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
     }
 
@@ -349,7 +349,7 @@ export const ADMIN_ROUTES_HANDLER: HandlerMapFromRoutes<typeof ADMIN_ROUTES> = {
     }
 
     // Only admins can create doctors
-    if (user.role !== 'admin') {
+    if (user.role !== 'admin' && user.role !== 'team_admin') {
       throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
     }
 
@@ -401,7 +401,7 @@ export const ADMIN_ROUTES_HANDLER: HandlerMapFromRoutes<typeof ADMIN_ROUTES> = {
     }
 
     // Only admins can block doctors
-    if (user.role !== 'admin') {
+    if (user.role !== 'admin' && user.role !== 'team_admin') {
       throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
     }
 
@@ -442,7 +442,7 @@ export const ADMIN_ROUTES_HANDLER: HandlerMapFromRoutes<typeof ADMIN_ROUTES> = {
     }
 
     // Only admins can unblock doctors
-    if (user.role !== 'admin') {
+    if (user.role !== 'admin' && user.role !== 'team_admin') {
       throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
     }
 
@@ -482,7 +482,7 @@ export const ADMIN_ROUTES_HANDLER: HandlerMapFromRoutes<typeof ADMIN_ROUTES> = {
     }
 
     // Only admins can view patients
-    if (user.role !== 'admin') {
+    if (user.role !== 'admin' && user.role !== 'team_admin') {
       throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
     }
 
@@ -528,7 +528,7 @@ export const ADMIN_ROUTES_HANDLER: HandlerMapFromRoutes<typeof ADMIN_ROUTES> = {
     }
 
     // Only admins can view patient details
-    if (user.role !== 'admin') {
+    if (user.role !== 'admin' && user.role !== 'team_admin') {
       throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
     }
 
@@ -571,6 +571,105 @@ export const ADMIN_ROUTES_HANDLER: HandlerMapFromRoutes<typeof ADMIN_ROUTES> = {
     }
   },
 
+  blockPatient: async c => {
+    const user = c.get('user')
+    if (!user) {
+      throw new HttpError('Unauthorized', HttpStatusCodes.UNAUTHORIZED)
+    }
+
+    // Only admins can block patients
+    if (user.role !== 'admin') {
+      throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
+    }
+
+    // Check permission
+    await requirePermission(user.id, PERMISSION_SLUGS.USERS_BLOCK_UNBLOCK)
+
+    const { patientId } = c.req.valid('param')
+    const { banReason } = c.req.valid('json')
+
+    try {
+      const patient = await USER_SERVICES.blockPatient(patientId, banReason || undefined)
+
+      return c.json(
+        {
+          message: 'Patient blocked successfully',
+          success: true,
+          data: {
+            ...patient,
+            createdAt: patient.createdAt.toISOString(),
+            updatedAt: patient.updatedAt.toISOString(),
+            userInfo: patient.userInfo
+              ? {
+                  ...patient.userInfo,
+                  dateOfBirth: patient.userInfo.dateOfBirth?.toISOString() || null,
+                }
+              : null,
+          },
+        },
+        HttpStatusCodes.OK
+      )
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      if (errorMessage.includes('not found')) {
+        throw new HttpError('Patient not found', HttpStatusCodes.NOT_FOUND)
+      }
+      throw new HttpError(
+        errorMessage || 'Failed to block patient',
+        HttpStatusCodes.INTERNAL_SERVER_ERROR
+      )
+    }
+  },
+
+  unblockPatient: async c => {
+    const user = c.get('user')
+    if (!user) {
+      throw new HttpError('Unauthorized', HttpStatusCodes.UNAUTHORIZED)
+    }
+
+    // Only admins can unblock patients
+    if (user.role !== 'admin') {
+      throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
+    }
+
+    // Check permission
+    await requirePermission(user.id, PERMISSION_SLUGS.USERS_BLOCK_UNBLOCK)
+
+    const { patientId } = c.req.valid('param')
+
+    try {
+      const patient = await USER_SERVICES.unblockPatient(patientId)
+
+      return c.json(
+        {
+          message: 'Patient unblocked successfully',
+          success: true,
+          data: {
+            ...patient,
+            createdAt: patient.createdAt.toISOString(),
+            updatedAt: patient.updatedAt.toISOString(),
+            userInfo: patient.userInfo
+              ? {
+                  ...patient.userInfo,
+                  dateOfBirth: patient.userInfo.dateOfBirth?.toISOString() || null,
+                }
+              : null,
+          },
+        },
+        HttpStatusCodes.OK
+      )
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      if (errorMessage.includes('not found')) {
+        throw new HttpError('Patient not found', HttpStatusCodes.NOT_FOUND)
+      }
+      throw new HttpError(
+        errorMessage || 'Failed to unblock patient',
+        HttpStatusCodes.INTERNAL_SERVER_ERROR
+      )
+    }
+  },
+
   getAllUserQueries: async c => {
     const user = c.get('user')
     if (!user) {
@@ -578,7 +677,7 @@ export const ADMIN_ROUTES_HANDLER: HandlerMapFromRoutes<typeof ADMIN_ROUTES> = {
     }
 
     // Only admins can view all queries
-    if (user.role !== 'admin') {
+    if (user.role !== 'admin' && user.role !== 'team_admin') {
       throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
     }
 
@@ -632,7 +731,7 @@ export const ADMIN_ROUTES_HANDLER: HandlerMapFromRoutes<typeof ADMIN_ROUTES> = {
     }
 
     // Only admins can view queries by ID
-    if (user.role !== 'admin') {
+    if (user.role !== 'admin' && user.role !== 'team_admin') {
       throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
     }
 
@@ -682,7 +781,7 @@ export const ADMIN_ROUTES_HANDLER: HandlerMapFromRoutes<typeof ADMIN_ROUTES> = {
     }
 
     // Only admins can view all appointments
-    if (user.role !== 'admin') {
+    if (user.role !== 'admin' && user.role !== 'team_admin') {
       throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
     }
 
@@ -697,6 +796,7 @@ export const ADMIN_ROUTES_HANDLER: HandlerMapFromRoutes<typeof ADMIN_ROUTES> = {
       doctorId: query.doctorId,
       patientId: query.patientId,
       search: query.search,
+      isArchived: query.isArchived !== undefined ? query.isArchived === 'true' : undefined,
     }
 
     const result = await APPOINTMENT_SERVICES.getAllForAdmin(filters)
@@ -715,6 +815,7 @@ export const ADMIN_ROUTES_HANDLER: HandlerMapFromRoutes<typeof ADMIN_ROUTES> = {
           doctorId: appointment.doctorId,
           patientId: appointment.patientId,
           status: appointment.status,
+          isArchived: appointment.isArchived,
           scheduledAt: appointment.scheduledAt?.toISOString() || null,
           startedAt: appointment.startedAt?.toISOString() || null,
           endedAt: appointment.endedAt?.toISOString() || null,
@@ -778,7 +879,7 @@ export const ADMIN_ROUTES_HANDLER: HandlerMapFromRoutes<typeof ADMIN_ROUTES> = {
     }
 
     // Only admins can view appointment details
-    if (user.role !== 'admin') {
+    if (user.role !== 'admin' && user.role !== 'team_admin') {
       throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
     }
 
@@ -867,6 +968,96 @@ export const ADMIN_ROUTES_HANDLER: HandlerMapFromRoutes<typeof ADMIN_ROUTES> = {
     }
   },
 
+  archiveAppointment: async c => {
+    const user = c.get('user')
+    if (!user) {
+      throw new HttpError('Unauthorized', HttpStatusCodes.UNAUTHORIZED)
+    }
+
+    // Only admins can archive appointments
+    if (user.role !== 'admin') {
+      throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
+    }
+
+    // Check permission
+    await requirePermission(user.id, PERMISSION_SLUGS.SESSIONS_ARCHIVE)
+
+    const { id } = c.req.valid('param')
+
+    try {
+      const appointment = await APPOINTMENT_SERVICES.archiveForAdmin(id)
+
+      // Format appointment with signed URLs
+      const doctorImage = await convertUserImageToSignedUrl(appointment.doctor?.image)
+      const patientImage = await convertUserImageToSignedUrl(appointment.patient?.image)
+      const uploadIdSignedUrl = appointment.uploadId
+        ? await convertUserImageToSignedUrl(appointment.uploadId)
+        : null
+
+      return c.json(
+        {
+          message: 'Appointment archived successfully',
+          success: true,
+          data: {
+            id: appointment.id,
+            doctorId: appointment.doctorId,
+            patientId: appointment.patientId,
+            status: appointment.status,
+            scheduledAt: appointment.scheduledAt?.toISOString() || null,
+            startedAt: appointment.startedAt?.toISOString() || null,
+            endedAt: appointment.endedAt?.toISOString() || null,
+            createdAt: appointment.createdAt.toISOString(),
+            updatedAt: appointment.updatedAt.toISOString(),
+            chatroomExpiry: appointment.chatroomExpiry?.toISOString() || null,
+            age: appointment.age,
+            appointmentFor: appointment.appointmentFor,
+            issue: appointment.issue,
+            uploadId: uploadIdSignedUrl,
+            relationWithPatient: appointment.relationWithPatient,
+            patientName: appointment.patientName,
+            patientAge: appointment.patientAge,
+            doctor: appointment.doctor
+              ? {
+                  ...appointment.doctor,
+                  image: doctorImage,
+                }
+              : null,
+            patient: appointment.patient
+              ? {
+                  ...appointment.patient,
+                  image: patientImage,
+                }
+              : null,
+            appointmentNotes: appointment.appointmentNotes
+              ? {
+                  ...appointment.appointmentNotes,
+                  createdAt: appointment.appointmentNotes.createdAt.toISOString(),
+                  updatedAt: appointment.appointmentNotes.updatedAt.toISOString(),
+                }
+              : null,
+            sessionReason: appointment.sessionReason
+              ? {
+                  ...appointment.sessionReason,
+                  createdAt: appointment.sessionReason.createdAt.toISOString(),
+                  updatedAt: appointment.sessionReason.updatedAt.toISOString(),
+                }
+              : null,
+          },
+        },
+        HttpStatusCodes.OK
+      )
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      if (errorMessage.includes('not found')) {
+        throw new HttpError('Appointment not found', HttpStatusCodes.NOT_FOUND)
+      }
+      throw new HttpError(
+        errorMessage || 'Failed to archive appointment',
+        HttpStatusCodes.INTERNAL_SERVER_ERROR
+      )
+    }
+  },
+
   updateAdminProfile: async c => {
     const user = c.get('user')
     if (!user) {
@@ -874,7 +1065,7 @@ export const ADMIN_ROUTES_HANDLER: HandlerMapFromRoutes<typeof ADMIN_ROUTES> = {
     }
 
     // Only admins can update their profile
-    if (user.role !== 'admin') {
+    if (user.role !== 'admin' && user.role !== 'team_admin') {
       throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
     }
 
@@ -919,7 +1110,7 @@ export const ADMIN_ROUTES_HANDLER: HandlerMapFromRoutes<typeof ADMIN_ROUTES> = {
     }
 
     // Only admins can view dashboard stats
-    if (user.role !== 'admin') {
+    if (user.role !== 'admin' && user.role !== 'team_admin') {
       throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
     }
 
@@ -953,7 +1144,7 @@ export const ADMIN_ROUTES_HANDLER: HandlerMapFromRoutes<typeof ADMIN_ROUTES> = {
     }
 
     // Only admins can view last user queries
-    if (user.role !== 'admin') {
+    if (user.role !== 'admin' && user.role !== 'team_admin') {
       throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
     }
 
@@ -1010,7 +1201,7 @@ export const ADMIN_ROUTES_HANDLER: HandlerMapFromRoutes<typeof ADMIN_ROUTES> = {
     }
 
     // Only admins can view last appointments
-    if (user.role !== 'admin') {
+    if (user.role !== 'admin' && user.role !== 'team_admin') {
       throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
     }
 
@@ -1034,6 +1225,7 @@ export const ADMIN_ROUTES_HANDLER: HandlerMapFromRoutes<typeof ADMIN_ROUTES> = {
             doctorId: appointment.doctorId,
             patientId: appointment.patientId,
             status: appointment.status,
+            isArchived: appointment.isArchived,
             scheduledAt: appointment.scheduledAt?.toISOString() || null,
             startedAt: appointment.startedAt?.toISOString() || null,
             endedAt: appointment.endedAt?.toISOString() || null,

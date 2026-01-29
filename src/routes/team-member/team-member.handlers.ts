@@ -12,7 +12,7 @@ export const TEAM_MEMBER_ROUTES_HANDLER: HandlerMapFromRoutes<typeof TEAM_MEMBER
     }
 
     // Only admins can view team members
-    if (user.role !== 'admin') {
+    if (user.role !== 'admin' && user.role !== 'team_admin') {
       throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
     }
 
@@ -50,7 +50,7 @@ export const TEAM_MEMBER_ROUTES_HANDLER: HandlerMapFromRoutes<typeof TEAM_MEMBER
     }
 
     // Only admins can view team members
-    if (user.role !== 'admin') {
+    if (user.role !== 'admin' && user.role !== 'team_admin') {
       throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
     }
 
@@ -96,7 +96,7 @@ export const TEAM_MEMBER_ROUTES_HANDLER: HandlerMapFromRoutes<typeof TEAM_MEMBER
     }
 
     // Only admins can create team members
-    if (user.role !== 'admin') {
+    if (user.role !== 'admin' && user.role !== 'team_admin') {
       throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
     }
 
@@ -137,7 +137,7 @@ export const TEAM_MEMBER_ROUTES_HANDLER: HandlerMapFromRoutes<typeof TEAM_MEMBER
     }
 
     // Only admins can update team member roles
-    if (user.role !== 'admin') {
+    if (user.role !== 'admin' && user.role !== 'team_admin') {
       throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
     }
 
@@ -179,7 +179,7 @@ export const TEAM_MEMBER_ROUTES_HANDLER: HandlerMapFromRoutes<typeof TEAM_MEMBER
     }
 
     // Only admins can remove team members
-    if (user.role !== 'admin') {
+    if (user.role !== 'admin' && user.role !== 'team_admin') {
       throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
     }
 
@@ -205,4 +205,3 @@ export const TEAM_MEMBER_ROUTES_HANDLER: HandlerMapFromRoutes<typeof TEAM_MEMBER
     }
   },
 }
-
