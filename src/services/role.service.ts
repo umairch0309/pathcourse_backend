@@ -7,7 +7,7 @@ export const ROLE_SERVICES = {
    * Get all roles with their permissions
    */
   getAll: async () => {
-    const roles = await (prisma as any).role.findMany({
+    const roles = await prisma.role.findMany({
       include: {
         rolePermissions: {
           include: {
@@ -21,13 +21,13 @@ export const ROLE_SERVICES = {
     })
 
     return {
-      roles: roles.map((role: any) => ({
+      roles: roles.map(role => ({
         id: role.id,
         name: role.name,
         description: role.description,
         createdAt: role.createdAt,
         updatedAt: role.updatedAt,
-        permissions: role.rolePermissions.map((rp: any) => ({
+        permissions: role.rolePermissions.map(rp => ({
           id: rp.permission.id,
           name: rp.permission.name,
           slug: rp.permission.slug,
@@ -41,7 +41,7 @@ export const ROLE_SERVICES = {
    * Get role by ID with permissions
    */
   getById: async (id: string) => {
-    const role = await (prisma as any).role.findUnique({
+    const role = await prisma.role.findUnique({
       where: { id },
       include: {
         rolePermissions: {
@@ -62,7 +62,7 @@ export const ROLE_SERVICES = {
       description: role.description,
       createdAt: role.createdAt,
       updatedAt: role.updatedAt,
-      permissions: role.rolePermissions.map((rp: any) => ({
+      permissions: role.rolePermissions.map(rp => ({
         id: rp.permission.id,
         name: rp.permission.name,
         slug: rp.permission.slug,
@@ -76,7 +76,7 @@ export const ROLE_SERVICES = {
    */
   create: async (data: { name: string; description?: string }) => {
     // Check if role with same name already exists
-    const existing = await (prisma as any).role.findUnique({
+    const existing = await prisma.role.findUnique({
       where: { name: data.name },
     })
 
@@ -84,7 +84,7 @@ export const ROLE_SERVICES = {
       throw new HttpError('Role with this name already exists', HttpStatusCodes.CONFLICT)
     }
 
-    const role = await (prisma as any).role.create({
+    const role = await prisma.role.create({
       data: {
         name: data.name,
         description: data.description || null,
@@ -98,7 +98,7 @@ export const ROLE_SERVICES = {
    * Update a role
    */
   update: async (id: string, data: { name?: string; description?: string }) => {
-    const role = await (prisma as any).role.findUnique({
+    const role = await prisma.role.findUnique({
       where: { id },
     })
 
@@ -108,7 +108,7 @@ export const ROLE_SERVICES = {
 
     // Check if name is being changed and if new name already exists
     if (data.name && data.name !== role.name) {
-      const existing = await (prisma as any).role.findUnique({
+      const existing = await prisma.role.findUnique({
         where: { name: data.name },
       })
 
@@ -117,7 +117,7 @@ export const ROLE_SERVICES = {
       }
     }
 
-    const updated = await (prisma as any).role.update({
+    const updated = await prisma.role.update({
       where: { id },
       data: {
         ...(data.name && { name: data.name }),
@@ -132,7 +132,7 @@ export const ROLE_SERVICES = {
    * Delete a role
    */
   delete: async (id: string) => {
-    const role = await (prisma as any).role.findUnique({
+    const role = await prisma.role.findUnique({
       where: { id },
       include: {
         teamMembers: true,
@@ -151,7 +151,7 @@ export const ROLE_SERVICES = {
       )
     }
 
-    await (prisma as any).role.delete({
+    await prisma.role.delete({
       where: { id },
     })
 
@@ -162,7 +162,7 @@ export const ROLE_SERVICES = {
    * Assign permissions to a role
    */
   assignPermissions: async (roleId: string, permissionIds: string[]) => {
-    const role = await (prisma as any).role.findUnique({
+    const role = await prisma.role.findUnique({
       where: { id: roleId },
     })
 
@@ -171,7 +171,7 @@ export const ROLE_SERVICES = {
     }
 
     // Verify all permissions exist
-    const permissions = await (prisma as any).permission.findMany({
+    const permissions = await prisma.permission.findMany({
       where: {
         id: {
           in: permissionIds,
@@ -184,13 +184,13 @@ export const ROLE_SERVICES = {
     }
 
     // Remove existing permissions
-    await (prisma as any).rolePermission.deleteMany({
+    await prisma.rolePermission.deleteMany({
       where: { roleId },
     })
 
     // Add new permissions
     if (permissionIds.length > 0) {
-      await (prisma as any).rolePermission.createMany({
+      await prisma.rolePermission.createMany({
         data: permissionIds.map(permissionId => ({
           roleId,
           permissionId,
@@ -205,7 +205,7 @@ export const ROLE_SERVICES = {
    * Get permissions for a role
    */
   getRolePermissions: async (roleId: string) => {
-    const role = await (prisma as any).role.findUnique({
+    const role = await prisma.role.findUnique({
       where: { id: roleId },
       include: {
         rolePermissions: {
@@ -223,7 +223,7 @@ export const ROLE_SERVICES = {
     return {
       roleId: role.id,
       roleName: role.name,
-      permissions: role.rolePermissions.map((rp: any) => ({
+      permissions: role.rolePermissions.map(rp => ({
         id: rp.permission.id,
         name: rp.permission.name,
         slug: rp.permission.slug,

@@ -131,7 +131,10 @@ export const PERMISSION_ROUTES = {
       ),
       [HttpStatusCodes.UNAUTHORIZED]: jsonContent(zodResponseSchema(), 'Unauthorized'),
       [HttpStatusCodes.NOT_FOUND]: jsonContent(zodResponseSchema(), 'Permission not found'),
-      [HttpStatusCodes.CONFLICT]: jsonContent(zodResponseSchema(), 'Permission slug already exists'),
+      [HttpStatusCodes.CONFLICT]: jsonContent(
+        zodResponseSchema(),
+        'Permission slug already exists'
+      ),
       [HttpStatusCodes.FORBIDDEN]: jsonContent(zodResponseSchema(), 'Forbidden'),
     },
   }),
@@ -158,4 +161,3 @@ export const PERMISSION_ROUTES = {
     },
   }),
 }
-

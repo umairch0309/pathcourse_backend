@@ -16644,6 +16644,18 @@ var init_error = __esm(() => {
   };
 });
 
+// src/lib/prisma.ts
+var exports_prisma = {};
+__export(exports_prisma, {
+  default: () => prisma_default
+});
+import { PrismaClient } from "@prisma/client";
+var prisma, prisma_default;
+var init_prisma = __esm(() => {
+  prisma = new PrismaClient;
+  prisma_default = prisma;
+});
+
 // node_modules/@smithy/types/dist-cjs/index.js
 var require_dist_cjs = __commonJS((exports) => {
   exports.HttpAuthLocation = undefined;
@@ -30541,7 +30553,7 @@ var require_dist_cjs40 = __commonJS((exports) => {
 });
 
 // node_modules/@aws-sdk/credential-provider-env/dist-es/fromEnv.js
-var import_client, import_property_provider, ENV_KEY = "AWS_ACCESS_KEY_ID", ENV_SECRET = "AWS_SECRET_ACCESS_KEY", ENV_SESSION = "AWS_SESSION_TOKEN", ENV_EXPIRATION = "AWS_CREDENTIAL_EXPIRATION", ENV_CREDENTIAL_SCOPE = "AWS_CREDENTIAL_SCOPE", ENV_ACCOUNT_ID = "AWS_ACCOUNT_ID", fromEnv = (init) => async () => {
+var import_client2, import_property_provider, ENV_KEY = "AWS_ACCESS_KEY_ID", ENV_SECRET = "AWS_SECRET_ACCESS_KEY", ENV_SESSION = "AWS_SESSION_TOKEN", ENV_EXPIRATION = "AWS_CREDENTIAL_EXPIRATION", ENV_CREDENTIAL_SCOPE = "AWS_CREDENTIAL_SCOPE", ENV_ACCOUNT_ID = "AWS_ACCOUNT_ID", fromEnv = (init) => async () => {
   init?.logger?.debug("@aws-sdk/credential-provider-env - fromEnv");
   const accessKeyId = process.env[ENV_KEY];
   const secretAccessKey = process.env[ENV_SECRET];
@@ -30558,13 +30570,13 @@ var import_client, import_property_provider, ENV_KEY = "AWS_ACCESS_KEY_ID", ENV_
       ...credentialScope && { credentialScope },
       ...accountId && { accountId }
     };
-    import_client.setCredentialFeature(credentials, "CREDENTIALS_ENV_VARS", "g");
+    import_client2.setCredentialFeature(credentials, "CREDENTIALS_ENV_VARS", "g");
     return credentials;
   }
   throw new import_property_provider.CredentialsProviderError("Unable to find environment variable credentials.", { logger: init?.logger });
 };
 var init_fromEnv = __esm(() => {
-  import_client = __toESM(require_client2(), 1);
+  import_client2 = __toESM(require_client2(), 1);
   import_property_provider = __toESM(require_dist_cjs17(), 1);
 });
 
@@ -31082,7 +31094,7 @@ var retryWrapper = (toRetry, maxRetries, delayMs) => {
 
 // node_modules/@aws-sdk/credential-provider-http/dist-es/fromHttp/fromHttp.js
 import fs from "fs/promises";
-var import_client2, import_node_http_handler, import_property_provider8, AWS_CONTAINER_CREDENTIALS_RELATIVE_URI = "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI", DEFAULT_LINK_LOCAL_HOST = "http://169.254.170.2", AWS_CONTAINER_CREDENTIALS_FULL_URI = "AWS_CONTAINER_CREDENTIALS_FULL_URI", AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE = "AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE", AWS_CONTAINER_AUTHORIZATION_TOKEN = "AWS_CONTAINER_AUTHORIZATION_TOKEN", fromHttp = (options = {}) => {
+var import_client3, import_node_http_handler, import_property_provider8, AWS_CONTAINER_CREDENTIALS_RELATIVE_URI = "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI", DEFAULT_LINK_LOCAL_HOST = "http://169.254.170.2", AWS_CONTAINER_CREDENTIALS_FULL_URI = "AWS_CONTAINER_CREDENTIALS_FULL_URI", AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE = "AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE", AWS_CONTAINER_AUTHORIZATION_TOKEN = "AWS_CONTAINER_AUTHORIZATION_TOKEN", fromHttp = (options = {}) => {
   options.logger?.debug("@aws-sdk/credential-provider-http - fromHttp");
   let host;
   const relative = options.awsContainerCredentialsRelativeUri ?? process.env[AWS_CONTAINER_CREDENTIALS_RELATIVE_URI];
@@ -31121,7 +31133,7 @@ Set AWS_CONTAINER_CREDENTIALS_FULL_URI or AWS_CONTAINER_CREDENTIALS_RELATIVE_URI
     }
     try {
       const result = await requestHandler.handle(request2);
-      return getCredentials(result.response).then((creds) => import_client2.setCredentialFeature(creds, "CREDENTIALS_HTTP", "z"));
+      return getCredentials(result.response).then((creds) => import_client3.setCredentialFeature(creds, "CREDENTIALS_HTTP", "z"));
     } catch (e2) {
       throw new import_property_provider8.CredentialsProviderError(String(e2), { logger: options.logger });
     }
@@ -31130,7 +31142,7 @@ Set AWS_CONTAINER_CREDENTIALS_FULL_URI or AWS_CONTAINER_CREDENTIALS_RELATIVE_URI
 var init_fromHttp = __esm(() => {
   init_checkUrl();
   init_requestHelpers();
-  import_client2 = __toESM(require_client2(), 1);
+  import_client3 = __toESM(require_client2(), 1);
   import_node_http_handler = __toESM(require_dist_cjs11(), 1);
   import_property_provider8 = __toESM(require_dist_cjs17(), 1);
 });
@@ -34803,7 +34815,7 @@ var init_loadSso = __esm(() => {
 });
 
 // node_modules/@aws-sdk/credential-provider-sso/dist-es/resolveSSOCredentials.js
-var import_client3, import_property_provider13, import_shared_ini_file_loader3, SHOULD_FAIL_CREDENTIAL_CHAIN = false, resolveSSOCredentials = async ({ ssoStartUrl, ssoSession, ssoAccountId, ssoRegion, ssoRoleName, ssoClient, clientConfig, parentClientConfig, profile, filepath, configFilepath, ignoreCache, logger }) => {
+var import_client4, import_property_provider13, import_shared_ini_file_loader3, SHOULD_FAIL_CREDENTIAL_CHAIN = false, resolveSSOCredentials = async ({ ssoStartUrl, ssoSession, ssoAccountId, ssoRegion, ssoRoleName, ssoClient, clientConfig, parentClientConfig, profile, filepath, configFilepath, ignoreCache, logger }) => {
   let token;
   const refreshMessage = `To refresh this SSO session run aws sso login with the corresponding profile.`;
   if (ssoSession) {
@@ -34876,15 +34888,15 @@ var import_client3, import_property_provider13, import_shared_ini_file_loader3, 
     ...accountId && { accountId }
   };
   if (ssoSession) {
-    import_client3.setCredentialFeature(credentials, "CREDENTIALS_SSO", "s");
+    import_client4.setCredentialFeature(credentials, "CREDENTIALS_SSO", "s");
   } else {
-    import_client3.setCredentialFeature(credentials, "CREDENTIALS_SSO_LEGACY", "u");
+    import_client4.setCredentialFeature(credentials, "CREDENTIALS_SSO_LEGACY", "u");
   }
   return credentials;
 };
 var init_resolveSSOCredentials = __esm(() => {
   init_dist_es4();
-  import_client3 = __toESM(require_client2(), 1);
+  import_client4 = __toESM(require_client2(), 1);
   import_property_provider13 = __toESM(require_dist_cjs17(), 1);
   import_shared_ini_file_loader3 = __toESM(require_dist_cjs35(), 1);
 });
@@ -35000,7 +35012,7 @@ var init_dist_es6 = __esm(() => {
 });
 
 // node_modules/@aws-sdk/credential-provider-ini/dist-es/resolveCredentialSource.js
-var import_client4, import_property_provider16, resolveCredentialSource = (credentialSource, profileName, logger) => {
+var import_client5, import_property_provider16, resolveCredentialSource = (credentialSource, profileName, logger) => {
   const sourceProvidersMap = {
     EcsContainer: async (options) => {
       const { fromHttp: fromHttp2 } = await Promise.resolve().then(() => (init_dist_es3(), exports_dist_es3));
@@ -35024,9 +35036,9 @@ var import_client4, import_property_provider16, resolveCredentialSource = (crede
   } else {
     throw new import_property_provider16.CredentialsProviderError(`Unsupported credential source in profile ${profileName}. Got ${credentialSource}, expected EcsContainer or Ec2InstanceMetadata or Environment.`, { logger });
   }
-}, setNamedProvider = (creds) => import_client4.setCredentialFeature(creds, "CREDENTIALS_PROFILE_NAMED_PROVIDER", "p");
+}, setNamedProvider = (creds) => import_client5.setCredentialFeature(creds, "CREDENTIALS_PROFILE_NAMED_PROVIDER", "p");
 var init_resolveCredentialSource = __esm(() => {
-  import_client4 = __toESM(require_client2(), 1);
+  import_client5 = __toESM(require_client2(), 1);
   import_property_provider16 = __toESM(require_dist_cjs17(), 1);
 });
 
@@ -35865,7 +35877,7 @@ var require_sts = __commonJS((exports) => {
 });
 
 // node_modules/@aws-sdk/credential-provider-ini/dist-es/resolveAssumeRoleCredentials.js
-var import_client5, import_property_provider17, import_shared_ini_file_loader5, isAssumeRoleProfile = (arg, { profile = "default", logger } = {}) => {
+var import_client6, import_property_provider17, import_shared_ini_file_loader5, isAssumeRoleProfile = (arg, { profile = "default", logger } = {}) => {
   return Boolean(arg) && typeof arg === "object" && typeof arg.role_arn === "string" && ["undefined", "string"].indexOf(typeof arg.role_session_name) > -1 && ["undefined", "string"].indexOf(typeof arg.external_id) > -1 && ["undefined", "string"].indexOf(typeof arg.mfa_serial) > -1 && (isAssumeRoleWithSourceProfile(arg, { profile, logger }) || isCredentialSourceProfile(arg, { profile, logger }));
 }, isAssumeRoleWithSourceProfile = (arg, { profile, logger }) => {
   const withSourceProfile = typeof arg.source_profile === "string" && typeof arg.credential_source === "undefined";
@@ -35903,7 +35915,7 @@ var import_client5, import_property_provider17, import_shared_ini_file_loader5, 
     [source_profile]: true
   }, isCredentialSourceWithoutRoleArn(profiles[source_profile] ?? {})) : (await resolveCredentialSource(profileData.credential_source, profileName, options.logger)(options))();
   if (isCredentialSourceWithoutRoleArn(profileData)) {
-    return sourceCredsProvider.then((creds) => import_client5.setCredentialFeature(creds, "CREDENTIALS_PROFILE_SOURCE_PROFILE", "o"));
+    return sourceCredsProvider.then((creds) => import_client6.setCredentialFeature(creds, "CREDENTIALS_PROFILE_SOURCE_PROFILE", "o"));
   } else {
     const params = {
       RoleArn: profileData.role_arn,
@@ -35920,14 +35932,14 @@ var import_client5, import_property_provider17, import_shared_ini_file_loader5, 
       params.TokenCode = await options.mfaCodeProvider(mfa_serial);
     }
     const sourceCreds = await sourceCredsProvider;
-    return options.roleAssumer(sourceCreds, params).then((creds) => import_client5.setCredentialFeature(creds, "CREDENTIALS_PROFILE_SOURCE_PROFILE", "o"));
+    return options.roleAssumer(sourceCreds, params).then((creds) => import_client6.setCredentialFeature(creds, "CREDENTIALS_PROFILE_SOURCE_PROFILE", "o"));
   }
 }, isCredentialSourceWithoutRoleArn = (section) => {
   return !section.role_arn && !!section.credential_source;
 };
 var init_resolveAssumeRoleCredentials = __esm(() => {
   init_resolveCredentialSource();
-  import_client5 = __toESM(require_client2(), 1);
+  import_client6 = __toESM(require_client2(), 1);
   import_property_provider17 = __toESM(require_dist_cjs17(), 1);
   import_shared_ini_file_loader5 = __toESM(require_dist_cjs35(), 1);
 });
@@ -36722,7 +36734,7 @@ var init_LoginCredentialsFetcher = __esm(() => {
 });
 
 // node_modules/@aws-sdk/credential-provider-login/dist-es/fromLoginCredentials.js
-var import_client6, import_property_provider19, import_shared_ini_file_loader7, fromLoginCredentials = (init) => async ({ callerClientConfig } = {}) => {
+var import_client7, import_property_provider19, import_shared_ini_file_loader7, fromLoginCredentials = (init) => async ({ callerClientConfig } = {}) => {
   init?.logger?.debug?.("@aws-sdk/credential-providers - fromLoginCredentials");
   const profiles = await import_shared_ini_file_loader7.parseKnownFiles(init || {});
   const profileName = import_shared_ini_file_loader7.getProfileName({
@@ -36737,11 +36749,11 @@ var import_client6, import_property_provider19, import_shared_ini_file_loader7, 
   }
   const fetcher = new LoginCredentialsFetcher(profile, init, callerClientConfig);
   const credentials = await fetcher.loadCredentials();
-  return import_client6.setCredentialFeature(credentials, "CREDENTIALS_LOGIN", "AD");
+  return import_client7.setCredentialFeature(credentials, "CREDENTIALS_LOGIN", "AD");
 };
 var init_fromLoginCredentials = __esm(() => {
   init_LoginCredentialsFetcher();
-  import_client6 = __toESM(require_client2(), 1);
+  import_client7 = __toESM(require_client2(), 1);
   import_property_provider19 = __toESM(require_dist_cjs17(), 1);
   import_shared_ini_file_loader7 = __toESM(require_dist_cjs35(), 1);
 });
@@ -36756,22 +36768,22 @@ var init_dist_es7 = __esm(() => {
 });
 
 // node_modules/@aws-sdk/credential-provider-ini/dist-es/resolveLoginCredentials.js
-var import_client7, isLoginProfile = (data) => {
+var import_client8, isLoginProfile = (data) => {
   return Boolean(data && data.login_session);
 }, resolveLoginCredentials = async (profileName, options) => {
   const credentials = await fromLoginCredentials({
     ...options,
     profile: profileName
   })();
-  return import_client7.setCredentialFeature(credentials, "CREDENTIALS_PROFILE_LOGIN", "AC");
+  return import_client8.setCredentialFeature(credentials, "CREDENTIALS_PROFILE_LOGIN", "AC");
 };
 var init_resolveLoginCredentials = __esm(() => {
   init_dist_es7();
-  import_client7 = __toESM(require_client2(), 1);
+  import_client8 = __toESM(require_client2(), 1);
 });
 
 // node_modules/@aws-sdk/credential-provider-process/dist-es/getValidatedProcessCredentials.js
-var import_client8, getValidatedProcessCredentials = (profileName, data, profiles) => {
+var import_client9, getValidatedProcessCredentials = (profileName, data, profiles) => {
   if (data.Version !== 1) {
     throw Error(`Profile ${profileName} credential_process did not return Version 1.`);
   }
@@ -36797,11 +36809,11 @@ var import_client8, getValidatedProcessCredentials = (profileName, data, profile
     ...data.CredentialScope && { credentialScope: data.CredentialScope },
     ...accountId && { accountId }
   };
-  import_client8.setCredentialFeature(credentials, "CREDENTIALS_PROCESS", "w");
+  import_client9.setCredentialFeature(credentials, "CREDENTIALS_PROCESS", "w");
   return credentials;
 };
 var init_getValidatedProcessCredentials = __esm(() => {
-  import_client8 = __toESM(require_client2(), 1);
+  import_client9 = __toESM(require_client2(), 1);
 });
 
 // node_modules/@aws-sdk/credential-provider-process/dist-es/resolveProcessCredentials.js
@@ -36863,16 +36875,16 @@ var init_dist_es8 = __esm(() => {
 });
 
 // node_modules/@aws-sdk/credential-provider-ini/dist-es/resolveProcessCredentials.js
-var import_client9, isProcessProfile = (arg) => Boolean(arg) && typeof arg === "object" && typeof arg.credential_process === "string", resolveProcessCredentials2 = async (options, profile) => Promise.resolve().then(() => (init_dist_es8(), exports_dist_es5)).then(({ fromProcess: fromProcess3 }) => fromProcess3({
+var import_client10, isProcessProfile = (arg) => Boolean(arg) && typeof arg === "object" && typeof arg.credential_process === "string", resolveProcessCredentials2 = async (options, profile) => Promise.resolve().then(() => (init_dist_es8(), exports_dist_es5)).then(({ fromProcess: fromProcess3 }) => fromProcess3({
   ...options,
   profile
-})().then((creds) => import_client9.setCredentialFeature(creds, "CREDENTIALS_PROFILE_PROCESS", "v")));
+})().then((creds) => import_client10.setCredentialFeature(creds, "CREDENTIALS_PROFILE_PROCESS", "v")));
 var init_resolveProcessCredentials2 = __esm(() => {
-  import_client9 = __toESM(require_client2(), 1);
+  import_client10 = __toESM(require_client2(), 1);
 });
 
 // node_modules/@aws-sdk/credential-provider-ini/dist-es/resolveSsoCredentials.js
-var import_client10, resolveSsoCredentials = async (profile, profileData, options = {}) => {
+var import_client11, resolveSsoCredentials = async (profile, profileData, options = {}) => {
   const { fromSSO: fromSSO3 } = await Promise.resolve().then(() => (init_dist_es6(), exports_dist_es4));
   return fromSSO3({
     profile,
@@ -36881,18 +36893,18 @@ var import_client10, resolveSsoCredentials = async (profile, profileData, option
     clientConfig: options.clientConfig
   })().then((creds) => {
     if (profileData.sso_session) {
-      return import_client10.setCredentialFeature(creds, "CREDENTIALS_PROFILE_SSO", "r");
+      return import_client11.setCredentialFeature(creds, "CREDENTIALS_PROFILE_SSO", "r");
     } else {
-      return import_client10.setCredentialFeature(creds, "CREDENTIALS_PROFILE_SSO_LEGACY", "t");
+      return import_client11.setCredentialFeature(creds, "CREDENTIALS_PROFILE_SSO_LEGACY", "t");
     }
   });
 }, isSsoProfile3 = (arg) => arg && (typeof arg.sso_start_url === "string" || typeof arg.sso_account_id === "string" || typeof arg.sso_session === "string" || typeof arg.sso_region === "string" || typeof arg.sso_role_name === "string");
 var init_resolveSsoCredentials = __esm(() => {
-  import_client10 = __toESM(require_client2(), 1);
+  import_client11 = __toESM(require_client2(), 1);
 });
 
 // node_modules/@aws-sdk/credential-provider-ini/dist-es/resolveStaticCredentials.js
-var import_client11, isStaticCredsProfile = (arg) => Boolean(arg) && typeof arg === "object" && typeof arg.aws_access_key_id === "string" && typeof arg.aws_secret_access_key === "string" && ["undefined", "string"].indexOf(typeof arg.aws_session_token) > -1 && ["undefined", "string"].indexOf(typeof arg.aws_account_id) > -1, resolveStaticCredentials = async (profile, options) => {
+var import_client12, isStaticCredsProfile = (arg) => Boolean(arg) && typeof arg === "object" && typeof arg.aws_access_key_id === "string" && typeof arg.aws_secret_access_key === "string" && ["undefined", "string"].indexOf(typeof arg.aws_session_token) > -1 && ["undefined", "string"].indexOf(typeof arg.aws_account_id) > -1, resolveStaticCredentials = async (profile, options) => {
   options?.logger?.debug("@aws-sdk/credential-provider-ini - resolveStaticCredentials");
   const credentials = {
     accessKeyId: profile.aws_access_key_id,
@@ -36901,10 +36913,10 @@ var import_client11, isStaticCredsProfile = (arg) => Boolean(arg) && typeof arg 
     ...profile.aws_credential_scope && { credentialScope: profile.aws_credential_scope },
     ...profile.aws_account_id && { accountId: profile.aws_account_id }
   };
-  return import_client11.setCredentialFeature(credentials, "CREDENTIALS_PROFILE", "n");
+  return import_client12.setCredentialFeature(credentials, "CREDENTIALS_PROFILE", "n");
 };
 var init_resolveStaticCredentials = __esm(() => {
-  import_client11 = __toESM(require_client2(), 1);
+  import_client12 = __toESM(require_client2(), 1);
 });
 
 // node_modules/@aws-sdk/credential-provider-web-identity/dist-es/fromWebToken.js
@@ -36936,7 +36948,7 @@ var fromWebToken = (init) => async (awsIdentityProperties) => {
 
 // node_modules/@aws-sdk/credential-provider-web-identity/dist-es/fromTokenFile.js
 import { readFileSync } from "fs";
-var import_client12, import_property_provider21, import_shared_ini_file_loader10, ENV_TOKEN_FILE = "AWS_WEB_IDENTITY_TOKEN_FILE", ENV_ROLE_ARN = "AWS_ROLE_ARN", ENV_ROLE_SESSION_NAME = "AWS_ROLE_SESSION_NAME", fromTokenFile = (init = {}) => async (awsIdentityProperties) => {
+var import_client13, import_property_provider21, import_shared_ini_file_loader10, ENV_TOKEN_FILE = "AWS_WEB_IDENTITY_TOKEN_FILE", ENV_ROLE_ARN = "AWS_ROLE_ARN", ENV_ROLE_SESSION_NAME = "AWS_ROLE_SESSION_NAME", fromTokenFile = (init = {}) => async (awsIdentityProperties) => {
   init.logger?.debug("@aws-sdk/credential-provider-web-identity - fromTokenFile");
   const webIdentityTokenFile = init?.webIdentityTokenFile ?? process.env[ENV_TOKEN_FILE];
   const roleArn = init?.roleArn ?? process.env[ENV_ROLE_ARN];
@@ -36953,12 +36965,12 @@ var import_client12, import_property_provider21, import_shared_ini_file_loader10
     roleSessionName
   })(awsIdentityProperties);
   if (webIdentityTokenFile === process.env[ENV_TOKEN_FILE]) {
-    import_client12.setCredentialFeature(credentials, "CREDENTIALS_ENV_VARS_STS_WEB_ID_TOKEN", "h");
+    import_client13.setCredentialFeature(credentials, "CREDENTIALS_ENV_VARS_STS_WEB_ID_TOKEN", "h");
   }
   return credentials;
 };
 var init_fromTokenFile = __esm(() => {
-  import_client12 = __toESM(require_client2(), 1);
+  import_client13 = __toESM(require_client2(), 1);
   import_property_provider21 = __toESM(require_dist_cjs17(), 1);
   import_shared_ini_file_loader10 = __toESM(require_dist_cjs35(), 1);
 });
@@ -36974,16 +36986,16 @@ var init_dist_es9 = __esm(() => {
 });
 
 // node_modules/@aws-sdk/credential-provider-ini/dist-es/resolveWebIdentityCredentials.js
-var import_client13, isWebIdentityProfile = (arg) => Boolean(arg) && typeof arg === "object" && typeof arg.web_identity_token_file === "string" && typeof arg.role_arn === "string" && ["undefined", "string"].indexOf(typeof arg.role_session_name) > -1, resolveWebIdentityCredentials = async (profile, options) => Promise.resolve().then(() => (init_dist_es9(), exports_dist_es6)).then(({ fromTokenFile: fromTokenFile3 }) => fromTokenFile3({
+var import_client14, isWebIdentityProfile = (arg) => Boolean(arg) && typeof arg === "object" && typeof arg.web_identity_token_file === "string" && typeof arg.role_arn === "string" && ["undefined", "string"].indexOf(typeof arg.role_session_name) > -1, resolveWebIdentityCredentials = async (profile, options) => Promise.resolve().then(() => (init_dist_es9(), exports_dist_es6)).then(({ fromTokenFile: fromTokenFile3 }) => fromTokenFile3({
   webIdentityTokenFile: profile.web_identity_token_file,
   roleArn: profile.role_arn,
   roleSessionName: profile.role_session_name,
   roleAssumerWithWebIdentity: options.roleAssumerWithWebIdentity,
   logger: options.logger,
   parentClientConfig: options.parentClientConfig
-})().then((creds) => import_client13.setCredentialFeature(creds, "CREDENTIALS_PROFILE_STS_WEB_ID_TOKEN", "q")));
+})().then((creds) => import_client14.setCredentialFeature(creds, "CREDENTIALS_PROFILE_STS_WEB_ID_TOKEN", "q")));
 var init_resolveWebIdentityCredentials = __esm(() => {
-  import_client13 = __toESM(require_client2(), 1);
+  import_client14 = __toESM(require_client2(), 1);
 });
 
 // node_modules/@aws-sdk/credential-provider-ini/dist-es/resolveProfileData.js
@@ -37049,18 +37061,6 @@ __export(exports_dist_es7, {
 });
 var init_dist_es10 = __esm(() => {
   init_fromIni();
-});
-
-// src/lib/prisma.ts
-var exports_prisma = {};
-__export(exports_prisma, {
-  default: () => prisma_default
-});
-import { PrismaClient } from "@prisma/client";
-var prisma, prisma_default;
-var init_prisma = __esm(() => {
-  prisma = new PrismaClient;
-  prisma_default = prisma;
 });
 
 // node_modules/kysely/dist/esm/util/object-utils.js
@@ -50843,6 +50843,44 @@ var init_notification_service = __esm(() => {
         unreadCount
       };
     },
+    getAllForAdmin: async (filters) => {
+      const page = filters?.page || 1;
+      const limit = filters?.limit || 10;
+      const skip = (page - 1) * limit;
+      const where = {
+        user: {
+          role: {
+            in: ["admin", "team_admin"]
+          }
+        }
+      };
+      if (filters?.isRead !== null && filters?.isRead !== undefined) {
+        where.isRead = filters.isRead;
+      }
+      if (filters?.allowedTypes && filters.allowedTypes.length > 0) {
+        where.title = {
+          in: filters.allowedTypes
+        };
+      }
+      const [notifications, total] = await Promise.all([
+        prisma_default.notification.findMany({
+          where,
+          orderBy: { createdAt: "desc" },
+          skip,
+          take: limit
+        }),
+        prisma_default.notification.count({ where })
+      ]);
+      return {
+        notifications,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit)
+        }
+      };
+    },
     getById: async (id, userId) => {
       const notification = await prisma_default.notification.findFirst({
         where: {
@@ -50900,7 +50938,7 @@ var init_notification_service = __esm(() => {
 // src/lib/notification-helper.ts
 var exports_notification_helper = {};
 __export(exports_notification_helper, {
-  getAllAdminUserIds: () => getAllAdminUserIds,
+  getAllAdminAndTeamUserIds: () => getAllAdminAndTeamUserIds,
   createNotificationsForUsers: () => createNotificationsForUsers,
   createNotificationForUser: () => createNotificationForUser,
   createNotificationForAllAdmins: () => createNotificationForAllAdmins,
@@ -50923,7 +50961,7 @@ function buildNotificationUrl(type, entityId, customUrl) {
       if (!entityId) {
         return null;
       }
-      return `${FRONTEND_URL}/admin/sessions/${entityId}`;
+      return `${FRONTEND_URL}/specialist/session`;
     case NOTIFICATION_TYPES.USER_INQUIRY:
       if (!entityId) {
         return null;
@@ -50943,17 +50981,20 @@ function buildNotificationUrl(type, entityId, customUrl) {
       return null;
   }
 }
-async function getAllAdminUserIds() {
+async function getAllAdminAndTeamUserIds() {
   const prisma2 = (await Promise.resolve().then(() => (init_prisma(), exports_prisma))).default;
   const admins = await prisma2.user.findMany({
-    where: {
-      role: "admin"
-    },
-    select: {
-      id: true
-    }
+    where: { role: "admin" },
+    select: { id: true }
   });
-  return admins.map((admin3) => admin3.id);
+  const teamMembers = await prisma2.teamMember.findMany({
+    select: { userId: true }
+  });
+  const allIds = [
+    ...admins.map((a3) => a3.id),
+    ...teamMembers.map((tm) => tm.userId)
+  ];
+  return Array.from(new Set(allIds));
 }
 async function createNotificationForUser(userId, type, message2, entityId, customUrl) {
   const url2 = buildNotificationUrl(type, entityId, customUrl);
@@ -50974,9 +51015,9 @@ async function createNotificationsForUsers(userIds, type, message2, entityId) {
   })));
 }
 async function createNotificationForAllAdmins(type, message2, entityId) {
-  const adminIds = await getAllAdminUserIds();
-  if (adminIds.length > 0) {
-    await createNotificationsForUsers(adminIds, type, message2, entityId);
+  const userIds = await getAllAdminAndTeamUserIds();
+  if (userIds.length > 0) {
+    await createNotificationsForUsers(userIds, type, message2, entityId);
   }
 }
 var FRONTEND_URL;
@@ -68101,6 +68142,95 @@ function createApp() {
 
 // src/routes/admin/admin.handlers.ts
 init_error();
+
+// src/lib/permission-check.ts
+init_error();
+init_prisma();
+async function hasPermission(userId, permissionSlug) {
+  const user = await prisma_default.user.findUnique({
+    where: { id: userId },
+    select: { role: true }
+  });
+  if (user?.role?.toLowerCase() === "admin") {
+    const teamMemberCheck = await prisma_default.teamMember.findUnique({
+      where: { userId }
+    });
+    if (!teamMemberCheck) {
+      return true;
+    }
+  }
+  const teamMember = await prisma_default.teamMember.findUnique({
+    where: { userId },
+    include: {
+      role: {
+        include: {
+          rolePermissions: {
+            include: {
+              permission: true
+            }
+          }
+        }
+      }
+    }
+  });
+  if (!teamMember) {
+    return false;
+  }
+  return teamMember.role.rolePermissions.some((rp) => rp.permission.slug === permissionSlug);
+}
+async function requirePermission(userId, permissionSlug) {
+  const hasAccess = await hasPermission(userId, permissionSlug);
+  if (!hasAccess) {
+    throw new HttpError(`You do not have permission to perform this action. Required permission: ${permissionSlug}`, FORBIDDEN);
+  }
+}
+async function getUserPermissions(userId) {
+  const user = await prisma_default.user.findUnique({
+    where: { id: userId },
+    select: { role: true }
+  });
+  const teamMember = await prisma_default.teamMember.findUnique({
+    where: { userId },
+    include: {
+      role: {
+        include: {
+          rolePermissions: {
+            include: {
+              permission: true
+            }
+          }
+        }
+      }
+    }
+  });
+  if (user?.role?.toLowerCase() === "admin" && !teamMember) {
+    return Object.values(PERMISSION_SLUGS);
+  }
+  if (!teamMember) {
+    return [];
+  }
+  return teamMember.role.rolePermissions.map((rp) => rp.permission.slug);
+}
+var PERMISSION_SLUGS = {
+  DASHBOARD_VIEW: "dashboard.view",
+  ENTERPRISE_ADD: "enterprise.add",
+  ENTERPRISE_VIEW: "enterprise.view",
+  ENTERPRISE_UPDATE: "enterprise.update",
+  ENTERPRISE_DELETE: "enterprise.delete",
+  SPECIALISTS_VIEW: "specialists.view",
+  SPECIALISTS_ADD: "specialists.add",
+  SPECIALISTS_BLOCK_UNBLOCK: "specialists.block_unblock",
+  SPECIALISTS_ACCEPT_REJECT: "specialists.accept_reject",
+  USERS_VIEW: "users.view",
+  USERS_BLOCK_UNBLOCK: "users.block_unblock",
+  SESSIONS_VIEW: "sessions.view",
+  SESSIONS_ARCHIVE: "sessions.archive",
+  USER_INQUIRIES_VIEW: "user_inquiries.view",
+  USER_INQUIRIES_DELETE: "user_inquiries.delete",
+  SETTINGS_VIEW: "settings.view",
+  NOTIFICATIONS_VIEW_ALL: "notifications.view_all",
+  NOTIFICATIONS_VIEW_BY_PERMISSION: "notifications.view_by_permission"
+};
 
 // node_modules/@aws-sdk/middleware-expect-continue/dist-es/index.js
 var import_protocol_http = __toESM(require_dist_cjs2(), 1);
@@ -95899,7 +96029,7 @@ var defaultRoles3 = {
 };
 
 // node_modules/better-auth/dist/shared/better-auth.bkwPl2G4.mjs
-var hasPermission2 = (input) => {
+var hasPermission3 = (input) => {
   if (input.userId && input.options?.adminUserIds?.includes(input.userId)) {
     return true;
   }
@@ -96109,7 +96239,7 @@ var admin = (options) => {
           }
         }
       }, async (ctx) => {
-        const canSetRole = hasPermission2({
+        const canSetRole = hasPermission3({
           userId: ctx.context.session.user.id,
           role: ctx.context.session.user.role,
           options: opts,
@@ -96163,7 +96293,7 @@ var admin = (options) => {
         }
       }, async (ctx) => {
         const { id } = ctx.query;
-        const canGetUser = hasPermission2({
+        const canGetUser = hasPermission3({
           userId: ctx.context.session.user.id,
           role: ctx.context.session.user.role,
           options: opts,
@@ -96244,7 +96374,7 @@ var admin = (options) => {
           throw ctx.error("UNAUTHORIZED");
         }
         if (session) {
-          const canCreateUser = hasPermission2({
+          const canCreateUser = hasPermission3({
             userId: session.user.id,
             role: session.user.role,
             options: opts,
@@ -96322,7 +96452,7 @@ var admin = (options) => {
           }
         }
       }, async (ctx) => {
-        const canUpdateUser = hasPermission2({
+        const canUpdateUser = hasPermission3({
           userId: ctx.context.session.user.id,
           role: ctx.context.session.user.role,
           options: opts,
@@ -96421,7 +96551,7 @@ var admin = (options) => {
         }
       }, async (ctx) => {
         const session = ctx.context.session;
-        const canListUsers = hasPermission2({
+        const canListUsers = hasPermission3({
           userId: ctx.context.session.user.id,
           role: session.user.role,
           options: opts,
@@ -96505,7 +96635,7 @@ var admin = (options) => {
         }
       }, async (ctx) => {
         const session = ctx.context.session;
-        const canListSessions = hasPermission2({
+        const canListSessions = hasPermission3({
           userId: ctx.context.session.user.id,
           role: session.user.role,
           options: opts,
@@ -96557,7 +96687,7 @@ var admin = (options) => {
         }
       }, async (ctx) => {
         const session = ctx.context.session;
-        const canBanUser = hasPermission2({
+        const canBanUser = hasPermission3({
           userId: ctx.context.session.user.id,
           role: session.user.role,
           options: opts,
@@ -96620,7 +96750,7 @@ var admin = (options) => {
         }
       }, async (ctx) => {
         const session = ctx.context.session;
-        const canBanUser = hasPermission2({
+        const canBanUser = hasPermission3({
           userId: ctx.context.session.user.id,
           role: session.user.role,
           options: opts,
@@ -96685,7 +96815,7 @@ var admin = (options) => {
           }
         }
       }, async (ctx) => {
-        const canImpersonateUser = hasPermission2({
+        const canImpersonateUser = hasPermission3({
           userId: ctx.context.session.user.id,
           role: ctx.context.session.user.role,
           options: opts,
@@ -96798,7 +96928,7 @@ var admin = (options) => {
         }
       }, async (ctx) => {
         const session = ctx.context.session;
-        const canRevokeSession = hasPermission2({
+        const canRevokeSession = hasPermission3({
           userId: ctx.context.session.user.id,
           role: session.user.role,
           options: opts,
@@ -96850,7 +96980,7 @@ var admin = (options) => {
         }
       }, async (ctx) => {
         const session = ctx.context.session;
-        const canRevokeSession = hasPermission2({
+        const canRevokeSession = hasPermission3({
           userId: ctx.context.session.user.id,
           role: session.user.role,
           options: opts,
@@ -96902,7 +97032,7 @@ var admin = (options) => {
         }
       }, async (ctx) => {
         const session = ctx.context.session;
-        const canDeleteUser = hasPermission2({
+        const canDeleteUser = hasPermission3({
           userId: ctx.context.session.user.id,
           role: session.user.role,
           options: opts,
@@ -96967,7 +97097,7 @@ var admin = (options) => {
           }
         }
       }, async (ctx) => {
-        const canSetUserPassword = hasPermission2({
+        const canSetUserPassword = hasPermission3({
           userId: ctx.context.session.user.id,
           role: ctx.context.session.user.role,
           options: opts,
@@ -97071,7 +97201,7 @@ var admin = (options) => {
             message: "user not found"
           });
         }
-        const result = hasPermission2({
+        const result = hasPermission3({
           userId: user.id,
           role: user.role,
           options,
@@ -99535,14 +99665,21 @@ var APPOINTMENT_SERVICES = {
     if (filters?.status) {
       where.status = filters.status;
     }
+    if (filters?.isArchived !== undefined) {
+      where.isArchived = filters.isArchived;
+    }
     if (filters?.search) {
-      where.OR = [
-        { issue: { contains: filters.search, mode: "insensitive" } },
-        { patientName: { contains: filters.search, mode: "insensitive" } },
-        { doctor: { name: { contains: filters.search, mode: "insensitive" } } },
-        { doctor: { email: { contains: filters.search, mode: "insensitive" } } },
-        { patient: { name: { contains: filters.search, mode: "insensitive" } } },
-        { patient: { email: { contains: filters.search, mode: "insensitive" } } }
+      where.AND = [
+        {
+          OR: [
+            { issue: { contains: filters.search, mode: "insensitive" } },
+            { patientName: { contains: filters.search, mode: "insensitive" } },
+            { doctor: { name: { contains: filters.search, mode: "insensitive" } } },
+            { doctor: { email: { contains: filters.search, mode: "insensitive" } } },
+            { patient: { name: { contains: filters.search, mode: "insensitive" } } },
+            { patient: { email: { contains: filters.search, mode: "insensitive" } } }
+          ]
+        }
       ];
     }
     const [appointments, total] = await Promise.all([
@@ -99639,6 +99776,26 @@ var APPOINTMENT_SERVICES = {
       }
     });
     return appointment;
+  },
+  archiveForAdmin: async (id) => {
+    const existing = await prisma_default.appointment.findUnique({
+      where: { id },
+      select: { id: true }
+    });
+    if (!existing) {
+      throw new Error("Appointment not found");
+    }
+    await prisma_default.appointment.update({
+      where: { id },
+      data: {
+        isArchived: true
+      }
+    });
+    const archived = await APPOINTMENT_SERVICES.getByIdForAdmin(id);
+    if (!archived) {
+      throw new Error("Appointment not found after archive");
+    }
+    return archived;
   },
   getLastN: async (limit = 5) => {
     const appointments = await prisma_default.appointment.findMany({
@@ -99847,6 +100004,60 @@ var USER_SERVICES = {
     });
     return updatedUser;
   },
+  blockPatient: async (patientId, banReason) => {
+    const patient2 = await prisma_default.user.findFirst({
+      where: {
+        id: patientId,
+        role: "patient"
+      },
+      select: {
+        id: true
+      }
+    });
+    if (!patient2) {
+      throw new Error("Patient not found");
+    }
+    await prisma_default.user.update({
+      where: { id: patientId },
+      data: {
+        banned: true,
+        banReason: banReason || null,
+        banExpires: null
+      }
+    });
+    const updated = await USER_SERVICES.getPatientById(patientId);
+    if (!updated) {
+      throw new Error("Patient not found after update");
+    }
+    return updated;
+  },
+  unblockPatient: async (patientId) => {
+    const patient2 = await prisma_default.user.findFirst({
+      where: {
+        id: patientId,
+        role: "patient"
+      },
+      select: {
+        id: true
+      }
+    });
+    if (!patient2) {
+      throw new Error("Patient not found");
+    }
+    await prisma_default.user.update({
+      where: { id: patientId },
+      data: {
+        banned: false,
+        banReason: null,
+        banExpires: null
+      }
+    });
+    const updated = await USER_SERVICES.getPatientById(patientId);
+    if (!updated) {
+      throw new Error("Patient not found after update");
+    }
+    return updated;
+  },
   getAllPatients: async (filters) => {
     const page = filters?.page || 1;
     const limit = filters?.limit || 10;
@@ -99950,6 +100161,29 @@ var USER_SERVICES = {
     const image = await convertUserImageToSignedUrl2(patient2.image);
     return {
       ...patient2,
+      image
+    };
+  },
+  getUserById: async (userId) => {
+    const user = await prisma_default.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        image: true,
+        phone: true,
+        role: true,
+        createdAt: true,
+        updatedAt: true
+      }
+    });
+    if (!user) {
+      return null;
+    }
+    const image = await convertUserImageToSignedUrl2(user.image);
+    return {
+      ...user,
       image
     };
   },
@@ -100225,9 +100459,10 @@ var ADMIN_ROUTES_HANDLER = {
     if (!user) {
       throw new HttpError("Unauthorized", UNAUTHORIZED);
     }
-    if (user.role !== "admin") {
+    if (user.role !== "admin" && user.role !== "team_admin") {
       throw new HttpError("Forbidden - Admin only", FORBIDDEN);
     }
+    await requirePermission(user.id, PERMISSION_SLUGS.SPECIALISTS_VIEW);
     const query = c3.req.valid("query");
     const filters = {
       page: query.page ? parseInt(query.page, 10) : 1,
@@ -100249,9 +100484,10 @@ var ADMIN_ROUTES_HANDLER = {
     if (!user) {
       throw new HttpError("Unauthorized", UNAUTHORIZED);
     }
-    if (user.role !== "admin") {
+    if (user.role !== "admin" && user.role !== "team_admin") {
       throw new HttpError("Forbidden - Admin only", FORBIDDEN);
     }
+    await requirePermission(user.id, PERMISSION_SLUGS.SPECIALISTS_ACCEPT_REJECT);
     const { doctorId } = c3.req.valid("json");
     try {
       const doctor2 = await DOCTOR_SERVICES.approveDoctor(doctorId);
@@ -100273,9 +100509,10 @@ var ADMIN_ROUTES_HANDLER = {
     if (!user) {
       throw new HttpError("Unauthorized", UNAUTHORIZED);
     }
-    if (user.role !== "admin") {
+    if (user.role !== "admin" && user.role !== "team_admin") {
       throw new HttpError("Forbidden - Admin only", FORBIDDEN);
     }
+    await requirePermission(user.id, PERMISSION_SLUGS.SPECIALISTS_ACCEPT_REJECT);
     const { doctorId, rejectReason } = c3.req.valid("json");
     try {
       const doctor2 = await DOCTOR_SERVICES.rejectDoctor(doctorId, rejectReason);
@@ -100297,9 +100534,10 @@ var ADMIN_ROUTES_HANDLER = {
     if (!user) {
       throw new HttpError("Unauthorized", UNAUTHORIZED);
     }
-    if (user.role !== "admin") {
+    if (user.role !== "admin" && user.role !== "team_admin") {
       throw new HttpError("Forbidden - Admin only", FORBIDDEN);
     }
+    await requirePermission(user.id, PERMISSION_SLUGS.SPECIALISTS_VIEW);
     const query = c3.req.valid("query");
     const filters = {
       page: query.page ? parseInt(query.page, 10) : 1,
@@ -100321,9 +100559,10 @@ var ADMIN_ROUTES_HANDLER = {
     if (!user) {
       throw new HttpError("Unauthorized", UNAUTHORIZED);
     }
-    if (user.role !== "admin") {
+    if (user.role !== "admin" && user.role !== "team_admin") {
       throw new HttpError("Forbidden - Admin only", FORBIDDEN);
     }
+    await requirePermission(user.id, PERMISSION_SLUGS.SPECIALISTS_ADD);
     const data = c3.req.valid("json");
     try {
       const doctor2 = await DOCTOR_SERVICES.createDoctor({
@@ -100353,9 +100592,10 @@ var ADMIN_ROUTES_HANDLER = {
     if (!user) {
       throw new HttpError("Unauthorized", UNAUTHORIZED);
     }
-    if (user.role !== "admin") {
+    if (user.role !== "admin" && user.role !== "team_admin") {
       throw new HttpError("Forbidden - Admin only", FORBIDDEN);
     }
+    await requirePermission(user.id, PERMISSION_SLUGS.SPECIALISTS_BLOCK_UNBLOCK);
     const { doctorId } = c3.req.valid("param");
     const { banReason } = c3.req.valid("json");
     try {
@@ -100378,9 +100618,10 @@ var ADMIN_ROUTES_HANDLER = {
     if (!user) {
       throw new HttpError("Unauthorized", UNAUTHORIZED);
     }
-    if (user.role !== "admin") {
+    if (user.role !== "admin" && user.role !== "team_admin") {
       throw new HttpError("Forbidden - Admin only", FORBIDDEN);
     }
+    await requirePermission(user.id, PERMISSION_SLUGS.SPECIALISTS_BLOCK_UNBLOCK);
     const { doctorId } = c3.req.valid("param");
     try {
       const doctor2 = await DOCTOR_SERVICES.unblockDoctor(doctorId);
@@ -100402,9 +100643,10 @@ var ADMIN_ROUTES_HANDLER = {
     if (!user) {
       throw new HttpError("Unauthorized", UNAUTHORIZED);
     }
-    if (user.role !== "admin") {
+    if (user.role !== "admin" && user.role !== "team_admin") {
       throw new HttpError("Forbidden - Admin only", FORBIDDEN);
     }
+    await requirePermission(user.id, PERMISSION_SLUGS.USERS_VIEW);
     const query = c3.req.valid("query");
     const filters = {
       page: query.page ? parseInt(query.page, 10) : 1,
@@ -100434,7 +100676,7 @@ var ADMIN_ROUTES_HANDLER = {
     if (!user) {
       throw new HttpError("Unauthorized", UNAUTHORIZED);
     }
-    if (user.role !== "admin") {
+    if (user.role !== "admin" && user.role !== "team_admin") {
       throw new HttpError("Forbidden - Admin only", FORBIDDEN);
     }
     const { patientId } = c3.req.valid("param");
@@ -100464,7 +100706,7 @@ var ADMIN_ROUTES_HANDLER = {
       throw new HttpError(errorMessage || "Failed to retrieve patient", INTERNAL_SERVER_ERROR);
     }
   },
-  getAllUserQueries: async (c3) => {
+  blockPatient: async (c3) => {
     const user = c3.get("user");
     if (!user) {
       throw new HttpError("Unauthorized", UNAUTHORIZED);
@@ -100472,6 +100714,74 @@ var ADMIN_ROUTES_HANDLER = {
     if (user.role !== "admin") {
       throw new HttpError("Forbidden - Admin only", FORBIDDEN);
     }
+    await requirePermission(user.id, PERMISSION_SLUGS.USERS_BLOCK_UNBLOCK);
+    const { patientId } = c3.req.valid("param");
+    const { banReason } = c3.req.valid("json");
+    try {
+      const patient2 = await USER_SERVICES.blockPatient(patientId, banReason || undefined);
+      return c3.json({
+        message: "Patient blocked successfully",
+        success: true,
+        data: {
+          ...patient2,
+          createdAt: patient2.createdAt.toISOString(),
+          updatedAt: patient2.updatedAt.toISOString(),
+          userInfo: patient2.userInfo ? {
+            ...patient2.userInfo,
+            dateOfBirth: patient2.userInfo.dateOfBirth?.toISOString() || null
+          } : null
+        }
+      }, OK);
+    } catch (error44) {
+      const errorMessage = error44 instanceof Error ? error44.message : "Unknown error";
+      if (errorMessage.includes("not found")) {
+        throw new HttpError("Patient not found", NOT_FOUND);
+      }
+      throw new HttpError(errorMessage || "Failed to block patient", INTERNAL_SERVER_ERROR);
+    }
+  },
+  unblockPatient: async (c3) => {
+    const user = c3.get("user");
+    if (!user) {
+      throw new HttpError("Unauthorized", UNAUTHORIZED);
+    }
+    if (user.role !== "admin") {
+      throw new HttpError("Forbidden - Admin only", FORBIDDEN);
+    }
+    await requirePermission(user.id, PERMISSION_SLUGS.USERS_BLOCK_UNBLOCK);
+    const { patientId } = c3.req.valid("param");
+    try {
+      const patient2 = await USER_SERVICES.unblockPatient(patientId);
+      return c3.json({
+        message: "Patient unblocked successfully",
+        success: true,
+        data: {
+          ...patient2,
+          createdAt: patient2.createdAt.toISOString(),
+          updatedAt: patient2.updatedAt.toISOString(),
+          userInfo: patient2.userInfo ? {
+            ...patient2.userInfo,
+            dateOfBirth: patient2.userInfo.dateOfBirth?.toISOString() || null
+          } : null
+        }
+      }, OK);
+    } catch (error44) {
+      const errorMessage = error44 instanceof Error ? error44.message : "Unknown error";
+      if (errorMessage.includes("not found")) {
+        throw new HttpError("Patient not found", NOT_FOUND);
+      }
+      throw new HttpError(errorMessage || "Failed to unblock patient", INTERNAL_SERVER_ERROR);
+    }
+  },
+  getAllUserQueries: async (c3) => {
+    const user = c3.get("user");
+    if (!user) {
+      throw new HttpError("Unauthorized", UNAUTHORIZED);
+    }
+    if (user.role !== "admin" && user.role !== "team_admin") {
+      throw new HttpError("Forbidden - Admin only", FORBIDDEN);
+    }
+    await requirePermission(user.id, PERMISSION_SLUGS.USER_INQUIRIES_VIEW);
     const query = c3.req.valid("query");
     const filters = {
       page: query.page ? parseInt(query.page, 10) : 1,
@@ -100509,9 +100819,10 @@ var ADMIN_ROUTES_HANDLER = {
     if (!user) {
       throw new HttpError("Unauthorized", UNAUTHORIZED);
     }
-    if (user.role !== "admin") {
+    if (user.role !== "admin" && user.role !== "team_admin") {
       throw new HttpError("Forbidden - Admin only", FORBIDDEN);
     }
+    await requirePermission(user.id, PERMISSION_SLUGS.USER_INQUIRIES_VIEW);
     const { id } = c3.req.valid("param");
     const userQuery = await USER_QUERY_SERVICES.getById(id);
     if (!userQuery) {
@@ -100544,9 +100855,10 @@ var ADMIN_ROUTES_HANDLER = {
     if (!user) {
       throw new HttpError("Unauthorized", UNAUTHORIZED);
     }
-    if (user.role !== "admin") {
+    if (user.role !== "admin" && user.role !== "team_admin") {
       throw new HttpError("Forbidden - Admin only", FORBIDDEN);
     }
+    await requirePermission(user.id, PERMISSION_SLUGS.SESSIONS_VIEW);
     const query = c3.req.valid("query");
     const filters = {
       page: query.page ? parseInt(query.page, 10) : 1,
@@ -100554,7 +100866,8 @@ var ADMIN_ROUTES_HANDLER = {
       status: query.status,
       doctorId: query.doctorId,
       patientId: query.patientId,
-      search: query.search
+      search: query.search,
+      isArchived: query.isArchived !== undefined ? query.isArchived === "true" : undefined
     };
     const result = await APPOINTMENT_SERVICES.getAllForAdmin(filters);
     const formattedAppointments = await Promise.all(result.appointments.map(async (appointment) => {
@@ -100566,6 +100879,7 @@ var ADMIN_ROUTES_HANDLER = {
         doctorId: appointment.doctorId,
         patientId: appointment.patientId,
         status: appointment.status,
+        isArchived: appointment.isArchived,
         scheduledAt: appointment.scheduledAt?.toISOString() || null,
         startedAt: appointment.startedAt?.toISOString() || null,
         endedAt: appointment.endedAt?.toISOString() || null,
@@ -100613,9 +100927,10 @@ var ADMIN_ROUTES_HANDLER = {
     if (!user) {
       throw new HttpError("Unauthorized", UNAUTHORIZED);
     }
-    if (user.role !== "admin") {
+    if (user.role !== "admin" && user.role !== "team_admin") {
       throw new HttpError("Forbidden - Admin only", FORBIDDEN);
     }
+    await requirePermission(user.id, PERMISSION_SLUGS.SESSIONS_VIEW);
     const { id } = c3.req.valid("param");
     try {
       const appointment = await APPOINTMENT_SERVICES.getByIdForAdmin(id);
@@ -100676,7 +100991,7 @@ var ADMIN_ROUTES_HANDLER = {
       throw new HttpError(errorMessage || "Failed to retrieve appointment", INTERNAL_SERVER_ERROR);
     }
   },
-  updateAdminProfile: async (c3) => {
+  archiveAppointment: async (c3) => {
     const user = c3.get("user");
     if (!user) {
       throw new HttpError("Unauthorized", UNAUTHORIZED);
@@ -100684,6 +100999,101 @@ var ADMIN_ROUTES_HANDLER = {
     if (user.role !== "admin") {
       throw new HttpError("Forbidden - Admin only", FORBIDDEN);
     }
+    await requirePermission(user.id, PERMISSION_SLUGS.SESSIONS_ARCHIVE);
+    const { id } = c3.req.valid("param");
+    try {
+      const appointment = await APPOINTMENT_SERVICES.archiveForAdmin(id);
+      const doctorImage = await convertUserImageToSignedUrl3(appointment.doctor?.image);
+      const patientImage = await convertUserImageToSignedUrl3(appointment.patient?.image);
+      const uploadIdSignedUrl = appointment.uploadId ? await convertUserImageToSignedUrl3(appointment.uploadId) : null;
+      return c3.json({
+        message: "Appointment archived successfully",
+        success: true,
+        data: {
+          id: appointment.id,
+          doctorId: appointment.doctorId,
+          patientId: appointment.patientId,
+          status: appointment.status,
+          scheduledAt: appointment.scheduledAt?.toISOString() || null,
+          startedAt: appointment.startedAt?.toISOString() || null,
+          endedAt: appointment.endedAt?.toISOString() || null,
+          createdAt: appointment.createdAt.toISOString(),
+          updatedAt: appointment.updatedAt.toISOString(),
+          chatroomExpiry: appointment.chatroomExpiry?.toISOString() || null,
+          age: appointment.age,
+          appointmentFor: appointment.appointmentFor,
+          issue: appointment.issue,
+          uploadId: uploadIdSignedUrl,
+          relationWithPatient: appointment.relationWithPatient,
+          patientName: appointment.patientName,
+          patientAge: appointment.patientAge,
+          doctor: appointment.doctor ? {
+            ...appointment.doctor,
+            image: doctorImage
+          } : null,
+          patient: appointment.patient ? {
+            ...appointment.patient,
+            image: patientImage
+          } : null,
+          appointmentNotes: appointment.appointmentNotes ? {
+            ...appointment.appointmentNotes,
+            createdAt: appointment.appointmentNotes.createdAt.toISOString(),
+            updatedAt: appointment.appointmentNotes.updatedAt.toISOString()
+          } : null,
+          sessionReason: appointment.sessionReason ? {
+            ...appointment.sessionReason,
+            createdAt: appointment.sessionReason.createdAt.toISOString(),
+            updatedAt: appointment.sessionReason.updatedAt.toISOString()
+          } : null
+        }
+      }, OK);
+    } catch (error44) {
+      const errorMessage = error44 instanceof Error ? error44.message : "Unknown error";
+      if (errorMessage.includes("not found")) {
+        throw new HttpError("Appointment not found", NOT_FOUND);
+      }
+      throw new HttpError(errorMessage || "Failed to archive appointment", INTERNAL_SERVER_ERROR);
+    }
+  },
+  getAdminProfile: async (c3) => {
+    const user = c3.get("user");
+    if (!user) {
+      throw new HttpError("Unauthorized", UNAUTHORIZED);
+    }
+    if (user.role !== "admin" && user.role !== "team_admin") {
+      throw new HttpError("Forbidden - Admin only", FORBIDDEN);
+    }
+    await requirePermission(user.id, PERMISSION_SLUGS.SETTINGS_VIEW);
+    try {
+      const dbUser = await USER_SERVICES.getUserById(user.id);
+      if (!dbUser) {
+        throw new HttpError("User not found", NOT_FOUND);
+      }
+      const image = await convertUserImageToSignedUrl3(dbUser.image);
+      return c3.json({
+        message: "Admin profile retrieved successfully",
+        success: true,
+        data: {
+          ...dbUser,
+          image,
+          createdAt: dbUser.createdAt.toISOString(),
+          updatedAt: dbUser.updatedAt.toISOString()
+        }
+      }, OK);
+    } catch (error44) {
+      const errorMessage = error44 instanceof Error ? error44.message : "Unknown error";
+      throw new HttpError(errorMessage || "Failed to get admin profile", INTERNAL_SERVER_ERROR);
+    }
+  },
+  updateAdminProfile: async (c3) => {
+    const user = c3.get("user");
+    if (!user) {
+      throw new HttpError("Unauthorized", UNAUTHORIZED);
+    }
+    if (user.role !== "admin" && user.role !== "team_admin") {
+      throw new HttpError("Forbidden - Admin only", FORBIDDEN);
+    }
+    await requirePermission(user.id, PERMISSION_SLUGS.SETTINGS_VIEW);
     const body = c3.req.valid("json");
     try {
       const updatedUser = await USER_SERVICES.updateAdminProfile({
@@ -100711,9 +101121,10 @@ var ADMIN_ROUTES_HANDLER = {
     if (!user) {
       throw new HttpError("Unauthorized", UNAUTHORIZED);
     }
-    if (user.role !== "admin") {
+    if (user.role !== "admin" && user.role !== "team_admin") {
       throw new HttpError("Forbidden - Admin only", FORBIDDEN);
     }
+    await requirePermission(user.id, PERMISSION_SLUGS.DASHBOARD_VIEW);
     try {
       const stats = await DASHBOARD_SERVICES.getStats();
       return c3.json({
@@ -100731,9 +101142,10 @@ var ADMIN_ROUTES_HANDLER = {
     if (!user) {
       throw new HttpError("Unauthorized", UNAUTHORIZED);
     }
-    if (user.role !== "admin") {
+    if (user.role !== "admin" && user.role !== "team_admin") {
       throw new HttpError("Forbidden - Admin only", FORBIDDEN);
     }
+    await requirePermission(user.id, PERMISSION_SLUGS.DASHBOARD_VIEW);
     const query = c3.req.valid("query");
     const limit = query.limit ? parseInt(query.limit, 10) : 5;
     try {
@@ -100771,9 +101183,10 @@ var ADMIN_ROUTES_HANDLER = {
     if (!user) {
       throw new HttpError("Unauthorized", UNAUTHORIZED);
     }
-    if (user.role !== "admin") {
+    if (user.role !== "admin" && user.role !== "team_admin") {
       throw new HttpError("Forbidden - Admin only", FORBIDDEN);
     }
+    await requirePermission(user.id, PERMISSION_SLUGS.DASHBOARD_VIEW);
     const query = c3.req.valid("query");
     const limit = query.limit ? parseInt(query.limit, 10) : 5;
     try {
@@ -100786,6 +101199,7 @@ var ADMIN_ROUTES_HANDLER = {
           doctorId: appointment.doctorId,
           patientId: appointment.patientId,
           status: appointment.status,
+          isArchived: appointment.isArchived,
           scheduledAt: appointment.scheduledAt?.toISOString() || null,
           startedAt: appointment.startedAt?.toISOString() || null,
           endedAt: appointment.endedAt?.toISOString() || null,
@@ -100888,7 +101302,10 @@ var TAGS = {
   enterprise: "Enterprise",
   appointment: "Appointment",
   agora: "Agora",
-  notification: "Notification"
+  notification: "Notification",
+  role: "Role",
+  permission: "Permission",
+  teamMember: "Team Member"
 };
 var tags_default = TAGS;
 
@@ -101063,6 +101480,33 @@ var blockDoctorResponseSchema = exports_external.object({
     onboardingStage: exports_external.string().nullable()
   })
 }).describe("Doctor response after blocking");
+var blockPatientBodySchema = exports_external.object({
+  banReason: exports_external.string().optional().nullable().describe("Reason for blocking the patient")
+}).describe("Request body for blocking a patient");
+var patientResponseSchema = exports_external.object({
+  id: exports_external.string(),
+  name: exports_external.string(),
+  email: exports_external.string(),
+  image: exports_external.string().nullable(),
+  phone: exports_external.string().nullable(),
+  role: exports_external.string().nullable(),
+  banned: exports_external.boolean().nullable(),
+  banReason: exports_external.string().nullable(),
+  banExpires: exports_external.string().datetime().nullable(),
+  onboardingStage: exports_external.string().nullable(),
+  enterpriseCode: exports_external.string().nullable(),
+  employeeCode: exports_external.string().nullable(),
+  isAnonymous: exports_external.boolean().nullable(),
+  createdAt: exports_external.string().datetime(),
+  updatedAt: exports_external.string().datetime(),
+  userInfo: exports_external.object({
+    id: exports_external.string(),
+    gender: exports_external.string().nullable(),
+    dateOfBirth: exports_external.string().datetime().nullable(),
+    phone: exports_external.string().nullable(),
+    address: exports_external.string().nullable()
+  }).nullable()
+}).describe("Patient with profile information");
 var ADMIN_ROUTES = {
   getDoctorRequests: createRoute({
     path: "/admin/doctor-requests",
@@ -101182,6 +101626,42 @@ var ADMIN_ROUTES = {
       [UNAUTHORIZED]: json_content_default(zodResponseSchema(), "Unauthorized"),
       [FORBIDDEN]: json_content_default(zodResponseSchema(), "Forbidden - Admin only"),
       [NOT_FOUND]: json_content_default(zodResponseSchema(), "Doctor not found")
+    }
+  }),
+  blockPatient: createRoute({
+    path: "/admin/patients/{patientId}/block",
+    method: "post",
+    tags: [tags_default.user],
+    summary: "Block a patient (Admin only)",
+    request: {
+      params: exports_external.object({
+        patientId: exports_external.string().describe("Patient ID to block")
+      }),
+      body: json_content_required_default(blockPatientBodySchema, "Request body for blocking a patient")
+    },
+    responses: {
+      [OK]: json_content_default(zodResponseSchema(patientResponseSchema), "Patient blocked successfully"),
+      [UNPROCESSABLE_ENTITY]: json_content_default(create_error_schema_default(blockPatientBodySchema), "Unprocessable Entity"),
+      [UNAUTHORIZED]: json_content_default(zodResponseSchema(), "Unauthorized"),
+      [FORBIDDEN]: json_content_default(zodResponseSchema(), "Forbidden - Admin only"),
+      [NOT_FOUND]: json_content_default(zodResponseSchema(), "Patient not found")
+    }
+  }),
+  unblockPatient: createRoute({
+    path: "/admin/patients/{patientId}/unblock",
+    method: "post",
+    tags: [tags_default.user],
+    summary: "Unblock a patient (Admin only)",
+    request: {
+      params: exports_external.object({
+        patientId: exports_external.string().describe("Patient ID to unblock")
+      })
+    },
+    responses: {
+      [OK]: json_content_default(zodResponseSchema(patientResponseSchema), "Patient unblocked successfully"),
+      [UNAUTHORIZED]: json_content_default(zodResponseSchema(), "Unauthorized"),
+      [FORBIDDEN]: json_content_default(zodResponseSchema(), "Forbidden - Admin only"),
+      [NOT_FOUND]: json_content_default(zodResponseSchema(), "Patient not found")
     }
   }),
   getAllPatients: createRoute({
@@ -101360,7 +101840,8 @@ var ADMIN_ROUTES = {
         status: exports_external.enum(["BOOKED", "COMPLETED", "NO_SHOW"]).optional().describe("Filter by appointment status"),
         doctorId: exports_external.string().optional().describe("Filter by doctor ID"),
         patientId: exports_external.string().optional().describe("Filter by patient ID"),
-        search: exports_external.string().optional().describe("Search by issue, patient name, doctor name, or email")
+        search: exports_external.string().optional().describe("Search by issue, patient name, doctor name, or email"),
+        isArchived: exports_external.string().optional().describe("Filter by archived status (true or false)")
       })
     },
     responses: {
@@ -101514,6 +101995,105 @@ var ADMIN_ROUTES = {
       [NOT_FOUND]: json_content_default(zodResponseSchema(), "Appointment not found")
     }
   }),
+  archiveAppointment: createRoute({
+    path: "/admin/appointments/{id}/archive",
+    method: "post",
+    tags: [tags_default.appointment],
+    summary: "Archive (soft delete) an appointment (Admin only)",
+    request: {
+      params: exports_external.object({
+        id: exports_external.string().describe("Appointment ID")
+      })
+    },
+    responses: {
+      [OK]: json_content_default(zodResponseSchema(exports_external.object({
+        id: exports_external.string(),
+        doctorId: exports_external.string(),
+        patientId: exports_external.string(),
+        status: exports_external.enum(["BOOKED", "COMPLETED", "NO_SHOW"]),
+        scheduledAt: exports_external.string().datetime().nullable(),
+        startedAt: exports_external.string().datetime().nullable(),
+        endedAt: exports_external.string().datetime().nullable(),
+        createdAt: exports_external.string().datetime(),
+        updatedAt: exports_external.string().datetime(),
+        chatroomExpiry: exports_external.string().datetime().nullable(),
+        age: exports_external.number().int().nullable(),
+        appointmentFor: exports_external.string(),
+        issue: exports_external.string(),
+        uploadId: exports_external.string().nullable(),
+        relationWithPatient: exports_external.string().nullable(),
+        patientName: exports_external.string().nullable(),
+        patientAge: exports_external.number().int().nullable(),
+        doctor: exports_external.object({
+          id: exports_external.string(),
+          name: exports_external.string(),
+          email: exports_external.string(),
+          image: exports_external.string().nullable(),
+          phone: exports_external.string().nullable(),
+          role: exports_external.string().nullable(),
+          isAnonymous: exports_external.boolean().nullable(),
+          employeeCode: exports_external.string().nullable(),
+          enterpriseCode: exports_external.string().nullable(),
+          banned: exports_external.boolean().nullable(),
+          onboardingStage: exports_external.string().nullable(),
+          createdAt: exports_external.string().datetime()
+        }),
+        patient: exports_external.object({
+          id: exports_external.string(),
+          name: exports_external.string().nullable(),
+          email: exports_external.string().nullable(),
+          image: exports_external.string().nullable(),
+          phone: exports_external.string().nullable(),
+          role: exports_external.string().nullable(),
+          isAnonymous: exports_external.boolean().nullable(),
+          employeeCode: exports_external.string().nullable(),
+          enterpriseCode: exports_external.string().nullable(),
+          banned: exports_external.boolean().nullable(),
+          onboardingStage: exports_external.string().nullable(),
+          createdAt: exports_external.string().datetime()
+        }),
+        appointmentNotes: exports_external.object({
+          id: exports_external.string(),
+          appointmentId: exports_external.string(),
+          doctorId: exports_external.string(),
+          notes: exports_external.string(),
+          createdAt: exports_external.string().datetime(),
+          updatedAt: exports_external.string().datetime()
+        }).nullable(),
+        sessionReason: exports_external.object({
+          id: exports_external.string(),
+          appointmentId: exports_external.string(),
+          reason: exports_external.string(),
+          createdAt: exports_external.string().datetime(),
+          updatedAt: exports_external.string().datetime()
+        }).nullable()
+      })), "Appointment archived successfully"),
+      [UNAUTHORIZED]: json_content_default(zodResponseSchema(), "Unauthorized"),
+      [FORBIDDEN]: json_content_default(zodResponseSchema(), "Forbidden - Admin only"),
+      [NOT_FOUND]: json_content_default(zodResponseSchema(), "Appointment not found")
+    }
+  }),
+  getAdminProfile: createRoute({
+    path: "/admin/profile",
+    method: "get",
+    tags: [tags_default.user],
+    summary: "Get current admin profile (Admin only)",
+    request: {},
+    responses: {
+      [OK]: json_content_default(zodResponseSchema(exports_external.object({
+        id: exports_external.string(),
+        name: exports_external.string(),
+        email: exports_external.string(),
+        image: exports_external.string().nullable(),
+        phone: exports_external.string().nullable(),
+        role: exports_external.string().nullable(),
+        createdAt: exports_external.string().datetime(),
+        updatedAt: exports_external.string().datetime()
+      })), "Admin profile retrieved successfully"),
+      [UNAUTHORIZED]: json_content_default(zodResponseSchema(), "Unauthorized"),
+      [FORBIDDEN]: json_content_default(zodResponseSchema(), "Forbidden - Admin only")
+    }
+  }),
   updateAdminProfile: createRoute({
     path: "/admin/profile",
     method: "put",
@@ -101646,6 +102226,104 @@ Object.entries(ADMIN_ROUTES).forEach(([key, route]) => {
   router2.openapi(route, ADMIN_ROUTES_HANDLER[key]);
 });
 var admin_default = router2;
+
+// src/routes/admin-notification/admin-notification.handlers.ts
+init_error();
+init_notification_service();
+var formatNotificationResponse = (notification) => ({
+  id: notification.id,
+  userId: notification.userId,
+  title: notification.title,
+  url: notification.url,
+  message: notification.message,
+  isRead: notification.isRead,
+  createdAt: notification.createdAt.toISOString(),
+  updatedAt: notification.updatedAt.toISOString()
+});
+var NOTIFICATION_TYPE_TO_PERMISSION = {
+  [NOTIFICATION_TYPES.DOCTOR_ONBOARDING_REQUEST]: PERMISSION_SLUGS.SPECIALISTS_VIEW,
+  [NOTIFICATION_TYPES.USER_INQUIRY]: PERMISSION_SLUGS.USER_INQUIRIES_VIEW,
+  [NOTIFICATION_TYPES.APPOINTMENT_BOOKED]: PERMISSION_SLUGS.SESSIONS_VIEW,
+  [NOTIFICATION_TYPES.APPOINTMENT_COMPLETED]: PERMISSION_SLUGS.SESSIONS_VIEW,
+  [NOTIFICATION_TYPES.APPOINTMENT_NO_SHOW]: PERMISSION_SLUGS.SESSIONS_VIEW
+};
+var ADMIN_NOTIFICATION_ROUTES_HANDLER = {
+  getAll: async (c3) => {
+    const user = c3.get("user");
+    if (!user) {
+      throw new HttpError("Unauthorized", UNAUTHORIZED);
+    }
+    if (user.role !== "admin" && user.role !== "team_admin") {
+      throw new HttpError("Forbidden - Admin only", FORBIDDEN);
+    }
+    await requirePermission(user.id, PERMISSION_SLUGS.NOTIFICATIONS_VIEW_BY_PERMISSION);
+    const permissionSlugs = await getUserPermissions(user.id);
+    const allowedTypes = Object.entries(NOTIFICATION_TYPE_TO_PERMISSION).filter(([, requiredPermission]) => requiredPermission && permissionSlugs.includes(requiredPermission)).map(([type]) => type);
+    const query = c3.req.valid("query");
+    const filters = {
+      page: query.page ? parseInt(query.page, 10) : 1,
+      limit: query.limit ? parseInt(query.limit, 10) : 10,
+      isRead: query.isRead === undefined ? undefined : query.isRead === "true",
+      allowedTypes
+    };
+    const result = await NOTIFICATION_SERVICES.getAllForAdmin(filters);
+    return c3.json({
+      message: "Admin notifications retrieved successfully",
+      success: true,
+      data: {
+        notifications: result.notifications.map(formatNotificationResponse),
+        pagination: result.pagination
+      }
+    }, OK);
+  }
+};
+// src/routes/admin-notification/admin-notification.routes.ts
+var notificationResponseSchema = exports_external.object({
+  id: exports_external.string(),
+  userId: exports_external.string(),
+  title: exports_external.string().describe("Notification type (used for icons)"),
+  url: exports_external.string().nullable().describe("URL for redirection"),
+  message: exports_external.string(),
+  isRead: exports_external.boolean(),
+  createdAt: exports_external.string().datetime(),
+  updatedAt: exports_external.string().datetime()
+}).describe("Notification information");
+var adminNotificationListResponseSchema = exports_external.object({
+  notifications: exports_external.array(notificationResponseSchema),
+  pagination: exports_external.object({
+    page: exports_external.number(),
+    limit: exports_external.number(),
+    total: exports_external.number(),
+    totalPages: exports_external.number()
+  })
+}).describe("Admin notifications list");
+var ADMIN_NOTIFICATION_ROUTES = {
+  getAll: createRoute({
+    path: "/admin/notifications",
+    method: "get",
+    tags: [tags_default.notification],
+    summary: "Get admin notifications (permission-filtered for team members)",
+    request: {
+      query: exports_external.object({
+        page: exports_external.string().optional().describe("Page number (default: 1)"),
+        limit: exports_external.string().optional().describe("Items per page (default: 10)"),
+        isRead: exports_external.string().optional().describe("Filter by read status (true/false), omit for all")
+      })
+    },
+    responses: {
+      [OK]: json_content_default(zodResponseSchema(adminNotificationListResponseSchema), "Admin notifications retrieved successfully"),
+      [UNAUTHORIZED]: json_content_default(zodResponseSchema(), "Unauthorized"),
+      [FORBIDDEN]: json_content_default(zodResponseSchema(), "Forbidden - Admin only")
+    }
+  })
+};
+
+// src/routes/admin-notification/index.ts
+var router3 = createRouter();
+Object.entries(ADMIN_NOTIFICATION_ROUTES).forEach(([key, route]) => {
+  router3.openapi(route, ADMIN_NOTIFICATION_ROUTES_HANDLER[key]);
+});
+var admin_notification_default = router3;
 
 // src/routes/agora/agora.handlers.ts
 init_error();
@@ -102070,11 +102748,11 @@ var AGORA_ROUTES = {
 };
 
 // src/routes/agora/index.ts
-var router3 = createRouter();
+var router4 = createRouter();
 Object.entries(AGORA_ROUTES).forEach(([key, route]) => {
-  router3.openapi(route, AGORA_ROUTES_HANDLER[key]);
+  router4.openapi(route, AGORA_ROUTES_HANDLER[key]);
 });
-var agora_default = router3;
+var agora_default = router4;
 // src/lib/anonymize-user.ts
 function formatUserForAppointment(user, userRole, isViewingOwnData = false) {
   if (isViewingOwnData) {
@@ -102279,6 +102957,9 @@ var formatFullAppointmentResponse = async (appointment, currentUserId) => {
     userInfo: formattedPatient.userInfo
   };
   const uploadIdSignedUrl = appointment.uploadId ? await convertUserImageToSignedUrl4(appointment.uploadId) : null;
+  const patientIsAnonymous = formattedPatient.isAnonymous === true;
+  const isDoctorViewing = currentUserId === appointment.doctorId;
+  const shouldHideUploadId = patientIsAnonymous && isDoctorViewing;
   const baseAppointment = {
     id: appointment.id,
     doctorId: appointment.doctorId,
@@ -102293,7 +102974,7 @@ var formatFullAppointmentResponse = async (appointment, currentUserId) => {
     age: appointment.age,
     appointmentFor: appointment.appointmentFor,
     issue: appointment.issue,
-    uploadId: uploadIdSignedUrl,
+    uploadId: shouldHideUploadId ? null : uploadIdSignedUrl,
     relationWithPatient: appointment.relationWithPatient,
     patientName: appointment.patientName,
     patientAge: appointment.patientAge
@@ -102330,6 +103011,9 @@ var formatAppointmentResponse = async (appointment, currentUserId) => {
     image: await convertUserImageToSignedUrl4(appointment.patient.image)
   } : appointment.patient;
   const uploadIdSignedUrl = appointment.uploadId ? await convertUserImageToSignedUrl4(appointment.uploadId) : null;
+  const patientIsAnonymous = appointment.patient?.isAnonymous === true;
+  const isDoctorViewing = currentUserId === appointment.doctorId;
+  const shouldHideUploadId = patientIsAnonymous && isDoctorViewing;
   return {
     id: appointment.id,
     doctorId: appointment.doctorId,
@@ -102344,7 +103028,7 @@ var formatAppointmentResponse = async (appointment, currentUserId) => {
     age: appointment.age,
     appointmentFor: appointment.appointmentFor,
     issue: appointment.issue,
-    uploadId: uploadIdSignedUrl,
+    uploadId: shouldHideUploadId ? null : uploadIdSignedUrl,
     relationWithPatient: appointment.relationWithPatient,
     patientName: appointment.patientName,
     patientAge: appointment.patientAge,
@@ -103590,29 +104274,29 @@ var APPOINTMENT_ROUTES = {
 };
 
 // src/routes/appointment/index.ts
-var router4 = createRouter();
-router4.openapi(APPOINTMENT_ROUTES.getDoctorAppointments, APPOINTMENT_ROUTES_HANDLER.getDoctorAppointments);
-router4.openapi(APPOINTMENT_ROUTES.getDoctorSessionHistory, APPOINTMENT_ROUTES_HANDLER.getDoctorSessionHistory);
-router4.openapi(APPOINTMENT_ROUTES.getDoctorSessionReasonHistory, APPOINTMENT_ROUTES_HANDLER.getDoctorSessionReasonHistory);
-router4.openapi(APPOINTMENT_ROUTES.getDoctorFullSessionReasonHistory, APPOINTMENT_ROUTES_HANDLER.getDoctorFullSessionReasonHistory);
-router4.openapi(APPOINTMENT_ROUTES.getDoctorYearlySessionReasonStats, APPOINTMENT_ROUTES_HANDLER.getDoctorYearlySessionReasonStats);
-router4.openapi(APPOINTMENT_ROUTES.getDoctorMonthlyStats, APPOINTMENT_ROUTES_HANDLER.getDoctorMonthlyStats);
-router4.openapi(APPOINTMENT_ROUTES.getPatientAppointments, APPOINTMENT_ROUTES_HANDLER.getPatientAppointments);
-router4.openapi(APPOINTMENT_ROUTES.getPatientSessionHistory, APPOINTMENT_ROUTES_HANDLER.getPatientSessionHistory);
-router4.openapi(APPOINTMENT_ROUTES.getPatientMonthlyStats, APPOINTMENT_ROUTES_HANDLER.getPatientMonthlyStats);
-router4.openapi(APPOINTMENT_ROUTES.getPatientWeeklyActivityStats, APPOINTMENT_ROUTES_HANDLER.getPatientWeeklyActivityStats);
-router4.openapi(APPOINTMENT_ROUTES.getByIdFull, APPOINTMENT_ROUTES_HANDLER.getByIdFull);
-router4.openapi(APPOINTMENT_ROUTES.getMessages, APPOINTMENT_ROUTES_HANDLER.getMessages);
-router4.openapi(APPOINTMENT_ROUTES.create, APPOINTMENT_ROUTES_HANDLER.create);
-router4.openapi(APPOINTMENT_ROUTES.getById, APPOINTMENT_ROUTES_HANDLER.getById);
-router4.openapi(APPOINTMENT_ROUTES.updateStartedAt, APPOINTMENT_ROUTES_HANDLER.updateStartedAt);
-router4.openapi(APPOINTMENT_ROUTES.markAsCompleted, APPOINTMENT_ROUTES_HANDLER.markAsCompleted);
-router4.openapi(APPOINTMENT_ROUTES.submitSessionReason, APPOINTMENT_ROUTES_HANDLER.submitSessionReason);
-router4.openapi(APPOINTMENT_ROUTES.upsertAppointmentNotes, APPOINTMENT_ROUTES_HANDLER.upsertAppointmentNotes);
-router4.openapi(APPOINTMENT_ROUTES.getAppointmentNotes, APPOINTMENT_ROUTES_HANDLER.getAppointmentNotes);
-router4.openapi(APPOINTMENT_ROUTES.updateStatus, APPOINTMENT_ROUTES_HANDLER.updateStatus);
-router4.openapi(APPOINTMENT_ROUTES.getAll, APPOINTMENT_ROUTES_HANDLER.getAll);
-var appointment_default = router4;
+var router5 = createRouter();
+router5.openapi(APPOINTMENT_ROUTES.getDoctorAppointments, APPOINTMENT_ROUTES_HANDLER.getDoctorAppointments);
+router5.openapi(APPOINTMENT_ROUTES.getDoctorSessionHistory, APPOINTMENT_ROUTES_HANDLER.getDoctorSessionHistory);
+router5.openapi(APPOINTMENT_ROUTES.getDoctorSessionReasonHistory, APPOINTMENT_ROUTES_HANDLER.getDoctorSessionReasonHistory);
+router5.openapi(APPOINTMENT_ROUTES.getDoctorFullSessionReasonHistory, APPOINTMENT_ROUTES_HANDLER.getDoctorFullSessionReasonHistory);
+router5.openapi(APPOINTMENT_ROUTES.getDoctorYearlySessionReasonStats, APPOINTMENT_ROUTES_HANDLER.getDoctorYearlySessionReasonStats);
+router5.openapi(APPOINTMENT_ROUTES.getDoctorMonthlyStats, APPOINTMENT_ROUTES_HANDLER.getDoctorMonthlyStats);
+router5.openapi(APPOINTMENT_ROUTES.getPatientAppointments, APPOINTMENT_ROUTES_HANDLER.getPatientAppointments);
+router5.openapi(APPOINTMENT_ROUTES.getPatientSessionHistory, APPOINTMENT_ROUTES_HANDLER.getPatientSessionHistory);
+router5.openapi(APPOINTMENT_ROUTES.getPatientMonthlyStats, APPOINTMENT_ROUTES_HANDLER.getPatientMonthlyStats);
+router5.openapi(APPOINTMENT_ROUTES.getPatientWeeklyActivityStats, APPOINTMENT_ROUTES_HANDLER.getPatientWeeklyActivityStats);
+router5.openapi(APPOINTMENT_ROUTES.getByIdFull, APPOINTMENT_ROUTES_HANDLER.getByIdFull);
+router5.openapi(APPOINTMENT_ROUTES.getMessages, APPOINTMENT_ROUTES_HANDLER.getMessages);
+router5.openapi(APPOINTMENT_ROUTES.create, APPOINTMENT_ROUTES_HANDLER.create);
+router5.openapi(APPOINTMENT_ROUTES.getById, APPOINTMENT_ROUTES_HANDLER.getById);
+router5.openapi(APPOINTMENT_ROUTES.updateStartedAt, APPOINTMENT_ROUTES_HANDLER.updateStartedAt);
+router5.openapi(APPOINTMENT_ROUTES.markAsCompleted, APPOINTMENT_ROUTES_HANDLER.markAsCompleted);
+router5.openapi(APPOINTMENT_ROUTES.submitSessionReason, APPOINTMENT_ROUTES_HANDLER.submitSessionReason);
+router5.openapi(APPOINTMENT_ROUTES.upsertAppointmentNotes, APPOINTMENT_ROUTES_HANDLER.upsertAppointmentNotes);
+router5.openapi(APPOINTMENT_ROUTES.getAppointmentNotes, APPOINTMENT_ROUTES_HANDLER.getAppointmentNotes);
+router5.openapi(APPOINTMENT_ROUTES.updateStatus, APPOINTMENT_ROUTES_HANDLER.updateStatus);
+router5.openapi(APPOINTMENT_ROUTES.getAll, APPOINTMENT_ROUTES_HANDLER.getAll);
+var appointment_default = router5;
 // src/routes/auth/auth.handlers.ts
 init_error();
 
@@ -103978,11 +104662,11 @@ var AUTH_ROUTES = {
 };
 
 // src/routes/auth/index.ts
-var router5 = createRouter();
+var router6 = createRouter();
 Object.entries(AUTH_ROUTES).forEach(([key, route]) => {
-  router5.openapi(route, AUTH_ROUTES_HANDLER[key]);
+  router6.openapi(route, AUTH_ROUTES_HANDLER[key]);
 });
-var auth_default = router5;
+var auth_default = router6;
 
 // src/routes/doctor/doctor.handlers.ts
 init_error();
@@ -104496,11 +105180,11 @@ var DOCTOR_ROUTES = {
 };
 
 // src/routes/doctor/index.ts
-var router6 = createRouter();
+var router7 = createRouter();
 Object.entries(DOCTOR_ROUTES).forEach(([key, route]) => {
-  router6.openapi(route, DOCTOR_ROUTES_HANDLER[key]);
+  router7.openapi(route, DOCTOR_ROUTES_HANDLER[key]);
 });
-var doctor_default = router6;
+var doctor_default = router7;
 
 // src/routes/doctor-profile/doctor-profile.handlers.ts
 init_error();
@@ -104780,11 +105464,12 @@ var DOCTOR_PROFILE_ROUTES = {
 };
 
 // src/routes/doctor-profile/index.ts
-var router7 = createRouter();
+var router8 = createRouter();
 Object.entries(DOCTOR_PROFILE_ROUTES).forEach(([key, route]) => {
-  router7.openapi(route, DOCTOR_PROFILE_ROUTES_HANDLER[key]);
+  router8.openapi(route, DOCTOR_PROFILE_ROUTES_HANDLER[key]);
 });
-var doctor_profile_default = router7;
+var doctor_profile_default = router8;
+
 // src/routes/doctor-profile-complete/doctor-profile-complete.handlers.ts
 init_error();
 init_prisma();
@@ -105528,11 +106213,11 @@ var DOCTOR_PROFILE_COMPLETE_ROUTES = {
 };
 
 // src/routes/doctor-profile-complete/index.ts
-var router8 = createRouter();
+var router9 = createRouter();
 Object.entries(DOCTOR_PROFILE_COMPLETE_ROUTES).forEach(([key, route]) => {
-  router8.openapi(route, DOCTOR_PROFILE_COMPLETE_ROUTES_HANDLER[key]);
+  router9.openapi(route, DOCTOR_PROFILE_COMPLETE_ROUTES_HANDLER[key]);
 });
-var doctor_profile_complete_default = router8;
+var doctor_profile_complete_default = router9;
 
 // src/routes/education/education.handlers.ts
 init_error();
@@ -105816,11 +106501,11 @@ var EDUCATION_ROUTES = {
 };
 
 // src/routes/education/index.ts
-var router9 = createRouter();
+var router10 = createRouter();
 Object.entries(EDUCATION_ROUTES).forEach(([key, route]) => {
-  router9.openapi(route, EDUCATION_ROUTES_HANDLER[key]);
+  router10.openapi(route, EDUCATION_ROUTES_HANDLER[key]);
 });
-var education_default = router9;
+var education_default = router10;
 
 // src/routes/enterprise/enterprise.handlers.ts
 init_error();
@@ -105838,9 +106523,10 @@ var ENTERPRISE_ROUTES_HANDLER = {
     if (!user) {
       throw new HttpError("Unauthorized", UNAUTHORIZED);
     }
-    if (user.role !== "admin") {
+    if (user.role !== "admin" && user.role !== "team_admin") {
       throw new HttpError("Forbidden - Admin only", FORBIDDEN);
     }
+    await requirePermission(user.id, PERMISSION_SLUGS.ENTERPRISE_ADD);
     const { name, code, sessionsPerMonth, generateCode } = c3.req.valid("json");
     try {
       const enterprise = await ENTERPRISE_SERVICES.create({
@@ -105870,9 +106556,10 @@ var ENTERPRISE_ROUTES_HANDLER = {
     if (!user) {
       throw new HttpError("Unauthorized", UNAUTHORIZED);
     }
-    if (user.role !== "admin") {
+    if (user.role !== "admin" && user.role !== "team_admin") {
       throw new HttpError("Forbidden - Admin only", FORBIDDEN);
     }
+    await requirePermission(user.id, PERMISSION_SLUGS.ENTERPRISE_VIEW);
     const query = c3.req.valid("query");
     const filters = {
       page: query.page ? parseInt(query.page, 10) : 1,
@@ -105894,9 +106581,10 @@ var ENTERPRISE_ROUTES_HANDLER = {
     if (!user) {
       throw new HttpError("Unauthorized", UNAUTHORIZED);
     }
-    if (user.role !== "admin") {
+    if (user.role !== "admin" && user.role !== "team_admin") {
       throw new HttpError("Forbidden - Admin only", FORBIDDEN);
     }
+    await requirePermission(user.id, PERMISSION_SLUGS.ENTERPRISE_VIEW);
     const { id } = c3.req.valid("param");
     const enterprise = await ENTERPRISE_SERVICES.getById(id);
     if (!enterprise) {
@@ -105913,9 +106601,10 @@ var ENTERPRISE_ROUTES_HANDLER = {
     if (!user) {
       throw new HttpError("Unauthorized", UNAUTHORIZED);
     }
-    if (user.role !== "admin") {
+    if (user.role !== "admin" && user.role !== "team_admin") {
       throw new HttpError("Forbidden - Admin only", FORBIDDEN);
     }
+    await requirePermission(user.id, PERMISSION_SLUGS.ENTERPRISE_UPDATE);
     const { id } = c3.req.valid("param");
     const body = c3.req.valid("json");
     try {
@@ -105948,9 +106637,10 @@ var ENTERPRISE_ROUTES_HANDLER = {
     if (!user) {
       throw new HttpError("Unauthorized", UNAUTHORIZED);
     }
-    if (user.role !== "admin") {
+    if (user.role !== "admin" && user.role !== "team_admin") {
       throw new HttpError("Forbidden - Admin only", FORBIDDEN);
     }
+    await requirePermission(user.id, PERMISSION_SLUGS.ENTERPRISE_DELETE);
     const { id } = c3.req.valid("param");
     try {
       await ENTERPRISE_SERVICES.delete(id);
@@ -106088,11 +106778,11 @@ var ENTERPRISE_ROUTES = {
 };
 
 // src/routes/enterprise/index.ts
-var router10 = createRouter();
+var router11 = createRouter();
 Object.entries(ENTERPRISE_ROUTES).forEach(([key, route]) => {
-  router10.openapi(route, ENTERPRISE_ROUTES_HANDLER[key]);
+  router11.openapi(route, ENTERPRISE_ROUTES_HANDLER[key]);
 });
-var enterprise_default = router10;
+var enterprise_default = router11;
 
 // src/routes/files/files-handlers.ts
 init_error();
@@ -106259,16 +106949,16 @@ var FILES_ROUTES = {
 };
 
 // src/routes/files/index.ts
-var router11 = createRouter();
+var router12 = createRouter();
 Object.entries(FILES_ROUTES).forEach(([key, route]) => {
-  router11.openapi(route, FILES_ROUTES_HANDLER[key]);
+  router12.openapi(route, FILES_ROUTES_HANDLER[key]);
 });
-var files_default = router11;
+var files_default = router12;
 
 // src/routes/notification/notification.handlers.ts
 init_error();
 init_notification_service();
-var formatNotificationResponse = (notification) => ({
+var formatNotificationResponse2 = (notification) => ({
   id: notification.id,
   userId: notification.userId,
   title: notification.title,
@@ -106296,7 +106986,7 @@ var NOTIFICATION_ROUTES_HANDLER = {
       message: "Notifications retrieved successfully",
       success: true,
       data: {
-        notifications: result.notifications.map(formatNotificationResponse),
+        notifications: result.notifications.map(formatNotificationResponse2),
         pagination: result.pagination,
         unreadCount: result.unreadCount
       }
@@ -106385,7 +107075,7 @@ var NOTIFICATION_ROUTES_HANDLER = {
   }
 };
 // src/routes/notification/notification.routes.ts
-var notificationResponseSchema = exports_external.object({
+var notificationResponseSchema2 = exports_external.object({
   id: exports_external.string(),
   userId: exports_external.string(),
   title: exports_external.string().describe("Notification type (used for icons)"),
@@ -106396,7 +107086,7 @@ var notificationResponseSchema = exports_external.object({
   updatedAt: exports_external.string().datetime()
 }).describe("Notification information");
 var notificationListResponseSchema = exports_external.object({
-  notifications: exports_external.array(notificationResponseSchema),
+  notifications: exports_external.array(notificationResponseSchema2),
   pagination: exports_external.object({
     page: exports_external.number(),
     limit: exports_external.number(),
@@ -106484,187 +107174,152 @@ var NOTIFICATION_ROUTES = {
 };
 
 // src/routes/notification/index.ts
-var router12 = createRouter();
+var router13 = createRouter();
 Object.entries(NOTIFICATION_ROUTES).forEach(([key, route]) => {
-  router12.openapi(route, NOTIFICATION_ROUTES_HANDLER[key]);
+  router13.openapi(route, NOTIFICATION_ROUTES_HANDLER[key]);
 });
-var notification_default = router12;
+var notification_default = router13;
 
-// src/routes/service-pricing/service-pricing.handlers.ts
+// src/routes/permission/permission.handlers.ts
+init_error();
+
+// src/services/permission.service.ts
 init_error();
 init_prisma();
-
-// src/services/service-pricing.service.ts
-init_prisma();
-var SERVICE_PRICING_SERVICES = {
-  getAll: async (serviceId) => {
-    const pricing = await prisma_default.servicePricing.findMany({
-      where: {
-        isActive: true,
-        ...serviceId && { serviceId }
-      },
-      include: {
-        service: true
-      },
-      orderBy: { duration: "asc" }
+var PERMISSION_SERVICES = {
+  getAll: async () => {
+    const permissions = await prisma_default.permission.findMany({
+      orderBy: {
+        name: "asc"
+      }
     });
-    return pricing;
+    return { permissions };
   },
   getById: async (id) => {
-    const pricing = await prisma_default.servicePricing.findUnique({
-      where: { id },
-      include: {
-        service: true
-      }
+    const permission = await prisma_default.permission.findUnique({
+      where: { id }
     });
-    return pricing;
+    if (!permission) {
+      throw new HttpError("Permission not found", NOT_FOUND);
+    }
+    return permission;
   },
-  getByDuration: async (duration3, serviceId) => {
-    const pricing = await prisma_default.servicePricing.findFirst({
-      where: {
-        duration: duration3,
-        ...serviceId && { serviceId },
-        isActive: true
-      },
-      include: {
-        service: true
-      }
+  getBySlug: async (slug) => {
+    const permission = await prisma_default.permission.findUnique({
+      where: { slug }
     });
-    return pricing;
+    return permission;
   },
   create: async (data) => {
-    const total = data.doctorAmount + data.platformAmount;
-    if (Math.abs(total - data.userPrice) > 0.01) {
-      throw new Error("Doctor amount + Platform amount must equal user price");
+    const existing = await prisma_default.permission.findUnique({
+      where: { slug: data.slug }
+    });
+    if (existing) {
+      throw new HttpError("Permission with this slug already exists", CONFLICT);
     }
-    const pricing = await prisma_default.servicePricing.create({
+    const permission = await prisma_default.permission.create({
       data: {
-        serviceId: data.serviceId,
-        duration: data.duration,
-        userPrice: data.userPrice,
-        doctorAmount: data.doctorAmount,
-        platformAmount: data.platformAmount,
-        isActive: true
-      },
-      include: {
-        service: true
+        name: data.name,
+        slug: data.slug,
+        description: data.description || null
       }
     });
-    return pricing;
+    return permission;
   },
   update: async (id, data) => {
-    if (data.userPrice !== undefined || data.doctorAmount !== undefined || data.platformAmount !== undefined) {
-      const existing = await prisma_default.servicePricing.findUnique({
-        where: { id }
+    const permission = await prisma_default.permission.findUnique({
+      where: { id }
+    });
+    if (!permission) {
+      throw new HttpError("Permission not found", NOT_FOUND);
+    }
+    if (data.slug && data.slug !== permission.slug) {
+      const existing = await prisma_default.permission.findUnique({
+        where: { slug: data.slug }
       });
-      if (!existing) {
-        throw new Error("Service pricing not found");
-      }
-      const userPrice = data.userPrice ?? Number(existing.userPrice);
-      const doctorAmount = data.doctorAmount ?? Number(existing.doctorAmount);
-      const platformAmount = data.platformAmount ?? Number(existing.platformAmount);
-      const total = doctorAmount + platformAmount;
-      if (Math.abs(total - userPrice) > 0.01) {
-        throw new Error("Doctor amount + Platform amount must equal user price");
+      if (existing) {
+        throw new HttpError("Permission with this slug already exists", CONFLICT);
       }
     }
-    const pricing = await prisma_default.servicePricing.update({
+    const updated = await prisma_default.permission.update({
       where: { id },
-      data,
-      include: {
-        service: true
+      data: {
+        ...data.name && { name: data.name },
+        ...data.slug && { slug: data.slug },
+        ...data.description !== undefined && { description: data.description || null }
       }
     });
-    return pricing;
-  },
-  updateByDuration: async (duration3, serviceId, data) => {
-    if (data.userPrice !== undefined || data.doctorAmount !== undefined || data.platformAmount !== undefined) {
-      const existing2 = await prisma_default.servicePricing.findFirst({
-        where: {
-          serviceId,
-          duration: duration3
-        }
-      });
-      if (!existing2) {
-        throw new Error("Service pricing not found");
-      }
-      const userPrice = data.userPrice ?? Number(existing2.userPrice);
-      const doctorAmount = data.doctorAmount ?? Number(existing2.doctorAmount);
-      const platformAmount = data.platformAmount ?? Number(existing2.platformAmount);
-      const total = doctorAmount + platformAmount;
-      if (Math.abs(total - userPrice) > 0.01) {
-        throw new Error("Doctor amount + Platform amount must equal user price");
-      }
-    }
-    const existing = await prisma_default.servicePricing.findFirst({
-      where: {
-        serviceId,
-        duration: duration3
-      }
-    });
-    if (!existing) {
-      throw new Error("Service pricing not found");
-    }
-    const pricing = await prisma_default.servicePricing.update({
-      where: { id: existing.id },
-      data,
-      include: {
-        service: true
-      }
-    });
-    return pricing;
+    return updated;
   },
   delete: async (id) => {
-    const pricing = await prisma_default.servicePricing.update({
-      where: { id },
-      data: { isActive: false }
+    const permission = await prisma_default.permission.findUnique({
+      where: { id }
     });
-    return pricing;
+    if (!permission) {
+      throw new HttpError("Permission not found", NOT_FOUND);
+    }
+    await prisma_default.permission.delete({
+      where: { id }
+    });
+    return { success: true };
   }
 };
 
-// src/routes/service-pricing/service-pricing.handlers.ts
-var formatServicePricingResponse = (pricing) => ({
-  id: pricing.id,
-  serviceId: pricing.serviceId,
-  service: pricing.service ? {
-    id: pricing.service.id,
-    name: pricing.service.name
-  } : undefined,
-  duration: pricing.duration,
-  userPrice: Number(pricing.userPrice),
-  doctorAmount: Number(pricing.doctorAmount),
-  platformAmount: Number(pricing.platformAmount),
-  isActive: pricing.isActive,
-  createdAt: pricing.createdAt.toISOString(),
-  updatedAt: pricing.updatedAt.toISOString()
-});
-var SERVICE_PRICING_ROUTES_HANDLER = {
+// src/routes/permission/permission.handlers.ts
+var PERMISSION_ROUTES_HANDLER = {
   getAll: async (c3) => {
-    const pricing = await SERVICE_PRICING_SERVICES.getAll();
-    return c3.json({
-      message: "Service pricing retrieved successfully",
-      success: true,
-      data: {
-        pricing: pricing.map(formatServicePricingResponse)
-      }
-    }, OK);
+    const user = c3.get("user");
+    if (!user) {
+      throw new HttpError("Unauthorized", UNAUTHORIZED);
+    }
+    if (user.role !== "admin") {
+      throw new HttpError("Forbidden - Admin only", FORBIDDEN);
+    }
+    try {
+      const result = await PERMISSION_SERVICES.getAll();
+      return c3.json({
+        message: "Permissions retrieved successfully",
+        success: true,
+        data: {
+          permissions: result.permissions.map((permission) => ({
+            ...permission,
+            createdAt: permission.createdAt.toISOString(),
+            updatedAt: permission.updatedAt.toISOString()
+          }))
+        }
+      }, OK);
+    } catch (error44) {
+      const message2 = error44 instanceof Error ? error44.message : "Failed to retrieve permissions";
+      throw new HttpError(message2, INTERNAL_SERVER_ERROR);
+    }
   },
-  getByDuration: async (c3) => {
-    const { duration: duration3 } = c3.req.valid("param");
-    const durationNum = parseInt(duration3, 10);
-    if (Number.isNaN(durationNum)) {
-      throw new HttpError("Invalid duration", BAD_REQUEST);
+  getById: async (c3) => {
+    const user = c3.get("user");
+    if (!user) {
+      throw new HttpError("Unauthorized", UNAUTHORIZED);
     }
-    const pricing = await SERVICE_PRICING_SERVICES.getByDuration(durationNum);
-    if (!pricing) {
-      throw new HttpError("Service pricing not found", NOT_FOUND);
+    if (user.role !== "admin") {
+      throw new HttpError("Forbidden - Admin only", FORBIDDEN);
     }
-    return c3.json({
-      message: "Service pricing retrieved successfully",
-      success: true,
-      data: formatServicePricingResponse(pricing)
-    }, OK);
+    const { id } = c3.req.valid("param");
+    try {
+      const permission = await PERMISSION_SERVICES.getById(id);
+      return c3.json({
+        message: "Permission retrieved successfully",
+        success: true,
+        data: {
+          ...permission,
+          createdAt: permission.createdAt.toISOString(),
+          updatedAt: permission.updatedAt.toISOString()
+        }
+      }, OK);
+    } catch (error44) {
+      if (error44 instanceof HttpError) {
+        throw error44;
+      }
+      const message2 = error44 instanceof Error ? error44.message : "Failed to retrieve permission";
+      throw new HttpError(message2, INTERNAL_SERVER_ERROR);
+    }
   },
   create: async (c3) => {
     const user = c3.get("user");
@@ -106674,28 +107329,24 @@ var SERVICE_PRICING_ROUTES_HANDLER = {
     if (user.role !== "admin") {
       throw new HttpError("Forbidden - Admin only", FORBIDDEN);
     }
-    const { serviceId, duration: duration3, userPrice, doctorAmount, platformAmount } = c3.req.valid("json");
+    const body = c3.req.valid("json");
     try {
-      const pricing = await SERVICE_PRICING_SERVICES.create({
-        serviceId,
-        duration: duration3,
-        userPrice,
-        doctorAmount,
-        platformAmount
-      });
+      const permission = await PERMISSION_SERVICES.create(body);
       return c3.json({
-        message: "Service pricing created successfully",
+        message: "Permission created successfully",
         success: true,
-        data: formatServicePricingResponse(pricing)
+        data: {
+          ...permission,
+          createdAt: permission.createdAt.toISOString(),
+          updatedAt: permission.updatedAt.toISOString()
+        }
       }, CREATED);
     } catch (error44) {
-      if (error44 instanceof Error && "code" in error44 && error44.code === "P2002") {
-        throw new HttpError("Service pricing for this duration already exists", CONFLICT);
+      if (error44 instanceof HttpError) {
+        throw error44;
       }
-      if (error44 instanceof Error && error44.message.includes("must equal")) {
-        throw new HttpError(error44.message, UNPROCESSABLE_ENTITY);
-      }
-      throw error44;
+      const message2 = error44 instanceof Error ? error44.message : "Failed to create permission";
+      throw new HttpError(message2, INTERNAL_SERVER_ERROR);
     }
   },
   update: async (c3) => {
@@ -106707,67 +107358,24 @@ var SERVICE_PRICING_ROUTES_HANDLER = {
       throw new HttpError("Forbidden - Admin only", FORBIDDEN);
     }
     const { id } = c3.req.valid("param");
-    const data = c3.req.valid("json");
+    const body = c3.req.valid("json");
     try {
-      const pricing = await SERVICE_PRICING_SERVICES.update(id, data);
+      const permission = await PERMISSION_SERVICES.update(id, body);
       return c3.json({
-        message: "Service pricing updated successfully",
+        message: "Permission updated successfully",
         success: true,
-        data: formatServicePricingResponse(pricing)
+        data: {
+          ...permission,
+          createdAt: permission.createdAt.toISOString(),
+          updatedAt: permission.updatedAt.toISOString()
+        }
       }, OK);
     } catch (error44) {
-      if (error44 instanceof Error && "code" in error44 && error44.code === "P2025") {
-        throw new HttpError("Service pricing not found", NOT_FOUND);
+      if (error44 instanceof HttpError) {
+        throw error44;
       }
-      if (error44 instanceof Error && error44.message.includes("must equal")) {
-        throw new HttpError(error44.message, UNPROCESSABLE_ENTITY);
-      }
-      throw error44;
-    }
-  },
-  updateByDuration: async (c3) => {
-    const user = c3.get("user");
-    if (!user) {
-      throw new HttpError("Unauthorized", UNAUTHORIZED);
-    }
-    if (user.role !== "admin") {
-      throw new HttpError("Forbidden - Admin only", FORBIDDEN);
-    }
-    const { duration: duration3 } = c3.req.valid("param");
-    const durationNum = parseInt(duration3, 10);
-    if (Number.isNaN(durationNum)) {
-      throw new HttpError("Invalid duration", BAD_REQUEST);
-    }
-    const query = c3.req.valid("query");
-    const data = c3.req.valid("json");
-    let finalServiceId = query.serviceId || "";
-    if (!finalServiceId) {
-      const openEarService = await prisma_default.service.findUnique({
-        where: { name: "Open Ear" }
-      });
-      if (!openEarService) {
-        throw new HttpError("Service not found. Please provide serviceId in query.", BAD_REQUEST);
-      }
-      finalServiceId = openEarService.id;
-    }
-    try {
-      const pricing = await SERVICE_PRICING_SERVICES.updateByDuration(durationNum, finalServiceId, data);
-      return c3.json({
-        message: "Service pricing updated successfully",
-        success: true,
-        data: formatServicePricingResponse(pricing)
-      }, OK);
-    } catch (error44) {
-      if (error44 instanceof Error && "code" in error44 && error44.code === "P2025") {
-        throw new HttpError("Service pricing not found", NOT_FOUND);
-      }
-      if (error44 instanceof Error && error44.message.includes("not found")) {
-        throw new HttpError("Service pricing not found", NOT_FOUND);
-      }
-      if (error44 instanceof Error && error44.message.includes("must equal")) {
-        throw new HttpError(error44.message, UNPROCESSABLE_ENTITY);
-      }
-      throw error44;
+      const message2 = error44 instanceof Error ? error44.message : "Failed to update permission";
+      throw new HttpError(message2, INTERNAL_SERVER_ERROR);
     }
   },
   delete: async (c3) => {
@@ -106780,162 +107388,1184 @@ var SERVICE_PRICING_ROUTES_HANDLER = {
     }
     const { id } = c3.req.valid("param");
     try {
-      await SERVICE_PRICING_SERVICES.delete(id);
+      await PERMISSION_SERVICES.delete(id);
       return c3.json({
-        message: "Service pricing deleted successfully",
-        success: true
+        message: "Permission deleted successfully",
+        success: true,
+        data: { success: true }
       }, OK);
     } catch (error44) {
-      if (error44 instanceof Error && "code" in error44 && error44.code === "P2025") {
-        throw new HttpError("Service pricing not found", NOT_FOUND);
+      if (error44 instanceof HttpError) {
+        throw error44;
       }
-      throw error44;
+      const message2 = error44 instanceof Error ? error44.message : "Failed to delete permission";
+      throw new HttpError(message2, INTERNAL_SERVER_ERROR);
     }
   }
 };
-// src/routes/service-pricing/service-pricing.routes.ts
-var servicePricingResponseSchema = exports_external.object({
+// src/routes/permission/permission.routes.ts
+var permissionResponseSchema = exports_external.object({
   id: exports_external.string(),
-  serviceId: exports_external.string(),
-  service: exports_external.object({
-    id: exports_external.string(),
-    name: exports_external.string()
-  }).optional(),
-  duration: exports_external.number().int(),
-  userPrice: exports_external.number(),
-  doctorAmount: exports_external.number(),
-  platformAmount: exports_external.number(),
-  isActive: exports_external.boolean(),
+  name: exports_external.string(),
+  slug: exports_external.string(),
+  description: exports_external.string().nullable(),
   createdAt: exports_external.string().datetime(),
   updatedAt: exports_external.string().datetime()
-}).describe("Service pricing information");
-var createServicePricingBodySchema = exports_external.object({
-  serviceId: exports_external.string().describe("Service ID"),
-  duration: exports_external.number().int().min(1).describe("Duration in minutes (15, 30, 45, or 60)"),
-  userPrice: exports_external.number().positive().describe("Total price paid by user"),
-  doctorAmount: exports_external.number().positive().describe("Amount received by doctor"),
-  platformAmount: exports_external.number().positive().describe("Amount kept by platform")
-}).describe("Request body for creating service pricing").refine((data) => Math.abs(data.doctorAmount + data.platformAmount - data.userPrice) < 0.01, {
-  message: "Doctor amount + Platform amount must equal user price",
-  path: ["userPrice"]
-});
-var updateServicePricingBodySchema = exports_external.object({
-  userPrice: exports_external.number().positive().optional().describe("Total price paid by user"),
-  doctorAmount: exports_external.number().positive().optional().describe("Amount received by doctor"),
-  platformAmount: exports_external.number().positive().optional().describe("Amount kept by platform"),
-  isActive: exports_external.boolean().optional().describe("Whether this pricing is active")
-}).describe("Request body for updating service pricing");
-var servicePricingListResponseSchema = exports_external.object({
-  pricing: exports_external.array(servicePricingResponseSchema)
-}).describe("List of service pricing options");
-var SERVICE_PRICING_ROUTES = {
+}).describe("Permission");
+var permissionListResponseSchema = exports_external.object({
+  permissions: exports_external.array(permissionResponseSchema)
+}).describe("List of permissions");
+var createPermissionBodySchema = exports_external.object({
+  name: exports_external.string().min(1).describe("Permission name"),
+  slug: exports_external.string().min(1).describe("Permission slug (unique identifier)"),
+  description: exports_external.string().optional().describe("Permission description")
+}).describe("Request body for creating a permission");
+var updatePermissionBodySchema = exports_external.object({
+  name: exports_external.string().min(1).optional().describe("Permission name"),
+  slug: exports_external.string().min(1).optional().describe("Permission slug"),
+  description: exports_external.string().optional().nullable().describe("Permission description")
+}).describe("Request body for updating a permission");
+var PERMISSION_ROUTES = {
   getAll: createRoute({
-    path: "/service-pricing",
+    path: "/admin/permissions",
     method: "get",
-    tags: [tags_default.servicePricing],
-    summary: "Get all active service pricing options",
-    request: {},
+    tags: [tags_default.permission],
+    middleware: [isAuthenticated],
+    summary: "Get all permissions",
     responses: {
-      [OK]: json_content_default(zodResponseSchema(servicePricingListResponseSchema), "Service pricing retrieved successfully")
+      [OK]: json_content_default(zodResponseSchema(permissionListResponseSchema), "Permissions retrieved successfully"),
+      [UNAUTHORIZED]: json_content_default(zodResponseSchema(), "Unauthorized"),
+      [FORBIDDEN]: json_content_default(zodResponseSchema(), "Forbidden")
     }
   }),
-  getByDuration: createRoute({
-    path: "/service-pricing/duration/{duration}",
+  getById: createRoute({
+    path: "/admin/permissions/{id}",
     method: "get",
-    tags: [tags_default.servicePricing],
-    summary: "Get service pricing by duration",
+    tags: [tags_default.permission],
+    middleware: [isAuthenticated],
+    summary: "Get permission by ID",
     request: {
       params: exports_external.object({
-        duration: exports_external.string().describe("Duration in minutes")
+        id: exports_external.string().describe("Permission ID")
       })
     },
     responses: {
-      [OK]: json_content_default(zodResponseSchema(servicePricingResponseSchema), "Service pricing retrieved successfully"),
-      [NOT_FOUND]: json_content_default(zodResponseSchema(), "Service pricing not found")
+      [OK]: json_content_default(zodResponseSchema(permissionResponseSchema), "Permission retrieved successfully"),
+      [UNAUTHORIZED]: json_content_default(zodResponseSchema(), "Unauthorized"),
+      [NOT_FOUND]: json_content_default(zodResponseSchema(), "Permission not found"),
+      [FORBIDDEN]: json_content_default(zodResponseSchema(), "Forbidden")
     }
   }),
   create: createRoute({
-    path: "/service-pricing",
+    path: "/admin/permissions",
     method: "post",
-    tags: [tags_default.servicePricing],
-    summary: "Create new service pricing (Admin only)",
+    tags: [tags_default.permission],
+    middleware: [isAuthenticated],
+    summary: "Create a new permission",
     request: {
-      body: json_content_required_default(createServicePricingBodySchema, "Request body for creating service pricing")
+      body: json_content_required_default(createPermissionBodySchema, "Request body for creating a permission")
     },
     responses: {
-      [CREATED]: json_content_default(zodResponseSchema(servicePricingResponseSchema), "Service pricing created successfully"),
-      [UNPROCESSABLE_ENTITY]: json_content_default(create_error_schema_default(createServicePricingBodySchema), "Unprocessable Entity"),
+      [CREATED]: json_content_default(zodResponseSchema(permissionResponseSchema), "Permission created successfully"),
+      [UNPROCESSABLE_ENTITY]: json_content_default(create_error_schema_default(createPermissionBodySchema), "Unprocessable Entity"),
       [UNAUTHORIZED]: json_content_default(zodResponseSchema(), "Unauthorized"),
-      [FORBIDDEN]: json_content_default(zodResponseSchema(), "Forbidden - Admin only"),
-      [CONFLICT]: json_content_default(zodResponseSchema(), "Service pricing for this duration already exists")
+      [CONFLICT]: json_content_default(zodResponseSchema(), "Permission already exists"),
+      [FORBIDDEN]: json_content_default(zodResponseSchema(), "Forbidden")
     }
   }),
   update: createRoute({
-    path: "/service-pricing/{id}",
-    method: "put",
-    tags: [tags_default.servicePricing],
-    summary: "Update service pricing by ID (Admin only)",
+    path: "/admin/permissions/{id}",
+    method: "patch",
+    tags: [tags_default.permission],
+    middleware: [isAuthenticated],
+    summary: "Update a permission",
     request: {
       params: exports_external.object({
-        id: exports_external.string().describe("Service pricing ID")
+        id: exports_external.string().describe("Permission ID")
       }),
-      body: json_content_required_default(updateServicePricingBodySchema, "Request body for updating service pricing")
+      body: json_content_required_default(updatePermissionBodySchema, "Request body for updating a permission")
     },
     responses: {
-      [OK]: json_content_default(zodResponseSchema(servicePricingResponseSchema), "Service pricing updated successfully"),
-      [UNPROCESSABLE_ENTITY]: json_content_default(create_error_schema_default(updateServicePricingBodySchema), "Unprocessable Entity"),
+      [OK]: json_content_default(zodResponseSchema(permissionResponseSchema), "Permission updated successfully"),
+      [UNPROCESSABLE_ENTITY]: json_content_default(create_error_schema_default(updatePermissionBodySchema), "Unprocessable Entity"),
       [UNAUTHORIZED]: json_content_default(zodResponseSchema(), "Unauthorized"),
-      [FORBIDDEN]: json_content_default(zodResponseSchema(), "Forbidden - Admin only"),
-      [NOT_FOUND]: json_content_default(zodResponseSchema(), "Service pricing not found")
-    }
-  }),
-  updateByDuration: createRoute({
-    path: "/service-pricing/duration/{duration}",
-    method: "put",
-    tags: [tags_default.servicePricing],
-    summary: "Update service pricing by duration (Admin only)",
-    request: {
-      params: exports_external.object({
-        duration: exports_external.string().describe("Duration in minutes")
-      }),
-      query: exports_external.object({
-        serviceId: exports_external.string().optional().describe("Service ID (optional, defaults to Open Ear service)")
-      }),
-      body: json_content_required_default(updateServicePricingBodySchema, "Request body for updating service pricing")
-    },
-    responses: {
-      [OK]: json_content_default(zodResponseSchema(servicePricingResponseSchema), "Service pricing updated successfully"),
-      [UNPROCESSABLE_ENTITY]: json_content_default(create_error_schema_default(updateServicePricingBodySchema), "Unprocessable Entity"),
-      [UNAUTHORIZED]: json_content_default(zodResponseSchema(), "Unauthorized"),
-      [FORBIDDEN]: json_content_default(zodResponseSchema(), "Forbidden - Admin only"),
-      [NOT_FOUND]: json_content_default(zodResponseSchema(), "Service pricing not found")
+      [NOT_FOUND]: json_content_default(zodResponseSchema(), "Permission not found"),
+      [CONFLICT]: json_content_default(zodResponseSchema(), "Permission slug already exists"),
+      [FORBIDDEN]: json_content_default(zodResponseSchema(), "Forbidden")
     }
   }),
   delete: createRoute({
-    path: "/service-pricing/{id}",
+    path: "/admin/permissions/{id}",
     method: "delete",
-    tags: [tags_default.servicePricing],
-    summary: "Delete service pricing by ID (Admin only - soft delete)",
+    tags: [tags_default.permission],
+    middleware: [isAuthenticated],
+    summary: "Delete a permission",
     request: {
       params: exports_external.object({
-        id: exports_external.string().describe("Service pricing ID")
+        id: exports_external.string().describe("Permission ID")
       })
     },
     responses: {
-      [OK]: json_content_default(zodResponseSchema(), "Service pricing deleted successfully"),
+      [OK]: json_content_default(zodResponseSchema(exports_external.object({ success: exports_external.boolean() })), "Permission deleted successfully"),
       [UNAUTHORIZED]: json_content_default(zodResponseSchema(), "Unauthorized"),
-      [FORBIDDEN]: json_content_default(zodResponseSchema(), "Forbidden - Admin only"),
-      [NOT_FOUND]: json_content_default(zodResponseSchema(), "Service pricing not found")
+      [NOT_FOUND]: json_content_default(zodResponseSchema(), "Permission not found"),
+      [FORBIDDEN]: json_content_default(zodResponseSchema(), "Forbidden")
     }
   })
 };
 
-// src/routes/service-pricing/index.ts
-var router13 = createRouter();
-Object.entries(SERVICE_PRICING_ROUTES).forEach(([key, route]) => {
-  router13.openapi(route, SERVICE_PRICING_ROUTES_HANDLER[key]);
+// src/routes/permission/index.ts
+var router14 = createRouter();
+Object.entries(PERMISSION_ROUTES).forEach(([key, route]) => {
+  router14.openapi(route, PERMISSION_ROUTES_HANDLER[key]);
 });
-var service_pricing_default = router13;
+var permission_default = router14;
+
+// src/routes/role/role.handlers.ts
+init_error();
+
+// src/services/role.service.ts
+init_error();
+init_prisma();
+var ROLE_SERVICES = {
+  getAll: async () => {
+    const roles = await prisma_default.role.findMany({
+      include: {
+        rolePermissions: {
+          include: {
+            permission: true
+          }
+        }
+      },
+      orderBy: {
+        name: "asc"
+      }
+    });
+    return {
+      roles: roles.map((role3) => ({
+        id: role3.id,
+        name: role3.name,
+        description: role3.description,
+        createdAt: role3.createdAt,
+        updatedAt: role3.updatedAt,
+        permissions: role3.rolePermissions.map((rp) => ({
+          id: rp.permission.id,
+          name: rp.permission.name,
+          slug: rp.permission.slug,
+          description: rp.permission.description
+        }))
+      }))
+    };
+  },
+  getById: async (id) => {
+    const role3 = await prisma_default.role.findUnique({
+      where: { id },
+      include: {
+        rolePermissions: {
+          include: {
+            permission: true
+          }
+        }
+      }
+    });
+    if (!role3) {
+      throw new HttpError("Role not found", NOT_FOUND);
+    }
+    return {
+      id: role3.id,
+      name: role3.name,
+      description: role3.description,
+      createdAt: role3.createdAt,
+      updatedAt: role3.updatedAt,
+      permissions: role3.rolePermissions.map((rp) => ({
+        id: rp.permission.id,
+        name: rp.permission.name,
+        slug: rp.permission.slug,
+        description: rp.permission.description
+      }))
+    };
+  },
+  create: async (data) => {
+    const existing = await prisma_default.role.findUnique({
+      where: { name: data.name }
+    });
+    if (existing) {
+      throw new HttpError("Role with this name already exists", CONFLICT);
+    }
+    const role3 = await prisma_default.role.create({
+      data: {
+        name: data.name,
+        description: data.description || null
+      }
+    });
+    return role3;
+  },
+  update: async (id, data) => {
+    const role3 = await prisma_default.role.findUnique({
+      where: { id }
+    });
+    if (!role3) {
+      throw new HttpError("Role not found", NOT_FOUND);
+    }
+    if (data.name && data.name !== role3.name) {
+      const existing = await prisma_default.role.findUnique({
+        where: { name: data.name }
+      });
+      if (existing) {
+        throw new HttpError("Role with this name already exists", CONFLICT);
+      }
+    }
+    const updated = await prisma_default.role.update({
+      where: { id },
+      data: {
+        ...data.name && { name: data.name },
+        ...data.description !== undefined && { description: data.description || null }
+      }
+    });
+    return updated;
+  },
+  delete: async (id) => {
+    const role3 = await prisma_default.role.findUnique({
+      where: { id },
+      include: {
+        teamMembers: true
+      }
+    });
+    if (!role3) {
+      throw new HttpError("Role not found", NOT_FOUND);
+    }
+    if (role3.teamMembers.length > 0) {
+      throw new HttpError("Cannot delete role that is assigned to team members", BAD_REQUEST);
+    }
+    await prisma_default.role.delete({
+      where: { id }
+    });
+    return { success: true };
+  },
+  assignPermissions: async (roleId, permissionIds) => {
+    const role3 = await prisma_default.role.findUnique({
+      where: { id: roleId }
+    });
+    if (!role3) {
+      throw new HttpError("Role not found", NOT_FOUND);
+    }
+    const permissions = await prisma_default.permission.findMany({
+      where: {
+        id: {
+          in: permissionIds
+        }
+      }
+    });
+    if (permissions.length !== permissionIds.length) {
+      throw new HttpError("One or more permissions not found", NOT_FOUND);
+    }
+    await prisma_default.rolePermission.deleteMany({
+      where: { roleId }
+    });
+    if (permissionIds.length > 0) {
+      await prisma_default.rolePermission.createMany({
+        data: permissionIds.map((permissionId) => ({
+          roleId,
+          permissionId
+        }))
+      });
+    }
+    return await ROLE_SERVICES.getById(roleId);
+  },
+  getRolePermissions: async (roleId) => {
+    const role3 = await prisma_default.role.findUnique({
+      where: { id: roleId },
+      include: {
+        rolePermissions: {
+          include: {
+            permission: true
+          }
+        }
+      }
+    });
+    if (!role3) {
+      throw new HttpError("Role not found", NOT_FOUND);
+    }
+    return {
+      roleId: role3.id,
+      roleName: role3.name,
+      permissions: role3.rolePermissions.map((rp) => ({
+        id: rp.permission.id,
+        name: rp.permission.name,
+        slug: rp.permission.slug,
+        description: rp.permission.description
+      }))
+    };
+  }
+};
+
+// src/routes/role/role.handlers.ts
+var ROLE_ROUTES_HANDLER = {
+  getAll: async (c3) => {
+    const user = c3.get("user");
+    if (!user) {
+      throw new HttpError("Unauthorized", UNAUTHORIZED);
+    }
+    if (user.role !== "admin" && user.role !== "team_admin") {
+      throw new HttpError("Forbidden - Admin only", FORBIDDEN);
+    }
+    try {
+      const result = await ROLE_SERVICES.getAll();
+      return c3.json({
+        message: "Roles retrieved successfully",
+        success: true,
+        data: {
+          roles: result.roles.map((role3) => ({
+            ...role3,
+            createdAt: role3.createdAt.toISOString(),
+            updatedAt: role3.updatedAt.toISOString()
+          }))
+        }
+      }, OK);
+    } catch (error44) {
+      const message2 = error44 instanceof Error ? error44.message : "Failed to retrieve roles";
+      throw new HttpError(message2, INTERNAL_SERVER_ERROR);
+    }
+  },
+  getById: async (c3) => {
+    const user = c3.get("user");
+    if (!user) {
+      throw new HttpError("Unauthorized", UNAUTHORIZED);
+    }
+    if (user.role !== "admin" && user.role !== "team_admin") {
+      throw new HttpError("Forbidden - Admin only", FORBIDDEN);
+    }
+    const { id } = c3.req.valid("param");
+    try {
+      const role3 = await ROLE_SERVICES.getById(id);
+      return c3.json({
+        message: "Role retrieved successfully",
+        success: true,
+        data: {
+          ...role3,
+          createdAt: role3.createdAt.toISOString(),
+          updatedAt: role3.updatedAt.toISOString()
+        }
+      }, OK);
+    } catch (error44) {
+      if (error44 instanceof HttpError) {
+        throw error44;
+      }
+      const message2 = error44 instanceof Error ? error44.message : "Failed to retrieve role";
+      throw new HttpError(message2, INTERNAL_SERVER_ERROR);
+    }
+  },
+  create: async (c3) => {
+    const user = c3.get("user");
+    if (!user) {
+      throw new HttpError("Unauthorized", UNAUTHORIZED);
+    }
+    if (user.role !== "admin" && user.role !== "team_admin") {
+      throw new HttpError("Forbidden - Admin only", FORBIDDEN);
+    }
+    const body = c3.req.valid("json");
+    try {
+      const role3 = await ROLE_SERVICES.create(body);
+      return c3.json({
+        message: "Role created successfully",
+        success: true,
+        data: {
+          id: role3.id,
+          name: role3.name,
+          description: role3.description,
+          createdAt: role3.createdAt.toISOString(),
+          updatedAt: role3.updatedAt.toISOString()
+        }
+      }, CREATED);
+    } catch (error44) {
+      if (error44 instanceof HttpError) {
+        throw error44;
+      }
+      const message2 = error44 instanceof Error ? error44.message : "Failed to create role";
+      throw new HttpError(message2, INTERNAL_SERVER_ERROR);
+    }
+  },
+  update: async (c3) => {
+    const user = c3.get("user");
+    if (!user) {
+      throw new HttpError("Unauthorized", UNAUTHORIZED);
+    }
+    if (user.role !== "admin" && user.role !== "team_admin") {
+      throw new HttpError("Forbidden - Admin only", FORBIDDEN);
+    }
+    const { id } = c3.req.valid("param");
+    const body = c3.req.valid("json");
+    try {
+      const role3 = await ROLE_SERVICES.update(id, body);
+      return c3.json({
+        message: "Role updated successfully",
+        success: true,
+        data: {
+          id: role3.id,
+          name: role3.name,
+          description: role3.description,
+          createdAt: role3.createdAt.toISOString(),
+          updatedAt: role3.updatedAt.toISOString()
+        }
+      }, OK);
+    } catch (error44) {
+      if (error44 instanceof HttpError) {
+        throw error44;
+      }
+      const message2 = error44 instanceof Error ? error44.message : "Failed to update role";
+      throw new HttpError(message2, INTERNAL_SERVER_ERROR);
+    }
+  },
+  delete: async (c3) => {
+    const user = c3.get("user");
+    if (!user) {
+      throw new HttpError("Unauthorized", UNAUTHORIZED);
+    }
+    if (user.role !== "admin" && user.role !== "team_admin") {
+      throw new HttpError("Forbidden - Admin only", FORBIDDEN);
+    }
+    const { id } = c3.req.valid("param");
+    try {
+      await ROLE_SERVICES.delete(id);
+      return c3.json({
+        message: "Role deleted successfully",
+        success: true,
+        data: { success: true }
+      }, OK);
+    } catch (error44) {
+      if (error44 instanceof HttpError) {
+        throw error44;
+      }
+      const message2 = error44 instanceof Error ? error44.message : "Failed to delete role";
+      throw new HttpError(message2, INTERNAL_SERVER_ERROR);
+    }
+  },
+  assignPermissions: async (c3) => {
+    const user = c3.get("user");
+    if (!user) {
+      throw new HttpError("Unauthorized", UNAUTHORIZED);
+    }
+    if (user.role !== "admin" && user.role !== "team_admin") {
+      throw new HttpError("Forbidden - Admin only", FORBIDDEN);
+    }
+    const { id } = c3.req.valid("param");
+    const { permissionIds } = c3.req.valid("json");
+    try {
+      const role3 = await ROLE_SERVICES.assignPermissions(id, permissionIds);
+      return c3.json({
+        message: "Permissions assigned successfully",
+        success: true,
+        data: {
+          ...role3,
+          createdAt: role3.createdAt.toISOString(),
+          updatedAt: role3.updatedAt.toISOString()
+        }
+      }, OK);
+    } catch (error44) {
+      if (error44 instanceof HttpError) {
+        throw error44;
+      }
+      const message2 = error44 instanceof Error ? error44.message : "Failed to assign permissions";
+      throw new HttpError(message2, INTERNAL_SERVER_ERROR);
+    }
+  }
+};
+// src/routes/role/role.routes.ts
+var roleResponseSchema = exports_external.object({
+  id: exports_external.string(),
+  name: exports_external.string(),
+  description: exports_external.string().nullable(),
+  createdAt: exports_external.string().datetime(),
+  updatedAt: exports_external.string().datetime(),
+  permissions: exports_external.array(exports_external.object({
+    id: exports_external.string(),
+    name: exports_external.string(),
+    slug: exports_external.string(),
+    description: exports_external.string().nullable()
+  }))
+}).describe("Role with permissions");
+var roleListResponseSchema = exports_external.object({
+  roles: exports_external.array(roleResponseSchema)
+}).describe("List of roles");
+var createRoleBodySchema = exports_external.object({
+  name: exports_external.string().min(1).describe("Role name"),
+  description: exports_external.string().optional().describe("Role description")
+}).describe("Request body for creating a role");
+var updateRoleBodySchema = exports_external.object({
+  name: exports_external.string().min(1).optional().describe("Role name"),
+  description: exports_external.string().optional().nullable().describe("Role description")
+}).describe("Request body for updating a role");
+var assignPermissionsBodySchema = exports_external.object({
+  permissionIds: exports_external.array(exports_external.string()).describe("Array of permission IDs to assign")
+}).describe("Request body for assigning permissions to a role");
+var ROLE_ROUTES = {
+  getAll: createRoute({
+    path: "/admin/roles",
+    method: "get",
+    tags: [tags_default.role],
+    middleware: [isAuthenticated],
+    summary: "Get all roles with permissions",
+    responses: {
+      [OK]: json_content_default(zodResponseSchema(roleListResponseSchema), "Roles retrieved successfully"),
+      [UNAUTHORIZED]: json_content_default(zodResponseSchema(), "Unauthorized"),
+      [FORBIDDEN]: json_content_default(zodResponseSchema(), "Forbidden")
+    }
+  }),
+  getById: createRoute({
+    path: "/admin/roles/{id}",
+    method: "get",
+    tags: [tags_default.role],
+    middleware: [isAuthenticated],
+    summary: "Get role by ID with permissions",
+    request: {
+      params: exports_external.object({
+        id: exports_external.string().describe("Role ID")
+      })
+    },
+    responses: {
+      [OK]: json_content_default(zodResponseSchema(roleResponseSchema), "Role retrieved successfully"),
+      [UNAUTHORIZED]: json_content_default(zodResponseSchema(), "Unauthorized"),
+      [NOT_FOUND]: json_content_default(zodResponseSchema(), "Role not found"),
+      [FORBIDDEN]: json_content_default(zodResponseSchema(), "Forbidden")
+    }
+  }),
+  create: createRoute({
+    path: "/admin/roles",
+    method: "post",
+    tags: [tags_default.role],
+    middleware: [isAuthenticated],
+    summary: "Create a new role",
+    request: {
+      body: json_content_required_default(createRoleBodySchema, "Request body for creating a role")
+    },
+    responses: {
+      [CREATED]: json_content_default(zodResponseSchema(exports_external.object({
+        id: exports_external.string(),
+        name: exports_external.string(),
+        description: exports_external.string().nullable(),
+        createdAt: exports_external.string().datetime(),
+        updatedAt: exports_external.string().datetime()
+      })), "Role created successfully"),
+      [UNPROCESSABLE_ENTITY]: json_content_default(create_error_schema_default(createRoleBodySchema), "Unprocessable Entity"),
+      [UNAUTHORIZED]: json_content_default(zodResponseSchema(), "Unauthorized"),
+      [CONFLICT]: json_content_default(zodResponseSchema(), "Role already exists"),
+      [FORBIDDEN]: json_content_default(zodResponseSchema(), "Forbidden")
+    }
+  }),
+  update: createRoute({
+    path: "/admin/roles/{id}",
+    method: "patch",
+    tags: [tags_default.role],
+    middleware: [isAuthenticated],
+    summary: "Update a role",
+    request: {
+      params: exports_external.object({
+        id: exports_external.string().describe("Role ID")
+      }),
+      body: json_content_required_default(updateRoleBodySchema, "Request body for updating a role")
+    },
+    responses: {
+      [OK]: json_content_default(zodResponseSchema(exports_external.object({
+        id: exports_external.string(),
+        name: exports_external.string(),
+        description: exports_external.string().nullable(),
+        createdAt: exports_external.string().datetime(),
+        updatedAt: exports_external.string().datetime()
+      })), "Role updated successfully"),
+      [UNPROCESSABLE_ENTITY]: json_content_default(create_error_schema_default(updateRoleBodySchema), "Unprocessable Entity"),
+      [UNAUTHORIZED]: json_content_default(zodResponseSchema(), "Unauthorized"),
+      [NOT_FOUND]: json_content_default(zodResponseSchema(), "Role not found"),
+      [CONFLICT]: json_content_default(zodResponseSchema(), "Role name already exists"),
+      [FORBIDDEN]: json_content_default(zodResponseSchema(), "Forbidden")
+    }
+  }),
+  delete: createRoute({
+    path: "/admin/roles/{id}",
+    method: "delete",
+    tags: [tags_default.role],
+    middleware: [isAuthenticated],
+    summary: "Delete a role",
+    request: {
+      params: exports_external.object({
+        id: exports_external.string().describe("Role ID")
+      })
+    },
+    responses: {
+      [OK]: json_content_default(zodResponseSchema(exports_external.object({ success: exports_external.boolean() })), "Role deleted successfully"),
+      [UNAUTHORIZED]: json_content_default(zodResponseSchema(), "Unauthorized"),
+      [NOT_FOUND]: json_content_default(zodResponseSchema(), "Role not found"),
+      [BAD_REQUEST]: json_content_default(zodResponseSchema(), "Cannot delete role assigned to team members"),
+      [FORBIDDEN]: json_content_default(zodResponseSchema(), "Forbidden")
+    }
+  }),
+  assignPermissions: createRoute({
+    path: "/admin/roles/{id}/permissions",
+    method: "post",
+    tags: [tags_default.role],
+    middleware: [isAuthenticated],
+    summary: "Assign permissions to a role",
+    request: {
+      params: exports_external.object({
+        id: exports_external.string().describe("Role ID")
+      }),
+      body: json_content_required_default(assignPermissionsBodySchema, "Request body for assigning permissions")
+    },
+    responses: {
+      [OK]: json_content_default(zodResponseSchema(roleResponseSchema), "Permissions assigned successfully"),
+      [UNPROCESSABLE_ENTITY]: json_content_default(create_error_schema_default(assignPermissionsBodySchema), "Unprocessable Entity"),
+      [UNAUTHORIZED]: json_content_default(zodResponseSchema(), "Unauthorized"),
+      [NOT_FOUND]: json_content_default(zodResponseSchema(), "Role or permission not found"),
+      [FORBIDDEN]: json_content_default(zodResponseSchema(), "Forbidden")
+    }
+  })
+};
+
+// src/routes/role/index.ts
+var router15 = createRouter();
+Object.entries(ROLE_ROUTES).forEach(([key, route]) => {
+  router15.openapi(route, ROLE_ROUTES_HANDLER[key]);
+});
+var role_default = router15;
+
+// src/routes/team-member/team-member.handlers.ts
+init_error();
+// src/services/team-member.service.ts
+init_error();
+init_prisma();
+var TEAM_MEMBER_SERVICES = {
+  getAll: async () => {
+    const teamMembers = await prisma_default.teamMember.findMany({
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            image: true,
+            role: true,
+            createdAt: true
+          }
+        },
+        role: {
+          include: {
+            rolePermissions: {
+              include: {
+                permission: true
+              }
+            }
+          }
+        }
+      },
+      orderBy: {
+        createdAt: "desc"
+      }
+    });
+    return {
+      teamMembers: teamMembers.map((tm) => ({
+        id: tm.id,
+        userId: tm.userId,
+        user: tm.user,
+        role: {
+          id: tm.role.id,
+          name: tm.role.name,
+          description: tm.role.description,
+          permissions: tm.role.rolePermissions.map((rp) => ({
+            id: rp.permission.id,
+            name: rp.permission.name,
+            slug: rp.permission.slug
+          }))
+        },
+        createdAt: tm.createdAt,
+        updatedAt: tm.updatedAt
+      }))
+    };
+  },
+  getByUserId: async (userId) => {
+    const teamMember = await prisma_default.teamMember.findUnique({
+      where: { userId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            image: true,
+            role: true,
+            createdAt: true
+          }
+        },
+        role: {
+          include: {
+            rolePermissions: {
+              include: {
+                permission: true
+              }
+            }
+          }
+        }
+      }
+    });
+    if (!teamMember) {
+      return null;
+    }
+    return {
+      id: teamMember.id,
+      userId: teamMember.userId,
+      user: teamMember.user,
+      role: {
+        id: teamMember.role.id,
+        name: teamMember.role.name,
+        description: teamMember.role.description,
+        permissions: teamMember.role.rolePermissions.map((rp) => ({
+          id: rp.permission.id,
+          name: rp.permission.name,
+          slug: rp.permission.slug
+        }))
+      },
+      createdAt: teamMember.createdAt,
+      updatedAt: teamMember.updatedAt
+    };
+  },
+  create: async (data) => {
+    const existingUser = await prisma_default.user.findUnique({
+      where: { email: data.email }
+    });
+    if (existingUser) {
+      throw new HttpError("User with this email already exists", CONFLICT);
+    }
+    const role3 = await prisma_default.role.findUnique({
+      where: { id: data.roleId }
+    });
+    if (!role3) {
+      throw new HttpError("Role not found", NOT_FOUND);
+    }
+    const user = await auth.api.signUpEmail({
+      body: {
+        email: data.email,
+        password: data.password,
+        name: data.name
+      }
+    });
+    if (!user || !user.user) {
+      throw new HttpError("Failed to create user", INTERNAL_SERVER_ERROR);
+    }
+    await prisma_default.user.update({
+      where: { id: user.user.id },
+      data: {
+        role: "team_admin",
+        onboardingStage: "COMPLETED"
+      }
+    });
+    const teamMember = await prisma_default.teamMember.create({
+      data: {
+        userId: user.user.id,
+        roleId: data.roleId
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            image: true,
+            role: true,
+            createdAt: true
+          }
+        },
+        role: {
+          include: {
+            rolePermissions: {
+              include: {
+                permission: true
+              }
+            }
+          }
+        }
+      }
+    });
+    return {
+      id: teamMember.id,
+      userId: teamMember.userId,
+      user: teamMember.user,
+      role: {
+        id: teamMember.role.id,
+        name: teamMember.role.name,
+        description: teamMember.role.description,
+        permissions: teamMember.role.rolePermissions.map((rp) => ({
+          id: rp.permission.id,
+          name: rp.permission.name,
+          slug: rp.permission.slug
+        }))
+      },
+      createdAt: teamMember.createdAt,
+      updatedAt: teamMember.updatedAt
+    };
+  },
+  updateRole: async (userId, roleId) => {
+    const teamMember = await prisma_default.teamMember.findUnique({
+      where: { userId }
+    });
+    if (!teamMember) {
+      throw new HttpError("Team member not found", NOT_FOUND);
+    }
+    const role3 = await prisma_default.role.findUnique({
+      where: { id: roleId }
+    });
+    if (!role3) {
+      throw new HttpError("Role not found", NOT_FOUND);
+    }
+    const updated = await prisma_default.teamMember.update({
+      where: { userId },
+      data: { roleId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            image: true,
+            role: true,
+            createdAt: true
+          }
+        },
+        role: {
+          include: {
+            rolePermissions: {
+              include: {
+                permission: true
+              }
+            }
+          }
+        }
+      }
+    });
+    return {
+      id: updated.id,
+      userId: updated.userId,
+      user: updated.user,
+      role: {
+        id: updated.role.id,
+        name: updated.role.name,
+        description: updated.role.description,
+        permissions: updated.role.rolePermissions.map((rp) => ({
+          id: rp.permission.id,
+          name: rp.permission.name,
+          slug: rp.permission.slug
+        }))
+      },
+      createdAt: updated.createdAt,
+      updatedAt: updated.updatedAt
+    };
+  },
+  delete: async (userId) => {
+    const teamMember = await prisma_default.teamMember.findUnique({
+      where: { userId }
+    });
+    if (!teamMember) {
+      throw new HttpError("Team member not found", NOT_FOUND);
+    }
+    await prisma_default.teamMember.delete({
+      where: { userId }
+    });
+    await prisma_default.user.update({
+      where: { id: userId },
+      data: {
+        role: null
+      }
+    });
+    return { success: true };
+  }
+};
+
+// src/routes/team-member/team-member.handlers.ts
+var TEAM_MEMBER_ROUTES_HANDLER = {
+  getAll: async (c3) => {
+    const user = c3.get("user");
+    if (!user) {
+      throw new HttpError("Unauthorized", UNAUTHORIZED);
+    }
+    if (user.role !== "admin" && user.role !== "team_admin") {
+      throw new HttpError("Forbidden - Admin only", FORBIDDEN);
+    }
+    try {
+      const result = await TEAM_MEMBER_SERVICES.getAll();
+      return c3.json({
+        message: "Team members retrieved successfully",
+        success: true,
+        data: {
+          teamMembers: result.teamMembers.map((tm) => ({
+            ...tm,
+            user: {
+              ...tm.user,
+              createdAt: tm.user.createdAt.toISOString()
+            },
+            createdAt: tm.createdAt.toISOString(),
+            updatedAt: tm.updatedAt.toISOString()
+          }))
+        }
+      }, OK);
+    } catch (error44) {
+      const message2 = error44 instanceof Error ? error44.message : "Failed to retrieve team members";
+      throw new HttpError(message2, INTERNAL_SERVER_ERROR);
+    }
+  },
+  getByUserId: async (c3) => {
+    const user = c3.get("user");
+    if (!user) {
+      throw new HttpError("Unauthorized", UNAUTHORIZED);
+    }
+    if (user.role !== "admin" && user.role !== "team_admin") {
+      throw new HttpError("Forbidden - Admin only", FORBIDDEN);
+    }
+    const { userId } = c3.req.valid("param");
+    try {
+      const teamMember = await TEAM_MEMBER_SERVICES.getByUserId(userId);
+      if (!teamMember) {
+        throw new HttpError("Team member not found", NOT_FOUND);
+      }
+      return c3.json({
+        message: "Team member retrieved successfully",
+        success: true,
+        data: {
+          ...teamMember,
+          user: {
+            ...teamMember.user,
+            createdAt: teamMember.user.createdAt.toISOString()
+          },
+          createdAt: teamMember.createdAt.toISOString(),
+          updatedAt: teamMember.updatedAt.toISOString()
+        }
+      }, OK);
+    } catch (error44) {
+      if (error44 instanceof HttpError) {
+        throw error44;
+      }
+      const message2 = error44 instanceof Error ? error44.message : "Failed to retrieve team member";
+      throw new HttpError(message2, INTERNAL_SERVER_ERROR);
+    }
+  },
+  create: async (c3) => {
+    const user = c3.get("user");
+    if (!user) {
+      throw new HttpError("Unauthorized", UNAUTHORIZED);
+    }
+    if (user.role !== "admin" && user.role !== "team_admin") {
+      throw new HttpError("Forbidden - Admin only", FORBIDDEN);
+    }
+    const body = c3.req.valid("json");
+    try {
+      const teamMember = await TEAM_MEMBER_SERVICES.create(body);
+      return c3.json({
+        message: "Team member created successfully",
+        success: true,
+        data: {
+          ...teamMember,
+          user: {
+            ...teamMember.user,
+            createdAt: teamMember.user.createdAt.toISOString()
+          },
+          createdAt: teamMember.createdAt.toISOString(),
+          updatedAt: teamMember.updatedAt.toISOString()
+        }
+      }, CREATED);
+    } catch (error44) {
+      if (error44 instanceof HttpError) {
+        throw error44;
+      }
+      const message2 = error44 instanceof Error ? error44.message : "Failed to create team member";
+      throw new HttpError(message2, INTERNAL_SERVER_ERROR);
+    }
+  },
+  updateRole: async (c3) => {
+    const user = c3.get("user");
+    if (!user) {
+      throw new HttpError("Unauthorized", UNAUTHORIZED);
+    }
+    if (user.role !== "admin" && user.role !== "team_admin") {
+      throw new HttpError("Forbidden - Admin only", FORBIDDEN);
+    }
+    const { userId } = c3.req.valid("param");
+    const { roleId } = c3.req.valid("json");
+    try {
+      const teamMember = await TEAM_MEMBER_SERVICES.updateRole(userId, roleId);
+      return c3.json({
+        message: "Team member role updated successfully",
+        success: true,
+        data: {
+          ...teamMember,
+          user: {
+            ...teamMember.user,
+            createdAt: teamMember.user.createdAt.toISOString()
+          },
+          createdAt: teamMember.createdAt.toISOString(),
+          updatedAt: teamMember.updatedAt.toISOString()
+        }
+      }, OK);
+    } catch (error44) {
+      if (error44 instanceof HttpError) {
+        throw error44;
+      }
+      const message2 = error44 instanceof Error ? error44.message : "Failed to update team member role";
+      throw new HttpError(message2, INTERNAL_SERVER_ERROR);
+    }
+  },
+  delete: async (c3) => {
+    const user = c3.get("user");
+    if (!user) {
+      throw new HttpError("Unauthorized", UNAUTHORIZED);
+    }
+    if (user.role !== "admin" && user.role !== "team_admin") {
+      throw new HttpError("Forbidden - Admin only", FORBIDDEN);
+    }
+    const { userId } = c3.req.valid("param");
+    try {
+      await TEAM_MEMBER_SERVICES.delete(userId);
+      return c3.json({
+        message: "Team member removed successfully",
+        success: true,
+        data: { success: true }
+      }, OK);
+    } catch (error44) {
+      if (error44 instanceof HttpError) {
+        throw error44;
+      }
+      const message2 = error44 instanceof Error ? error44.message : "Failed to remove team member";
+      throw new HttpError(message2, INTERNAL_SERVER_ERROR);
+    }
+  }
+};
+// src/routes/team-member/team-member.routes.ts
+var teamMemberResponseSchema = exports_external.object({
+  id: exports_external.string(),
+  userId: exports_external.string(),
+  user: exports_external.object({
+    id: exports_external.string(),
+    name: exports_external.string(),
+    email: exports_external.string(),
+    image: exports_external.string().nullable(),
+    role: exports_external.string().nullable(),
+    createdAt: exports_external.string().datetime()
+  }),
+  role: exports_external.object({
+    id: exports_external.string(),
+    name: exports_external.string(),
+    description: exports_external.string().nullable(),
+    permissions: exports_external.array(exports_external.object({
+      id: exports_external.string(),
+      name: exports_external.string(),
+      slug: exports_external.string()
+    }))
+  }),
+  createdAt: exports_external.string().datetime(),
+  updatedAt: exports_external.string().datetime()
+}).describe("Team member with role and permissions");
+var teamMemberListResponseSchema = exports_external.object({
+  teamMembers: exports_external.array(teamMemberResponseSchema)
+}).describe("List of team members");
+var createTeamMemberBodySchema = exports_external.object({
+  name: exports_external.string().min(1).describe("Team member name"),
+  email: exports_external.string().email().describe("Team member email"),
+  password: exports_external.string().min(8).describe("Team member password (minimum 8 characters)"),
+  roleId: exports_external.string().describe("Role ID to assign to the team member")
+}).describe("Request body for creating a team member");
+var updateTeamMemberRoleBodySchema = exports_external.object({
+  roleId: exports_external.string().describe("New role ID to assign")
+}).describe("Request body for updating team member role");
+var TEAM_MEMBER_ROUTES = {
+  getAll: createRoute({
+    path: "/admin/team-members",
+    method: "get",
+    tags: [tags_default.teamMember],
+    middleware: [isAuthenticated],
+    summary: "Get all team members with their roles and permissions",
+    responses: {
+      [OK]: json_content_default(zodResponseSchema(teamMemberListResponseSchema), "Team members retrieved successfully"),
+      [UNAUTHORIZED]: json_content_default(zodResponseSchema(), "Unauthorized"),
+      [FORBIDDEN]: json_content_default(zodResponseSchema(), "Forbidden")
+    }
+  }),
+  getByUserId: createRoute({
+    path: "/admin/team-members/{userId}",
+    method: "get",
+    tags: [tags_default.teamMember],
+    middleware: [isAuthenticated],
+    summary: "Get team member by user ID",
+    request: {
+      params: exports_external.object({
+        userId: exports_external.string().describe("User ID")
+      })
+    },
+    responses: {
+      [OK]: json_content_default(zodResponseSchema(teamMemberResponseSchema), "Team member retrieved successfully"),
+      [UNAUTHORIZED]: json_content_default(zodResponseSchema(), "Unauthorized"),
+      [NOT_FOUND]: json_content_default(zodResponseSchema(), "Team member not found"),
+      [FORBIDDEN]: json_content_default(zodResponseSchema(), "Forbidden")
+    }
+  }),
+  create: createRoute({
+    path: "/admin/team-members",
+    method: "post",
+    tags: [tags_default.teamMember],
+    middleware: [isAuthenticated],
+    summary: "Add a new team member (creates user and assigns role)",
+    request: {
+      body: json_content_required_default(createTeamMemberBodySchema, "Request body for creating a team member")
+    },
+    responses: {
+      [CREATED]: json_content_default(zodResponseSchema(teamMemberResponseSchema), "Team member created successfully"),
+      [UNPROCESSABLE_ENTITY]: json_content_default(create_error_schema_default(createTeamMemberBodySchema), "Unprocessable Entity"),
+      [UNAUTHORIZED]: json_content_default(zodResponseSchema(), "Unauthorized"),
+      [CONFLICT]: json_content_default(zodResponseSchema(), "User with email already exists"),
+      [NOT_FOUND]: json_content_default(zodResponseSchema(), "Role not found"),
+      [FORBIDDEN]: json_content_default(zodResponseSchema(), "Forbidden")
+    }
+  }),
+  updateRole: createRoute({
+    path: "/admin/team-members/{userId}/role",
+    method: "patch",
+    tags: [tags_default.teamMember],
+    middleware: [isAuthenticated],
+    summary: "Update team member role",
+    request: {
+      params: exports_external.object({
+        userId: exports_external.string().describe("User ID")
+      }),
+      body: json_content_required_default(updateTeamMemberRoleBodySchema, "Request body for updating team member role")
+    },
+    responses: {
+      [OK]: json_content_default(zodResponseSchema(teamMemberResponseSchema), "Team member role updated successfully"),
+      [UNPROCESSABLE_ENTITY]: json_content_default(create_error_schema_default(updateTeamMemberRoleBodySchema), "Unprocessable Entity"),
+      [UNAUTHORIZED]: json_content_default(zodResponseSchema(), "Unauthorized"),
+      [NOT_FOUND]: json_content_default(zodResponseSchema(), "Team member or role not found"),
+      [FORBIDDEN]: json_content_default(zodResponseSchema(), "Forbidden")
+    }
+  }),
+  delete: createRoute({
+    path: "/admin/team-members/{userId}",
+    method: "delete",
+    tags: [tags_default.teamMember],
+    middleware: [isAuthenticated],
+    summary: "Remove team member (removes from team but keeps user account)",
+    request: {
+      params: exports_external.object({
+        userId: exports_external.string().describe("User ID")
+      })
+    },
+    responses: {
+      [OK]: json_content_default(zodResponseSchema(exports_external.object({ success: exports_external.boolean() })), "Team member removed successfully"),
+      [UNAUTHORIZED]: json_content_default(zodResponseSchema(), "Unauthorized"),
+      [NOT_FOUND]: json_content_default(zodResponseSchema(), "Team member not found"),
+      [FORBIDDEN]: json_content_default(zodResponseSchema(), "Forbidden")
+    }
+  })
+};
+
+// src/routes/team-member/index.ts
+var router16 = createRouter();
+Object.entries(TEAM_MEMBER_ROUTES).forEach(([key, route]) => {
+  router16.openapi(route, TEAM_MEMBER_ROUTES_HANDLER[key]);
+});
+var team_member_default = router16;
 
 // src/routes/user/user.handlers.ts
 init_error();
@@ -107376,11 +109006,11 @@ var USER_ROUTES = {
 };
 
 // src/routes/user/index.ts
-var router14 = createRouter();
+var router17 = createRouter();
 Object.entries(USER_ROUTES).forEach(([key, route]) => {
-  router14.openapi(route, USER_ROUTES_HANDLER[key]);
+  router17.openapi(route, USER_ROUTES_HANDLER[key]);
 });
-var user_default = router14;
+var user_default = router17;
 
 // src/routes/user-query/user-query.handlers.ts
 init_error();
@@ -107422,8 +109052,8 @@ var USER_QUERY_ROUTES_HANDLER = {
     if (!user) {
       throw new HttpError("Unauthorized", UNAUTHORIZED);
     }
-    if (user.role !== "admin") {
-      throw new HttpError("Forbidden - Admin only", FORBIDDEN);
+    if (user.role !== "admin" && user.role !== "team_admin") {
+      throw new HttpError("Forbidden - Admin or Team Member only", FORBIDDEN);
     }
     const query = c3.req.valid("query");
     const filters = {
@@ -107446,8 +109076,8 @@ var USER_QUERY_ROUTES_HANDLER = {
     if (!user) {
       throw new HttpError("Unauthorized", UNAUTHORIZED);
     }
-    if (user.role !== "admin") {
-      throw new HttpError("Forbidden - Admin only", FORBIDDEN);
+    if (user.role !== "admin" && user.role !== "team_admin") {
+      throw new HttpError("Forbidden - Admin or Team Member only", FORBIDDEN);
     }
     const { id } = c3.req.valid("param");
     const userQuery = await USER_QUERY_SERVICES.getById(id);
@@ -107465,8 +109095,8 @@ var USER_QUERY_ROUTES_HANDLER = {
     if (!user) {
       throw new HttpError("Unauthorized", UNAUTHORIZED);
     }
-    if (user.role !== "admin") {
-      throw new HttpError("Forbidden - Admin only", FORBIDDEN);
+    if (user.role !== "admin" && user.role !== "team_admin") {
+      throw new HttpError("Forbidden - Admin or Team Member only", FORBIDDEN);
     }
     const { id } = c3.req.valid("param");
     try {
@@ -107585,15 +109215,15 @@ var USER_QUERY_ROUTES = {
 };
 
 // src/routes/user-query/index.ts
-var router15 = createRouter();
+var router18 = createRouter();
 Object.entries(USER_QUERY_ROUTES).forEach(([key, route]) => {
-  router15.openapi(route, USER_QUERY_ROUTES_HANDLER[key]);
+  router18.openapi(route, USER_QUERY_ROUTES_HANDLER[key]);
 });
-var user_query_default = router15;
+var user_query_default = router18;
 
 // src/app.ts
 function registerRoutes(app) {
-  return app.route("/api", auth_default).route("/api", user_default).route("/api", service_pricing_default).route("/api", user_query_default).route("/api", files_default).route("/api", doctor_default).route("/api", education_default).route("/api", doctor_profile_default).route("/api", doctor_profile_complete_default).route("/api", enterprise_default).route("/api", appointment_default).route("/api", agora_default).route("/api", notification_default).route("/api", admin_default);
+  return app.route("/api", auth_default).route("/api", user_default).route("/api", user_query_default).route("/api", files_default).route("/api", doctor_default).route("/api", education_default).route("/api", doctor_profile_default).route("/api", doctor_profile_complete_default).route("/api", enterprise_default).route("/api", appointment_default).route("/api", agora_default).route("/api", notification_default).route("/api", admin_notification_default).route("/api", role_default).route("/api", permission_default).route("/api", team_member_default).route("/api", admin_default);
 }
 
 // src/lib/appointment-no-show-cron.ts

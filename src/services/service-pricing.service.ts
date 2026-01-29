@@ -68,14 +68,21 @@ export const SERVICE_PRICING_SERVICES = {
     return pricing
   },
 
-  update: async (id: string, data: {
-    userPrice?: number
-    doctorAmount?: number
-    platformAmount?: number
-    isActive?: boolean
-  }) => {
+  update: async (
+    id: string,
+    data: {
+      userPrice?: number
+      doctorAmount?: number
+      platformAmount?: number
+      isActive?: boolean
+    }
+  ) => {
     // If updating prices, validate they add up
-    if (data.userPrice !== undefined || data.doctorAmount !== undefined || data.platformAmount !== undefined) {
+    if (
+      data.userPrice !== undefined ||
+      data.doctorAmount !== undefined ||
+      data.platformAmount !== undefined
+    ) {
       const existing = await prisma.servicePricing.findUnique({
         where: { id },
       })
@@ -104,14 +111,22 @@ export const SERVICE_PRICING_SERVICES = {
     return pricing
   },
 
-  updateByDuration: async (duration: number, serviceId: string, data: {
-    userPrice?: number
-    doctorAmount?: number
-    platformAmount?: number
-    isActive?: boolean
-  }) => {
+  updateByDuration: async (
+    duration: number,
+    serviceId: string,
+    data: {
+      userPrice?: number
+      doctorAmount?: number
+      platformAmount?: number
+      isActive?: boolean
+    }
+  ) => {
     // If updating prices, validate they add up
-    if (data.userPrice !== undefined || data.doctorAmount !== undefined || data.platformAmount !== undefined) {
+    if (
+      data.userPrice !== undefined ||
+      data.doctorAmount !== undefined ||
+      data.platformAmount !== undefined
+    ) {
       const existing = await prisma.servicePricing.findFirst({
         where: {
           serviceId,
@@ -164,4 +179,3 @@ export const SERVICE_PRICING_SERVICES = {
     return pricing
   },
 }
-

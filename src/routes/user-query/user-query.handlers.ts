@@ -63,8 +63,8 @@ export const USER_QUERY_ROUTES_HANDLER: HandlerMapFromRoutes<typeof USER_QUERY_R
     }
 
     // Only admins can view all queries
-    if (user.role !== 'admin') {
-      throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
+    if (user.role !== 'admin' && user.role !== 'team_admin') {
+      throw new HttpError('Forbidden - Admin or Team Member only', HttpStatusCodes.FORBIDDEN)
     }
 
     const query = c.req.valid('query')
@@ -95,9 +95,9 @@ export const USER_QUERY_ROUTES_HANDLER: HandlerMapFromRoutes<typeof USER_QUERY_R
       throw new HttpError('Unauthorized', HttpStatusCodes.UNAUTHORIZED)
     }
 
-    // Only admins can view queries by ID
-    if (user.role !== 'admin') {
-      throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
+    // Only admins and team members can view queries by ID
+    if (user.role !== 'admin' && user.role !== 'team_admin') {
+      throw new HttpError('Forbidden - Admin or Team Member only', HttpStatusCodes.FORBIDDEN)
     }
 
     const { id } = c.req.valid('param')
@@ -124,9 +124,9 @@ export const USER_QUERY_ROUTES_HANDLER: HandlerMapFromRoutes<typeof USER_QUERY_R
       throw new HttpError('Unauthorized', HttpStatusCodes.UNAUTHORIZED)
     }
 
-    // Only admins can delete queries
-    if (user.role !== 'admin') {
-      throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
+    // Only admins and team members can delete queries
+    if (user.role !== 'admin' && user.role !== 'team_admin') {
+      throw new HttpError('Forbidden - Admin or Team Member only', HttpStatusCodes.FORBIDDEN)
     }
 
     const { id } = c.req.valid('param')
@@ -149,4 +149,3 @@ export const USER_QUERY_ROUTES_HANDLER: HandlerMapFromRoutes<typeof USER_QUERY_R
     }
   },
 }
-

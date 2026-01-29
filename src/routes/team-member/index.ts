@@ -6,11 +6,7 @@ const router = createRouter()
 
 // Use forEach method to register all routes
 Object.entries(TEAM_MEMBER_ROUTES).forEach(([key, route]) => {
-  router.openapi(
-    route,
-    TEAM_MEMBER_ROUTES_HANDLER[key as keyof typeof TEAM_MEMBER_ROUTES_HANDLER]
-  )
+  router.openapi(route, TEAM_MEMBER_ROUTES_HANDLER[key as keyof typeof TEAM_MEMBER_ROUTES_HANDLER])
 })
 
 export default router
-

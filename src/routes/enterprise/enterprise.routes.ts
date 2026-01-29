@@ -8,9 +8,18 @@ import { zodResponseSchema } from '~/lib/zod-helper'
 const createEnterpriseBodySchema = z
   .object({
     name: z.string().min(1).max(200).describe('Enterprise name'),
-    code: z.string().min(1).max(50).optional().describe('Enterprise code (optional, will be generated if not provided)'),
+    code: z
+      .string()
+      .min(1)
+      .max(50)
+      .optional()
+      .describe('Enterprise code (optional, will be generated if not provided)'),
     sessionsPerMonth: z.number().int().min(0).describe('Number of sessions allowed per month'),
-    generateCode: z.boolean().optional().default(false).describe('Generate code automatically from enterprise name'),
+    generateCode: z
+      .boolean()
+      .optional()
+      .default(false)
+      .describe('Generate code automatically from enterprise name'),
   })
   .describe('Request body for creating enterprise')
 
@@ -18,7 +27,12 @@ const updateEnterpriseBodySchema = z
   .object({
     name: z.string().min(1).max(200).optional().describe('Enterprise name'),
     code: z.string().min(1).max(50).optional().describe('Enterprise code'),
-    sessionsPerMonth: z.number().int().min(0).optional().describe('Number of sessions allowed per month'),
+    sessionsPerMonth: z
+      .number()
+      .int()
+      .min(0)
+      .optional()
+      .describe('Number of sessions allowed per month'),
   })
   .describe('Request body for updating enterprise')
 
@@ -65,7 +79,10 @@ export const ENTERPRISE_ROUTES = {
       ),
       [HttpStatusCodes.UNAUTHORIZED]: jsonContent(zodResponseSchema(), 'Unauthorized'),
       [HttpStatusCodes.FORBIDDEN]: jsonContent(zodResponseSchema(), 'Forbidden - Admin only'),
-      [HttpStatusCodes.BAD_REQUEST]: jsonContent(zodResponseSchema(), 'Bad Request - Name or code already exists'),
+      [HttpStatusCodes.BAD_REQUEST]: jsonContent(
+        zodResponseSchema(),
+        'Bad Request - Name or code already exists'
+      ),
     },
   }),
 
@@ -135,7 +152,10 @@ export const ENTERPRISE_ROUTES = {
       [HttpStatusCodes.UNAUTHORIZED]: jsonContent(zodResponseSchema(), 'Unauthorized'),
       [HttpStatusCodes.FORBIDDEN]: jsonContent(zodResponseSchema(), 'Forbidden - Admin only'),
       [HttpStatusCodes.NOT_FOUND]: jsonContent(zodResponseSchema(), 'Enterprise not found'),
-      [HttpStatusCodes.BAD_REQUEST]: jsonContent(zodResponseSchema(), 'Bad Request - Name or code already exists'),
+      [HttpStatusCodes.BAD_REQUEST]: jsonContent(
+        zodResponseSchema(),
+        'Bad Request - Name or code already exists'
+      ),
     },
   }),
 
@@ -157,4 +177,3 @@ export const ENTERPRISE_ROUTES = {
     },
   }),
 }
-

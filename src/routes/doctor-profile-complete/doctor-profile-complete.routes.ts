@@ -14,7 +14,12 @@ const updateProfileBodySchema = z
     secondary_contact: z.string().nullable().optional().describe('Secondary contact number'),
     image: z.string().max(500).nullable().optional().describe('Profile image URL'),
     gender: z.string().max(20).nullable().optional().describe('Gender'),
-    dateOfBirth: z.string().datetime().nullable().optional().describe('Date of birth in UTC (ISO 8601 format)'),
+    dateOfBirth: z
+      .string()
+      .datetime()
+      .nullable()
+      .optional()
+      .describe('Date of birth in UTC (ISO 8601 format)'),
     phone: z.string().max(50).nullable().optional().describe('Phone number'),
     address: z.string().max(500).nullable().optional().describe('Address'),
   })
@@ -24,7 +29,11 @@ const updateProfileBodySchema = z
 const updateProfessionalExperienceBodySchema = z
   .object({
     age_group: z.string().min(1).max(100).optional().describe('Age group the doctor serves'),
-    languages: z.array(z.string()).min(1).optional().describe('Array of languages the doctor speaks'),
+    languages: z
+      .array(z.string())
+      .min(1)
+      .optional()
+      .describe('Array of languages the doctor speaks'),
     profession: z.string().min(1).optional().describe('Doctor profession/specialty'),
     special_interest_area: z.string().min(1).optional().describe('Special interest area'),
   })
@@ -34,7 +43,12 @@ const updateProfessionalExperienceBodySchema = z
 const updateDocumentsBodySchema = z
   .object({
     resume: z.string().max(500).nullable().optional().describe('Resume document URL'),
-    medicalLicense: z.string().max(500).nullable().optional().describe('Medical license document URL'),
+    medicalLicense: z
+      .string()
+      .max(500)
+      .nullable()
+      .optional()
+      .describe('Medical license document URL'),
     introductionVideo: z.string().max(500).nullable().optional().describe('Introduction video URL'),
   })
   .describe('Request body for updating documents')
@@ -50,7 +64,12 @@ const addEducationBodySchema = z
       .nullable()
       .optional()
       .describe('End year in UTC (ISO 8601 format)'),
-    document: z.string().max(500).nullable().optional().describe('Document URL (e.g., certificate)'),
+    document: z
+      .string()
+      .max(500)
+      .nullable()
+      .optional()
+      .describe('Document URL (e.g., certificate)'),
     institution_name: z.string().min(1).max(200).describe('Institution name'),
   })
   .describe('Request body for adding education record')
@@ -171,7 +190,10 @@ export const DOCTOR_PROFILE_COMPLETE_ROUTES = {
     middleware: [isAuthenticated],
     summary: 'Update doctor basic profile information (Doctor only)',
     request: {
-      body: jsonContentRequired(updateProfileBodySchema, 'Request body for updating doctor profile'),
+      body: jsonContentRequired(
+        updateProfileBodySchema,
+        'Request body for updating doctor profile'
+      ),
     },
     responses: {
       [HttpStatusCodes.OK]: jsonContent(
@@ -304,4 +326,3 @@ export const DOCTOR_PROFILE_COMPLETE_ROUTES = {
     },
   }),
 }
-

@@ -14,7 +14,12 @@ const selectRoleBodySchema = z
 const userInfoBodySchema = z
   .object({
     gender: z.string().max(20).nullable().optional().describe('User gender'),
-    dateOfBirth: z.string().datetime().nullable().optional().describe('User date of birth in UTC (ISO 8601 format)'),
+    dateOfBirth: z
+      .string()
+      .datetime()
+      .nullable()
+      .optional()
+      .describe('User date of birth in UTC (ISO 8601 format)'),
     phone: z.string().max(50).nullable().optional().describe('User phone number'),
     address: z.string().nullable().optional().describe('User address'),
   })
@@ -87,7 +92,10 @@ export const USER_ROUTES = {
       body: jsonContentRequired(userInfoBodySchema, 'Request body for user info'),
     },
     responses: {
-      [HttpStatusCodes.OK]: jsonContent(zodResponseSchema(userInfoResponseSchema), 'User info created or updated successfully'),
+      [HttpStatusCodes.OK]: jsonContent(
+        zodResponseSchema(userInfoResponseSchema),
+        'User info created or updated successfully'
+      ),
       [HttpStatusCodes.UNPROCESSABLE_ENTITY]: jsonContent(
         createErrorSchema(userInfoBodySchema),
         'Unprocessable Entity'
@@ -181,9 +189,11 @@ export const USER_ROUTES = {
         'Anonymous mode toggled successfully'
       ),
       [HttpStatusCodes.UNAUTHORIZED]: jsonContent(zodResponseSchema(), 'Unauthorized'),
-      [HttpStatusCodes.FORBIDDEN]: jsonContent(zodResponseSchema(), 'Only patients can use anonymous mode'),
+      [HttpStatusCodes.FORBIDDEN]: jsonContent(
+        zodResponseSchema(),
+        'Only patients can use anonymous mode'
+      ),
       [HttpStatusCodes.BAD_REQUEST]: jsonContent(zodResponseSchema(), 'Bad Request'),
     },
   }),
 }
-

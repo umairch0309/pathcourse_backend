@@ -90,6 +90,7 @@ export const DOCTOR_PROFILE_ROUTES_HANDLER: HandlerMapFromRoutes<typeof DOCTOR_P
       })
 
       // Create notifications for doctor onboarding request
+      // createNotificationForAllAdmins now notifies all admins and team members
       const { createNotificationForUser, createNotificationForAllAdmins, NOTIFICATION_TYPES } =
         await import('~/lib/notification-helper')
       await Promise.all([
@@ -99,7 +100,7 @@ export const DOCTOR_PROFILE_ROUTES_HANDLER: HandlerMapFromRoutes<typeof DOCTOR_P
           NOTIFICATION_TYPES.DOCTOR_ONBOARDING_REQUEST,
           'Your doctor profile has been submitted and is pending admin approval.'
         ),
-        // Notify all admins
+        // Notify all admins and team members
         createNotificationForAllAdmins(
           NOTIFICATION_TYPES.DOCTOR_ONBOARDING_REQUEST,
           `New doctor profile submission from ${user.name} is pending approval.`

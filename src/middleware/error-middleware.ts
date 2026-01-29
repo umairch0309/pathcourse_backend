@@ -13,7 +13,7 @@ const onError: ErrorHandler = (err, c) => {
         message: err.message,
         success: false,
       },
-      err.statusCode as ContentfulStatusCode,
+      err.statusCode as ContentfulStatusCode
     )
   }
 
@@ -37,7 +37,7 @@ const onError: ErrorHandler = (err, c) => {
       success: false,
       stack: env === 'production' ? undefined : err.stack,
     },
-    statusCode as ContentfulStatusCode,
+    statusCode as ContentfulStatusCode
   )
 }
 

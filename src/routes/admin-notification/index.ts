@@ -5,9 +5,10 @@ import { ADMIN_NOTIFICATION_ROUTES } from '~/routes/admin-notification/admin-not
 const router = createRouter()
 
 Object.entries(ADMIN_NOTIFICATION_ROUTES).forEach(([key, route]) => {
-  router.openapi(route, ADMIN_NOTIFICATION_ROUTES_HANDLER[key as keyof typeof ADMIN_NOTIFICATION_ROUTES_HANDLER])
+  router.openapi(
+    route,
+    ADMIN_NOTIFICATION_ROUTES_HANDLER[key as keyof typeof ADMIN_NOTIFICATION_ROUTES_HANDLER]
+  )
 })
 
 export default router
-
-

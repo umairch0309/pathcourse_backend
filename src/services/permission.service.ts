@@ -7,7 +7,7 @@ export const PERMISSION_SERVICES = {
    * Get all permissions
    */
   getAll: async () => {
-    const permissions = await (prisma as any).permission.findMany({
+    const permissions = await prisma.permission.findMany({
       orderBy: {
         name: 'asc',
       },
@@ -20,7 +20,7 @@ export const PERMISSION_SERVICES = {
    * Get permission by ID
    */
   getById: async (id: string) => {
-    const permission = await (prisma as any).permission.findUnique({
+    const permission = await prisma.permission.findUnique({
       where: { id },
     })
 
@@ -35,7 +35,7 @@ export const PERMISSION_SERVICES = {
    * Get permission by slug
    */
   getBySlug: async (slug: string) => {
-    const permission = await (prisma as any).permission.findUnique({
+    const permission = await prisma.permission.findUnique({
       where: { slug },
     })
 
@@ -55,7 +55,7 @@ export const PERMISSION_SERVICES = {
       throw new HttpError('Permission with this slug already exists', HttpStatusCodes.CONFLICT)
     }
 
-    const permission = await (prisma as any).permission.create({
+    const permission = await prisma.permission.create({
       data: {
         name: data.name,
         slug: data.slug,
@@ -70,7 +70,7 @@ export const PERMISSION_SERVICES = {
    * Update a permission
    */
   update: async (id: string, data: { name?: string; slug?: string; description?: string }) => {
-    const permission = await (prisma as any).permission.findUnique({
+    const permission = await prisma.permission.findUnique({
       where: { id },
     })
 
@@ -89,7 +89,7 @@ export const PERMISSION_SERVICES = {
       }
     }
 
-    const updated = await (prisma as any).permission.update({
+    const updated = await prisma.permission.update({
       where: { id },
       data: {
         ...(data.name && { name: data.name }),
@@ -105,7 +105,7 @@ export const PERMISSION_SERVICES = {
    * Delete a permission
    */
   delete: async (id: string) => {
-    const permission = await (prisma as any).permission.findUnique({
+    const permission = await prisma.permission.findUnique({
       where: { id },
     })
 
@@ -113,7 +113,7 @@ export const PERMISSION_SERVICES = {
       throw new HttpError('Permission not found', HttpStatusCodes.NOT_FOUND)
     }
 
-    await (prisma as any).permission.delete({
+    await prisma.permission.delete({
       where: { id },
     })
 

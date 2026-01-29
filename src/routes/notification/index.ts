@@ -6,8 +6,10 @@ const router = createRouter()
 
 // Use forEach method to register all routes
 Object.entries(NOTIFICATION_ROUTES).forEach(([key, route]) => {
-  router.openapi(route, NOTIFICATION_ROUTES_HANDLER[key as keyof typeof NOTIFICATION_ROUTES_HANDLER])
+  router.openapi(
+    route,
+    NOTIFICATION_ROUTES_HANDLER[key as keyof typeof NOTIFICATION_ROUTES_HANDLER]
+  )
 })
 
 export default router
-

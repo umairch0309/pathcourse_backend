@@ -1,13 +1,8 @@
 import * as HttpStatusCodes from 'stoker/http-status-codes'
 import { HttpError } from '~/lib/error'
-import {
-  PERMISSION_SLUGS,
-  getUserPermissions,
-  hasPermission,
-  requirePermission,
-} from '~/lib/permission-check'
+import { getUserPermissions, PERMISSION_SLUGS, requirePermission } from '~/lib/permission-check'
 import type { ADMIN_NOTIFICATION_ROUTES } from '~/routes/admin-notification/admin-notification.routes'
-import { NOTIFICATION_TYPES, NOTIFICATION_SERVICES } from '~/services/notification.service'
+import { NOTIFICATION_SERVICES, NOTIFICATION_TYPES } from '~/services/notification.service'
 import type { HandlerMapFromRoutes } from '~/types'
 
 const formatNotificationResponse = (notification: {
@@ -43,57 +38,50 @@ const NOTIFICATION_TYPE_TO_PERMISSION: Partial<Record<string, string>> = {
   // Message notifications are not part of admin panel by default
 }
 
-export const ADMIN_NOTIFICATION_ROUTES_HANDLER: HandlerMapFromRoutes<typeof ADMIN_NOTIFICATION_ROUTES> =
-  {
-    getAll: async c => {
-      const user = c.get('user')
-      if (!user) {
-        throw new HttpError('Unauthorized', HttpStatusCodes.UNAUTHORIZED)
-      }
+export const ADMIN_NOTIFICATION_ROUTES_HANDLER: HandlerMapFromRoutes<
+  typeof ADMIN_NOTIFICATION_ROUTES
+> = {
+  getAll: async c => {
+    const user = c.get('user')
+    if (!user) {
+      throw new HttpError('Unauthorized', HttpStatusCodes.UNAUTHORIZED)
+    }
 
-      // Only admins/team admins can view admin notifications
-      if (user.role !== 'admin' && user.role !== 'team_admin') {
-        throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
-      }
+    // Only admins/team admins can view admin notifications
+    if (user.role !== 'admin' && user.role !== 'team_admin') {
+      throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
+    }
 
-      const canViewAll = await hasPermission(user.id, PERMISSION_SLUGS.NOTIFICATIONS_VIEW_ALL)
-
-      // If not view_all, require view_by_permission
-      if (!canViewAll) {
-        await requirePermission(user.id, PERMISSION_SLUGS.NOTIFICATIONS_VIEW_BY_PERMISSION)
-      }
-
-      let allowedTypes: string[] | null = null
-
-      if (!canViewAll) {
-        const permissionSlugs = await getUserPermissions(user.id)
-        allowedTypes = Object.entries(NOTIFICATION_TYPE_TO_PERMISSION)
-          .filter(([, requiredPermission]) => requiredPermission && permissionSlugs.includes(requiredPermission))
-          .map(([type]) => type)
-      }
-
-      const query = c.req.valid('query')
-      const filters = {
-        page: query.page ? parseInt(query.page, 10) : 1,
-        limit: query.limit ? parseInt(query.limit, 10) : 10,
-        isRead: query.isRead === undefined ? undefined : query.isRead === 'true',
-        allowedTypes,
-      }
-
-      const result = await NOTIFICATION_SERVICES.getAllForAdmin(filters)
-
-      return c.json(
-        {
-          message: 'Admin notifications retrieved successfully',
-          success: true,
-          data: {
-            notifications: result.notifications.map(formatNotificationResponse),
-            pagination: result.pagination,
-          },
-        },
-        HttpStatusCodes.OK
+    // Always filter notifications by permission, even if user has view_all
+    await requirePermission(user.id, PERMISSION_SLUGS.NOTIFICATIONS_VIEW_BY_PERMISSION)
+    const permissionSlugs = await getUserPermissions(user.id)
+    const allowedTypes = Object.entries(NOTIFICATION_TYPE_TO_PERMISSION)
+      .filter(
+        ([, requiredPermission]) =>
+          requiredPermission && permissionSlugs.includes(requiredPermission)
       )
-    },
-  }
+      .map(([type]) => type)
 
+    const query = c.req.valid('query')
+    const filters = {
+      page: query.page ? parseInt(query.page, 10) : 1,
+      limit: query.limit ? parseInt(query.limit, 10) : 10,
+      isRead: query.isRead === undefined ? undefined : query.isRead === 'true',
+      allowedTypes,
+    }
 
+    const result = await NOTIFICATION_SERVICES.getAllForAdmin(filters)
+
+    return c.json(
+      {
+        message: 'Admin notifications retrieved successfully',
+        success: true,
+        data: {
+          notifications: result.notifications.map(formatNotificationResponse),
+          pagination: result.pagination,
+        },
+      },
+      HttpStatusCodes.OK
+    )
+  },
+}

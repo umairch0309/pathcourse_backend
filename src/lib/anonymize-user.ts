@@ -17,7 +17,10 @@ interface UserData {
  * Format user data, masking sensitive information if user is anonymous
  * Only applies to patients with isAnonymous = true
  */
-export function formatUserForResponse(user: UserData, isViewingOwnData = false): {
+export function formatUserForResponse(
+  user: UserData,
+  isViewingOwnData = false
+): {
   id: string
   name: string | null
   email: string | null
@@ -66,7 +69,11 @@ export function formatUserForResponse(user: UserData, isViewingOwnData = false):
  * Doctor data is always shown
  * employeeCode is always shown for patients (even when anonymous) so doctors can identify them
  */
-export function formatUserForAppointment(user: UserData, userRole: 'doctor' | 'patient', isViewingOwnData = false): {
+export function formatUserForAppointment(
+  user: UserData,
+  userRole: 'doctor' | 'patient',
+  isViewingOwnData = false
+): {
   id: string
   name: string | null
   email: string | null
@@ -121,4 +128,3 @@ export function formatUserForAppointment(user: UserData, userRole: 'doctor' | 'p
     employeeCode: user.employeeCode || null,
   }
 }
-

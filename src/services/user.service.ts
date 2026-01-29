@@ -338,6 +338,31 @@ export const USER_SERVICES = {
     }
   },
 
+  // Get user by ID (for admin profile)
+  getUserById: async (userId: string) => {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        image: true,
+        phone: true,
+        role: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    })
+    if (!user) {
+      return null
+    }
+    const image = await convertUserImageToSignedUrl(user.image)
+    return {
+      ...user,
+      image,
+    }
+  },
+
   // Update admin profile
   updateAdminProfile: async (data: {
     userId: string

@@ -389,6 +389,7 @@ export const DOCTOR_SERVICES = {
     })
 
     // Create notifications
+    // createNotificationForAllAdmins now notifies all admins and team members
     const { createNotificationForUser, createNotificationForAllAdmins, NOTIFICATION_TYPES } =
       await import('~/lib/notification-helper')
     await Promise.all([
@@ -398,7 +399,7 @@ export const DOCTOR_SERVICES = {
         NOTIFICATION_TYPES.DOCTOR_APPROVED,
         `Your doctor profile has been approved! You can now start accepting appointments.`
       ),
-      // Notify all admins
+      // Notify all admins and team members
       createNotificationForAllAdmins(
         NOTIFICATION_TYPES.DOCTOR_APPROVED,
         `Doctor ${updatedDoctor.user.name} has been approved.`
@@ -456,6 +457,7 @@ export const DOCTOR_SERVICES = {
     })
 
     // Create notifications
+    // createNotificationForAllAdmins now notifies all admins and team members
     const { createNotificationForUser, createNotificationForAllAdmins, NOTIFICATION_TYPES } =
       await import('~/lib/notification-helper')
     await Promise.all([
@@ -465,7 +467,7 @@ export const DOCTOR_SERVICES = {
         NOTIFICATION_TYPES.DOCTOR_REJECTED,
         `Your doctor profile has been rejected. Reason: ${rejectReason}`
       ),
-      // Notify all admins
+      // Notify all admins and team members
       createNotificationForAllAdmins(
         NOTIFICATION_TYPES.DOCTOR_REJECTED,
         `Doctor ${updatedDoctor.user.name} has been rejected.`

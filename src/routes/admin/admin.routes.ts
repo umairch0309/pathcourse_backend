@@ -570,7 +570,12 @@ export const ADMIN_ROUTES = {
       query: z.object({
         page: z.string().optional().describe('Page number (default: 1)'),
         limit: z.string().optional().describe('Items per page (default: 10)'),
-        search: z.string().optional().describe('Search term for organization name, organization email, name, email, number, or message'),
+        search: z
+          .string()
+          .optional()
+          .describe(
+            'Search term for organization name, organization email, name, email, number, or message'
+          ),
       }),
     },
     responses: {
@@ -665,10 +670,16 @@ export const ADMIN_ROUTES = {
       query: z.object({
         page: z.string().optional().describe('Page number (default: 1)'),
         limit: z.string().optional().describe('Items per page (default: 10)'),
-        status: z.enum(['BOOKED', 'COMPLETED', 'NO_SHOW']).optional().describe('Filter by appointment status'),
+        status: z
+          .enum(['BOOKED', 'COMPLETED', 'NO_SHOW'])
+          .optional()
+          .describe('Filter by appointment status'),
         doctorId: z.string().optional().describe('Filter by doctor ID'),
         patientId: z.string().optional().describe('Filter by patient ID'),
-        search: z.string().optional().describe('Search by issue, patient name, doctor name, or email'),
+        search: z
+          .string()
+          .optional()
+          .describe('Search by issue, patient name, doctor name, or email'),
         isArchived: z.string().optional().describe('Filter by archived status (true or false)'),
       }),
     },
@@ -933,6 +944,33 @@ export const ADMIN_ROUTES = {
     },
   }),
 
+  getAdminProfile: createRoute({
+    path: '/admin/profile',
+    method: 'get',
+    tags: [TAGS.user],
+    summary: 'Get current admin profile (Admin only)',
+    request: {},
+    responses: {
+      [HttpStatusCodes.OK]: jsonContent(
+        zodResponseSchema(
+          z.object({
+            id: z.string(),
+            name: z.string(),
+            email: z.string(),
+            image: z.string().nullable(),
+            phone: z.string().nullable(),
+            role: z.string().nullable(),
+            createdAt: z.string().datetime(),
+            updatedAt: z.string().datetime(),
+          })
+        ),
+        'Admin profile retrieved successfully'
+      ),
+      [HttpStatusCodes.UNAUTHORIZED]: jsonContent(zodResponseSchema(), 'Unauthorized'),
+      [HttpStatusCodes.FORBIDDEN]: jsonContent(zodResponseSchema(), 'Forbidden - Admin only'),
+    },
+  }),
+
   updateAdminProfile: createRoute({
     path: '/admin/profile',
     method: 'put',
@@ -964,7 +1002,10 @@ export const ADMIN_ROUTES = {
         ),
         'Admin profile updated successfully'
       ),
-      [HttpStatusCodes.UNPROCESSABLE_ENTITY]: jsonContent(zodResponseSchema(), 'Unprocessable Entity'),
+      [HttpStatusCodes.UNPROCESSABLE_ENTITY]: jsonContent(
+        zodResponseSchema(),
+        'Unprocessable Entity'
+      ),
       [HttpStatusCodes.UNAUTHORIZED]: jsonContent(zodResponseSchema(), 'Unauthorized'),
       [HttpStatusCodes.FORBIDDEN]: jsonContent(zodResponseSchema(), 'Forbidden - Admin only'),
     },

@@ -56,19 +56,25 @@ export function buildNotificationUrl(
 }
 
 /**
- * Get all admin user IDs
+ * Get all admin and team member user IDs
  */
-export async function getAllAdminUserIds(): Promise<string[]> {
+export async function getAllAdminAndTeamUserIds(): Promise<string[]> {
   const prisma = (await import('~/lib/prisma')).default
+  // Get all users with role 'admin'
   const admins = await prisma.user.findMany({
-    where: {
-      role: 'admin',
-    },
-    select: {
-      id: true,
-    },
+    where: { role: 'admin' },
+    select: { id: true },
   })
-  return admins.map((admin: { id: string }) => admin.id)
+  // Get all team member userIds
+  const teamMembers = await prisma.teamMember.findMany({
+    select: { userId: true },
+  })
+  // Combine and deduplicate
+  const allIds = [
+    ...admins.map((a: { id: string }) => a.id),
+    ...teamMembers.map((tm: { userId: string }) => tm.userId),
+  ]
+  return Array.from(new Set(allIds))
 }
 
 /**
@@ -115,13 +121,16 @@ export async function createNotificationsForUsers(
 /**
  * Create notification for all admins
  */
+/**
+ * Create notification for all admins and team members
+ */
 export async function createNotificationForAllAdmins(
   type: NotificationType,
   message: string,
   entityId?: string
 ) {
-  const adminIds = await getAllAdminUserIds()
-  if (adminIds.length > 0) {
-    await createNotificationsForUsers(adminIds, type, message, entityId)
+  const userIds = await getAllAdminAndTeamUserIds()
+  if (userIds.length > 0) {
+    await createNotificationsForUsers(userIds, type, message, entityId)
   }
 }

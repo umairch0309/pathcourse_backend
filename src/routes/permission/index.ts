@@ -10,4 +10,3 @@ Object.entries(PERMISSION_ROUTES).forEach(([key, route]) => {
 })
 
 export default router
-

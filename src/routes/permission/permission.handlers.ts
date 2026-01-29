@@ -184,4 +184,3 @@ export const PERMISSION_ROUTES_HANDLER: HandlerMapFromRoutes<typeof PERMISSION_R
     }
   },
 }
-

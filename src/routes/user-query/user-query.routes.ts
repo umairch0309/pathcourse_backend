@@ -79,7 +79,12 @@ export const USER_QUERY_ROUTES = {
       query: z.object({
         page: z.string().optional().describe('Page number (default: 1)'),
         limit: z.string().optional().describe('Items per page (default: 10)'),
-        search: z.string().optional().describe('Search term for organization name, organization email, name, email, number, or message'),
+        search: z
+          .string()
+          .optional()
+          .describe(
+            'Search term for organization name, organization email, name, email, number, or message'
+          ),
       }),
     },
     responses: {

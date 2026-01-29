@@ -18,7 +18,9 @@ class AppointmentNoShowCron {
       return
     }
 
-    console.log('[No-Show Cron] Starting - will check every 5 minutes for appointments past 20-minute mark')
+    console.log(
+      '[No-Show Cron] Starting - will check every 5 minutes for appointments past 20-minute mark'
+    )
 
     // Run immediately on start
     this.checkNoShowAppointments()
@@ -59,4 +61,3 @@ class AppointmentNoShowCron {
 
 // Export singleton instance
 export const appointmentNoShowCron = new AppointmentNoShowCron()
-

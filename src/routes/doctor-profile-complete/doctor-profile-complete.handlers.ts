@@ -1,12 +1,12 @@
 import * as HttpStatusCodes from 'stoker/http-status-codes'
-import { extractS3KeyFromUrl, keysToSignedUrls } from '~/lib/s3'
 import { HttpError } from '~/lib/error'
 import prisma from '~/lib/prisma'
+import { extractS3KeyFromUrl, keysToSignedUrls } from '~/lib/s3'
 import type { DOCTOR_PROFILE_COMPLETE_ROUTES } from '~/routes/doctor-profile-complete/doctor-profile-complete.routes'
 import { DOCTOR_SERVICES } from '~/services/doctor.service'
 import { DOCUMENTS_SERVICES } from '~/services/documents.service'
-import { PROFESSIONAL_EXPERIENCE_SERVICES } from '~/services/professional-experience.service'
 import { EDUCATION_SERVICES } from '~/services/education.service'
+import { PROFESSIONAL_EXPERIENCE_SERVICES } from '~/services/professional-experience.service'
 import type { HandlerMapFromRoutes } from '~/types'
 
 // Helper function to convert user image to signed URL
@@ -28,15 +28,17 @@ const convertUserImageToSignedUrl = async (
 }
 
 // Helper function to convert documents to signed URLs
-const convertDocumentsToSignedUrls = async (documents: {
-  id: string
-  doctorId: string
-  resume: string | null
-  medicalLicense: string | null
-  introductionVideo: string | null
-  createdAt: Date
-  updatedAt: Date
-} | null) => {
+const convertDocumentsToSignedUrls = async (
+  documents: {
+    id: string
+    doctorId: string
+    resume: string | null
+    medicalLicense: string | null
+    introductionVideo: string | null
+    createdAt: Date
+    updatedAt: Date
+  } | null
+) => {
   if (!documents) {
     return null
   }
@@ -363,10 +365,7 @@ export const DOCTOR_PROFILE_COMPLETE_ROUTES_HANDLER: HandlerMapFromRoutes<
           HttpStatusCodes.INTERNAL_SERVER_ERROR
         )
       }
-      throw new HttpError(
-        'Failed to update doctor profile',
-        HttpStatusCodes.INTERNAL_SERVER_ERROR
-      )
+      throw new HttpError('Failed to update doctor profile', HttpStatusCodes.INTERNAL_SERVER_ERROR)
     }
   },
 
@@ -394,7 +393,13 @@ export const DOCTOR_PROFILE_COMPLETE_ROUTES_HANDLER: HandlerMapFromRoutes<
       const existing = await PROFESSIONAL_EXPERIENCE_SERVICES.getByDoctorId(doctor.id)
 
       // If no existing record and no fields provided, throw error
-      if (!existing && !body.age_group && !body.languages && !body.profession && !body.special_interest_area) {
+      if (
+        !existing &&
+        !body.age_group &&
+        !body.languages &&
+        !body.profession &&
+        !body.special_interest_area
+      ) {
         throw new HttpError(
           'Professional experience not found. Please provide at least one field to create it.',
           HttpStatusCodes.NOT_FOUND
@@ -630,8 +635,10 @@ export const DOCTOR_PROFILE_COMPLETE_ROUTES_HANDLER: HandlerMapFromRoutes<
           )
         }
       }
-      throw new HttpError('Failed to delete education record', HttpStatusCodes.INTERNAL_SERVER_ERROR)
+      throw new HttpError(
+        'Failed to delete education record',
+        HttpStatusCodes.INTERNAL_SERVER_ERROR
+      )
     }
   },
 }
-

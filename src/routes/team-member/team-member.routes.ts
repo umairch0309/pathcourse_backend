@@ -117,7 +117,10 @@ export const TEAM_MEMBER_ROUTES = {
         'Unprocessable Entity'
       ),
       [HttpStatusCodes.UNAUTHORIZED]: jsonContent(zodResponseSchema(), 'Unauthorized'),
-      [HttpStatusCodes.CONFLICT]: jsonContent(zodResponseSchema(), 'User with email already exists'),
+      [HttpStatusCodes.CONFLICT]: jsonContent(
+        zodResponseSchema(),
+        'User with email already exists'
+      ),
       [HttpStatusCodes.NOT_FOUND]: jsonContent(zodResponseSchema(), 'Role not found'),
       [HttpStatusCodes.FORBIDDEN]: jsonContent(zodResponseSchema(), 'Forbidden'),
     },
@@ -178,4 +181,3 @@ export const TEAM_MEMBER_ROUTES = {
     },
   }),
 }
-

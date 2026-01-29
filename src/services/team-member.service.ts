@@ -8,7 +8,7 @@ export const TEAM_MEMBER_SERVICES = {
    * Get all team members with their roles and permissions
    */
   getAll: async () => {
-    const teamMembers = await (prisma as any).teamMember.findMany({
+    const teamMembers = await prisma.teamMember.findMany({
       include: {
         user: {
           select: {
@@ -61,7 +61,7 @@ export const TEAM_MEMBER_SERVICES = {
    * Returns null if not found (for admins without team member records)
    */
   getByUserId: async (userId: string) => {
-    const teamMember = await (prisma as any).teamMember.findUnique({
+    const teamMember = await prisma.teamMember.findUnique({
       where: { userId },
       include: {
         user: {
@@ -123,7 +123,7 @@ export const TEAM_MEMBER_SERVICES = {
     }
 
     // Verify role exists
-    const role = await (prisma as any).role.findUnique({
+    const role = await prisma.role.findUnique({
       where: { id: data.roleId },
     })
 
@@ -145,7 +145,7 @@ export const TEAM_MEMBER_SERVICES = {
     }
 
     // Update user role to team admin (distinct from main platform admin)
-    await (prisma as any).user.update({
+    await prisma.user.update({
       where: { id: user.user.id },
       data: {
         role: 'team_admin',
@@ -154,7 +154,7 @@ export const TEAM_MEMBER_SERVICES = {
     })
 
     // Create team member record
-    const teamMember = await (prisma as any).teamMember.create({
+    const teamMember = await prisma.teamMember.create({
       data: {
         userId: user.user.id,
         roleId: data.roleId,
@@ -205,7 +205,7 @@ export const TEAM_MEMBER_SERVICES = {
    * Update team member's role
    */
   updateRole: async (userId: string, roleId: string) => {
-    const teamMember = await (prisma as any).teamMember.findUnique({
+    const teamMember = await prisma.teamMember.findUnique({
       where: { userId },
     })
 
@@ -214,7 +214,7 @@ export const TEAM_MEMBER_SERVICES = {
     }
 
     // Verify role exists
-    const role = await (prisma as any).role.findUnique({
+    const role = await prisma.role.findUnique({
       where: { id: roleId },
     })
 
@@ -222,7 +222,7 @@ export const TEAM_MEMBER_SERVICES = {
       throw new HttpError('Role not found', HttpStatusCodes.NOT_FOUND)
     }
 
-    const updated = await (prisma as any).teamMember.update({
+    const updated = await prisma.teamMember.update({
       where: { userId },
       data: { roleId },
       include: {
@@ -271,7 +271,7 @@ export const TEAM_MEMBER_SERVICES = {
    * Remove team member (delete team member record, but keep user)
    */
   delete: async (userId: string) => {
-    const teamMember = await (prisma as any).teamMember.findUnique({
+    const teamMember = await prisma.teamMember.findUnique({
       where: { userId },
     })
 
@@ -279,12 +279,12 @@ export const TEAM_MEMBER_SERVICES = {
       throw new HttpError('Team member not found', HttpStatusCodes.NOT_FOUND)
     }
 
-    await (prisma as any).teamMember.delete({
+    await prisma.teamMember.delete({
       where: { userId },
     })
 
     // Optionally update user role back to guest or remove admin role
-    await (prisma as any).user.update({
+    await prisma.user.update({
       where: { id: userId },
       data: {
         role: null,

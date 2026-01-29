@@ -176,4 +176,3 @@ export const NOTIFICATION_ROUTES_HANDLER: HandlerMapFromRoutes<typeof NOTIFICATI
     }
   },
 }
-

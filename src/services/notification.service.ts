@@ -99,7 +99,7 @@ export const NOTIFICATION_SERVICES = {
     const limit = filters?.limit || 10
     const skip = (page - 1) * limit
 
-    const where: any = {
+    const where: import('@prisma/client').Prisma.NotificationWhereInput = {
       user: {
         role: {
           in: ['admin', 'team_admin'],

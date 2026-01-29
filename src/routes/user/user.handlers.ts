@@ -387,10 +387,12 @@ export const USER_ROUTES_HANDLER: HandlerMapFromRoutes<typeof USER_ROUTES> = {
         if (error.message === 'Only patients can use anonymous mode') {
           throw new HttpError('Only patients can use anonymous mode', HttpStatusCodes.FORBIDDEN)
         }
-        throw new HttpError(error.message || 'Failed to toggle anonymous mode', HttpStatusCodes.INTERNAL_SERVER_ERROR)
+        throw new HttpError(
+          error.message || 'Failed to toggle anonymous mode',
+          HttpStatusCodes.INTERNAL_SERVER_ERROR
+        )
       }
       throw new HttpError('Failed to toggle anonymous mode', HttpStatusCodes.INTERNAL_SERVER_ERROR)
     }
   },
 }
-

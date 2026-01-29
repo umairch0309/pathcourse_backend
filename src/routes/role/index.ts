@@ -10,4 +10,3 @@ Object.entries(ROLE_ROUTES).forEach(([key, route]) => {
 })
 
 export default router
-

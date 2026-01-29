@@ -23,7 +23,8 @@ export const USER_QUERY_SERVICES = {
       },
     })
 
-    // Create notification for all admins
+    // Create notification for all admins and team members
+    // createNotificationForAllAdmins now notifies all admins and team members
     const { createNotificationForAllAdmins, NOTIFICATION_TYPES } = await import(
       '~/lib/notification-helper'
     )

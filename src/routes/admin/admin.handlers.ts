@@ -1058,6 +1058,44 @@ export const ADMIN_ROUTES_HANDLER: HandlerMapFromRoutes<typeof ADMIN_ROUTES> = {
     }
   },
 
+  getAdminProfile: async c => {
+    const user = c.get('user')
+    if (!user) {
+      throw new HttpError('Unauthorized', HttpStatusCodes.UNAUTHORIZED)
+    }
+    if (user.role !== 'admin' && user.role !== 'team_admin') {
+      throw new HttpError('Forbidden - Admin only', HttpStatusCodes.FORBIDDEN)
+    }
+    await requirePermission(user.id, PERMISSION_SLUGS.SETTINGS_VIEW)
+    try {
+      // Fetch user from DB for latest info
+      const dbUser = await USER_SERVICES.getUserById(user.id)
+      if (!dbUser) {
+        throw new HttpError('User not found', HttpStatusCodes.NOT_FOUND)
+      }
+      const image = await convertUserImageToSignedUrl(dbUser.image)
+      return c.json(
+        {
+          message: 'Admin profile retrieved successfully',
+          success: true,
+          data: {
+            ...dbUser,
+            image,
+            createdAt: dbUser.createdAt.toISOString(),
+            updatedAt: dbUser.updatedAt.toISOString(),
+          },
+        },
+        HttpStatusCodes.OK
+      )
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      throw new HttpError(
+        errorMessage || 'Failed to get admin profile',
+        HttpStatusCodes.INTERNAL_SERVER_ERROR
+      )
+    }
+  },
+
   updateAdminProfile: async c => {
     const user = c.get('user')
     if (!user) {

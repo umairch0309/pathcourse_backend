@@ -7,8 +7,7 @@ const router = createRouter()
 // Use forEach method to register all routes
 Object.entries(ENTERPRISE_ROUTES).forEach(([key, route]) => {
   // biome-ignore lint/suspicious/noExplicitAny: type assertion needed for dynamic route handler mapping
-  router.openapi(route, ENTERPRISE_ROUTES_HANDLER[key as keyof typeof ENTERPRISE_ROUTES_HANDLER] as any)
+  router.openapi(route, ENTERPRISE_ROUTES_HANDLER[key as keyof typeof ENTERPRISE_ROUTES_HANDLER])
 })
 
 export default router
-

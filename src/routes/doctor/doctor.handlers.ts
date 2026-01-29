@@ -355,7 +355,8 @@ export const DOCTOR_ROUTES_HANDLER: HandlerMapFromRoutes<typeof DOCTOR_ROUTES> =
     }
 
     // Get connection ID from query or generate one
-    const connectionId = c.req.query('connectionId') || `conn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    const connectionId =
+      c.req.query('connectionId') || `conn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 
     const result = await DOCTOR_SERVICES.updateConnectionHeartbeat(user.id, connectionId)
 

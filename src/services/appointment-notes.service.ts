@@ -57,4 +57,3 @@ export const APPOINTMENT_NOTES_SERVICES = {
     return notes
   },
 }
-

@@ -61,4 +61,3 @@ export async function generateUniqueEnterpriseCode(
   // If we couldn't generate a unique code after max attempts, throw an error
   throw new Error('Failed to generate unique enterprise code after multiple attempts')
 }
-

@@ -16,7 +16,7 @@ export async function hasPermission(userId: string, permissionSlug: string): Pro
   // Check role case-insensitively to handle 'admin', 'ADMIN', etc.
   if (user?.role?.toLowerCase() === 'admin') {
     // Check if they have a team member record
-    const teamMemberCheck = await (prisma as any).teamMember.findUnique({
+    const teamMemberCheck = await prisma.teamMember.findUnique({
       where: { userId },
     })
 
@@ -27,7 +27,7 @@ export async function hasPermission(userId: string, permissionSlug: string): Pro
   }
 
   // Get team member with role and permissions
-  const teamMember = await (prisma as any).teamMember.findUnique({
+  const teamMember = await prisma.teamMember.findUnique({
     where: { userId },
     include: {
       role: {
@@ -47,7 +47,7 @@ export async function hasPermission(userId: string, permissionSlug: string): Pro
   }
 
   // Check if any permission matches the required slug
-  return teamMember.role.rolePermissions.some((rp: any) => rp.permission.slug === permissionSlug)
+  return teamMember.role.rolePermissions.some(rp => rp.permission.slug === permissionSlug)
 }
 
 /**
@@ -69,13 +69,13 @@ export async function requirePermission(userId: string, permissionSlug: string):
  */
 export async function getUserPermissions(userId: string): Promise<string[]> {
   // Get user to check if they're admin
-  const user = await (prisma as any).user.findUnique({
+  const user = await prisma.user.findUnique({
     where: { id: userId },
     select: { role: true },
   })
 
   // Get team member with role and permissions
-  const teamMember = await (prisma as any).teamMember.findUnique({
+  const teamMember = await prisma.teamMember.findUnique({
     where: { userId },
     include: {
       role: {
@@ -101,7 +101,7 @@ export async function getUserPermissions(userId: string): Promise<string[]> {
     return []
   }
 
-  return teamMember.role.rolePermissions.map((rp: any) => rp.permission.slug)
+  return teamMember.role.rolePermissions.map(rp => rp.permission.slug)
 }
 
 /**
